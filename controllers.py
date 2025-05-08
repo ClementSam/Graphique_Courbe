@@ -108,7 +108,7 @@ class GraphController:
         container = PlotContainerWidget(name, view.plot_widget)
         self.w.center_area_widget.add_plot_widget(container)
         self.w.left_panel.refresh_tree(self.state.graphs)
-
+        
     def add_curve(self):
         try:
             self.service.add_random_curve()

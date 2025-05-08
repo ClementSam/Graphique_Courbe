@@ -9,8 +9,8 @@ from layout_manager_dialog import LayoutManagerDialog
 import layout_manager as lm
 from app_state import AppState
 from project_io import export_project_to_json, import_project_from_json
-from graph_io import export_graph_to_json
-from curve_io import export_curve_to_json
+from graph_io import export_graph_to_json, import_graph_from_json
+from curve_io import export_curve_to_json, import_curve_from_json
 import os
 import json
 
@@ -167,6 +167,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if path:
             curve = import_curve_from_json(path)
             self.controller.service.add_curve(graph.name, curve)
+            signal_bus.curve_list_updated.emit()
             signal_bus.curve_updated.emit()
             QtWidgets.QMessageBox.information(self, "Import réussi", f"Courbe '{curve.name}' importée dans '{graph.name}'.")
 

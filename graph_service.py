@@ -29,6 +29,12 @@ class GraphService:
         self.state.select_graph(name)
 
     # Gestion des Courbes
+    def add_curve(self, graph_name: str, curve: CurveData):
+        graph = self.state.graphs.get(graph_name)
+        if not graph:
+            raise ValueError(f"Graphique '{graph_name}' introuvable.")
+        graph.add_curve(curve)
+    
     def add_random_curve(self):
         graph = self.state.current_graph
         if graph is None:
