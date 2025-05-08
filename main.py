@@ -116,9 +116,15 @@ class MainWindow(QtWidgets.QMainWindow):
         export_graph_btn.triggered.connect(self.export_graph)
         export_curve_btn = QtWidgets.QAction("📈 Exporter courbe", self)
         export_curve_btn.triggered.connect(self.export_curve)
-
+        import_graph_btn = QtWidgets.QAction("📥 Importer graphique", self)
+        import_graph_btn.triggered.connect(self.import_graph)
+        import_curve_btn = QtWidgets.QAction("📈 Importer courbe", self)
+        import_curve_btn.triggered.connect(self.import_curve)        
+        
         self.toolbar.addAction(export_graph_btn)
         self.toolbar.addAction(export_curve_btn)
+        self.toolbar.addAction(import_graph_btn)
+        self.toolbar.addAction(import_curve_btn)        
         self.toolbar.addSeparator()
 
         layout_btn = QtWidgets.QAction("🗂 Dispositions", self)
