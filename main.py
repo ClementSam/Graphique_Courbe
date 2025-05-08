@@ -11,6 +11,8 @@ from app_state import AppState
 from project_io import export_project_to_json, import_project_from_json
 from graph_io import export_graph_to_json, import_graph_from_json
 from curve_io import export_curve_to_json, import_curve_from_json
+from import_curve_dialog import ImportCurveDialog
+from curve_loader_factory import load_curve_by_format
 import os
 import json
 
@@ -163,7 +165,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.controller.import_graph(graph)
             QtWidgets.QMessageBox.information(self, "Import réussi", f"Graphique '{graph.name}' importé.")
 
-    def import_curve(self):
+    def import_curve_old(self):
         state = AppState.get_instance()
         graph = state.current_graph
         if not graph:
@@ -176,6 +178,26 @@ class MainWindow(QtWidgets.QMainWindow):
             signal_bus.curve_list_updated.emit()
             signal_bus.curve_updated.emit()
             QtWidgets.QMessageBox.information(self, "Import réussi", f"Courbe '{curve.name}' importée dans '{graph.name}'.")
+
+    def import_curve(self):
+        state = AppState.get_instance()
+        graph = state.current_graph
+        if not graph:
+            QtWidgets.QMessageBox.warning(self, "Aucun graphique sélectionné", "Veuillez sélectionner un graphique pour y ajouter la courbe.")
+            return
+
+        dlg = ImportCurveDialog(self)
+        if dlg.exec_() == QtWidgets.QDialog.Accepted:
+            path, fmt = dlg.get_selected_path_and_format()
+            try:
+                curves = load_curve_by_format(path, fmt)
+                for curve in curves:
+                    self.controller.service.add_curve(graph.name, curve)
+                signal_bus.curve_list_updated.emit()
+                signal_bus.curve_updated.emit()
+                QtWidgets.QMessageBox.information(self, "Import réussi", f"{len(curves)} courbe(s) importée(s) dans '{graph.name}'.")
+            except Exception as e:
+                QtWidgets.QMessageBox.warning(self, "Erreur", str(e))
 
     def _populate_recent_projects(self):
             self.recent_menu.clear()
