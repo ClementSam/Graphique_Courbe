@@ -87,7 +87,7 @@ class GraphController:
             elif name.startswith("add_curve:"):
                 graph_name = name.split(":", 1)[1]
                 self.service.select_graph(graph_name)
-                self.add_curve()
+                self.w.import_curve()
         elif kind == "graph":
             self.service.select_graph(name)
             signal_bus.graph_selected.emit(name)

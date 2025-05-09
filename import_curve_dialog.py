@@ -22,6 +22,7 @@ class ImportCurveDialog(QDialog):
         self.format_combo.addItem("Oscilloscope Keysight V5 / JSON", "keysight_json_v5")
         self.format_combo.addItem("Oscilloscope TEKTRO V1.2 / JSON", "tektro_json_v1_2")
         self.format_combo.addItem("CSV Standard", "csv_standard")
+        self.format_combo.addItem("➕ Générer une courbe aléatoire", "random_curve")
         layout.addWidget(self.format_combo)
 
         # Sélecteur de fichier

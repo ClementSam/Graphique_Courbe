@@ -13,6 +13,7 @@ from graph_io import export_graph_to_json, import_graph_from_json
 from curve_io import export_curve_to_json, import_curve_from_json
 from import_curve_dialog import ImportCurveDialog
 from curve_loader_factory import load_curve_by_format
+from curve_generators import generate_random_curve
 import os
 import json
 
@@ -165,20 +166,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.controller.import_graph(graph)
             QtWidgets.QMessageBox.information(self, "Import réussi", f"Graphique '{graph.name}' importé.")
 
-    def import_curve_old(self):
-        state = AppState.get_instance()
-        graph = state.current_graph
-        if not graph:
-            QtWidgets.QMessageBox.warning(self, "Aucun graphique sélectionné", "Veuillez sélectionner un graphique pour y ajouter la courbe.")
-            return
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Importer courbe", "", "Fichiers JSON (*.json)")
-        if path:
-            curve = import_curve_from_json(path)
-            self.controller.service.add_curve(graph.name, curve)
-            signal_bus.curve_list_updated.emit()
-            signal_bus.curve_updated.emit()
-            QtWidgets.QMessageBox.information(self, "Import réussi", f"Courbe '{curve.name}' importée dans '{graph.name}'.")
-
     def import_curve(self):
         state = AppState.get_instance()
         graph = state.current_graph
@@ -190,7 +177,17 @@ class MainWindow(QtWidgets.QMainWindow):
         if dlg.exec_() == QtWidgets.QDialog.Accepted:
             path, fmt = dlg.get_selected_path_and_format()
             try:
-                curves = load_curve_by_format(path, fmt)
+                if fmt == "random_curve":
+                    # Utilise AppState pour savoir quel graph est actif
+                    existing_names = [c.name for c in graph.curves]
+                    index = 1
+                    while f"Courbe {index}" in existing_names:
+                        index += 1
+                    curve = generate_random_curve(index)
+                    curves = [curve]
+                else:
+                    curves = load_curve_by_format(path, fmt)
+
                 for curve in curves:
                     self.controller.service.add_curve(graph.name, curve)
                 signal_bus.curve_list_updated.emit()

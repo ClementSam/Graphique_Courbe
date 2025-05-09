@@ -34,24 +34,6 @@ class GraphService:
         if not graph:
             raise ValueError(f"Graphique '{graph_name}' introuvable.")
         graph.add_curve(curve)
-    
-    def add_random_curve(self):
-        graph = self.state.current_graph
-        if graph is None:
-            raise ValueError("Aucun graphique sélectionné.")
-        
-        x = np.linspace(0, 2*np.pi, 1000)
-        y = np.sin(np.random.uniform(1, 5) * x)
-        curve_name = self._generate_unique_curve_name(graph)
-        curve = CurveData(
-            name=curve_name,
-            x=x,
-            y=y,
-            color=np.random.choice(['r', 'g', 'b', 'm', 'c', 'y']),
-            style=QtCore.Qt.SolidLine
-        )
-        graph.add_curve(curve)
-        return curve.name
 
     def remove_curve(self, curve_name: str):
         graph = self.state.current_graph
