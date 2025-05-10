@@ -1,12 +1,14 @@
 from app_state import AppState
 from PyQt5 import QtWidgets
 import pyqtgraph as pg
+from pyqtgraph.opengl import GLViewWidget, GLLinePlotItem
 
 class MyPlotView:
     def __init__(self, graph_data):
         self.graph_data = graph_data
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground('w')
+        self.plot_widget.useOpenGL(True)
         self.curves = {}
 
     def update_graph_properties(self):
@@ -23,7 +25,8 @@ class MyPlotView:
             if not curve.visible:
                 continue
             pen = pg.mkPen(color=curve.color, width=curve.width, style=curve.style)
-            item = self.plot_widget.plot(curve.x, curve.y, pen=pen, name=curve.name)
+            #item = self.plot_widget.plot(curve.x, curve.y, pen=pen, name=curve.name)
+            item = self.plot_widget.plot(curve.x, curve.y, pen=pen, name=curve.name, downsample=True, autoDownsample=True)
             self.curves[curve.name] = item
 
     def auto_range(self):
