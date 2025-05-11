@@ -1,7 +1,8 @@
 from app_state import AppState
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import QTimer
+import time
 import pyqtgraph as pg
-from pyqtgraph.opengl import GLViewWidget, GLLinePlotItem
 
 class MyPlotView:
     def __init__(self, graph_data):
@@ -18,16 +19,31 @@ class MyPlotView:
         self.plot_widget.setBackground('k' if g.dark_mode else 'w')
 
     def refresh_curves(self):
+        import time
+        start = time.perf_counter()
+    
         self.plot_widget.clear()
         self.curves.clear()
+    
         for curve in self.graph_data.curves:
             print('[VIEW] Drawing:', curve.name, '| Visible:', curve.visible)
             if not curve.visible:
                 continue
+    
             pen = pg.mkPen(color=curve.color, width=curve.width, style=curve.style)
-            #item = self.plot_widget.plot(curve.x, curve.y, pen=pen, name=curve.name)
-            item = self.plot_widget.plot(curve.x, curve.y, pen=pen, name=curve.name, downsample=True, autoDownsample=True)
+    
+            # Créer l'item
+            item = pg.PlotDataItem(curve.x, curve.y, pen=pen, name=curve.name)
+    
+            # Ajouter d'abord au widget
+            self.plot_widget.addItem(item)
+    
+            # Ensuite activer clipping et downsampling
+            item.setClipToView(True)
+            item.setDownsampling(auto=True)
+    
             self.curves[curve.name] = item
+    
+        end = time.perf_counter()
+        print(f"[PROFILER] refresh_curves took {end - start:.4f} seconds")
 
-    def auto_range(self):
-        self.plot_widget.enableAutoRange()
