@@ -32,18 +32,23 @@ class MyPlotView:
     
             pen = pg.mkPen(color=curve.color, width=curve.width, style=curve.style)
     
-            # Créer l'item
-            item = pg.PlotDataItem(curve.x, curve.y, pen=pen, name=curve.name)
+            if curve.downsampling_mode == "manual":
+                x = curve.x[::curve.downsampling_ratio]
+                y = curve.y[::curve.downsampling_ratio]
+                item = pg.PlotDataItem(x, y, pen=pen, name=curve.name)
+            else:
+                item = pg.PlotDataItem(curve.x, curve.y, pen=pen, name=curve.name)
     
-            # Ajouter d'abord au widget
             self.plot_widget.addItem(item)
-    
-            # Ensuite activer clipping et downsampling
             item.setClipToView(True)
-            item.setDownsampling(auto=True)
+    
+            if curve.downsampling_mode == "off":
+                item.setDownsampling(auto=False)
+            elif curve.downsampling_mode == "auto":
+                item.setDownsampling(auto=True)
+            # pas besoin de downsampling pour "manual" car déjà sous-échantillonné
     
             self.curves[curve.name] = item
     
         end = time.perf_counter()
         print(f"[PROFILER] refresh_curves took {end - start:.4f} seconds")
-

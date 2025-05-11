@@ -13,6 +13,8 @@ class CurveData:
     width: int = 2
     style: Optional[int] = None
     visible: bool = True
+    downsampling_mode: str = "auto"
+    downsampling_ratio: int = 1
 
     def __post_init__(self):
         self.x = np.array(self.x)

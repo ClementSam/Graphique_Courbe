@@ -54,6 +54,16 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.style_combo.addItem("Tiret", QtCore.Qt.DashLine)
         self.style_combo.addItem("Tiret-point", QtCore.Qt.DashDotLine)
         self.style_combo.addItem("Tiret-point-point", QtCore.Qt.DashDotDotLine)
+        self.downsampling_combo = QtWidgets.QComboBox()
+        self.downsampling_combo.addItem("Automatique", "auto")
+        self.downsampling_combo.addItem("Manuel", "manual")
+        self.downsampling_combo.addItem("Désactivé", "off")
+        self.downsampling_ratio_input = QtWidgets.QSpinBox()
+        self.downsampling_ratio_input.setRange(1, 1000)
+        self.downsampling_ratio_input.setValue(10)
+        self.downsampling_ratio_input.setEnabled(False)
+        self.downsampling_apply_btn = QtWidgets.QPushButton("Appliquer")
+        self.downsampling_apply_btn.setEnabled(False)
 
         layout.addWidget(QtWidgets.QLabel("Courbe sélectionnée :"))
         layout.addWidget(self.label_curve_name)
@@ -63,6 +73,16 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(QtWidgets.QLabel("Style :"))
         layout.addWidget(self.style_combo)
         layout.addWidget(self.color_button)
+
+        ds_layout = QtWidgets.QHBoxLayout()
+        ds_layout.addWidget(QtWidgets.QLabel("Ratio :"))
+        ds_layout.addWidget(self.downsampling_ratio_input)
+        ds_layout.addWidget(self.downsampling_apply_btn)
+        
+        layout.addWidget(QtWidgets.QLabel("Downsampling :"))
+        layout.addWidget(self.downsampling_combo)
+        layout.addLayout(ds_layout)
+
         layout.addStretch()
 
         self.addTab(tab_curve, "Propriétés de la courbe")

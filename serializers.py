@@ -11,7 +11,9 @@ def curve_to_dict(curve: CurveData) -> dict:
         "y": curve.y.tolist(),
         "color": curve.color,
         "width": curve.width,
-        "style": curve.style
+        "style": curve.style,
+        "downsampling_mode": curve.downsampling_mode,
+        "downsampling_ratio": curve.downsampling_ratio
     }
 
 
@@ -22,7 +24,9 @@ def dict_to_curve(data: dict) -> CurveData:
         y=data["y"],
         color=data.get("color", "b"),
         width=data.get("width", 2),
-        style=data.get("style")
+        style=data.get("style"),
+        downsampling_mode=data.get("downsampling_mode", "auto"),
+        downsampling_ratio=data.get("downsampling_ratio", 1)
     )
 
 

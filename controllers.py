@@ -60,6 +60,9 @@ class GraphController:
         rp.logy_checkbox.toggled.connect(self._on_graph_props_changed)
         rp.font_combo.currentFontChanged.connect(self._on_graph_props_changed)
         rp.button_reset_zoom.clicked.connect(self.reset_zoom)
+        
+        rp.downsampling_combo.currentIndexChanged.connect(self._on_downsampling_mode_changed)
+        rp.downsampling_apply_btn.clicked.connect(self._on_apply_downsampling_ratio)
 
     def _connect_signals(self):
         signal_bus.graph_selected.connect(self.refresh_graph_ui)
@@ -153,13 +156,24 @@ class GraphController:
             self._block_ui_sync = False
 
     def refresh_curve_ui(self):
+        rp = self.w.right_panel
+        
         curve = self.state.current_curve
         if not curve:
             return
-        rp = self.w.right_panel
+
+        index = rp.downsampling_combo.findData(curve.downsampling_mode)
+        rp.downsampling_combo.setCurrentIndex(index)
+        
         rp.label_curve_name.setText(curve.name)
         rp.width_spin.setValue(curve.width)
         rp.style_combo.setCurrentIndex(rp.style_combo.findData(curve.style))
+        
+        rp.downsampling_ratio_input.setValue(curve.downsampling_ratio)
+        is_manual = curve.downsampling_mode == "manual"
+        rp.downsampling_ratio_input.setEnabled(is_manual)
+        rp.downsampling_apply_btn.setEnabled(is_manual)
+        
         self.w.right_panel.setTabEnabled(1, True)
 
     def _on_graph_props_changed(self, *_):
@@ -283,7 +297,6 @@ class GraphController:
                     child_item.setText(name)
                     return
 
-
     def import_graph(self, graph_data):
         name = graph_data.name
         self.state.graphs[name] = graph_data
@@ -293,3 +306,23 @@ class GraphController:
         self.w.center_area_widget.add_plot_widget(container)
         self.w.left_panel.refresh_tree(self.state.graphs)
         self._refresh_plot()
+
+    def _on_downsampling_mode_changed(self, index):
+        mode = self.w.right_panel.downsampling_combo.itemData(index)
+        is_manual = (mode == "manual")
+        self.w.right_panel.downsampling_ratio_input.setEnabled(is_manual)
+        self.w.right_panel.downsampling_apply_btn.setEnabled(is_manual)
+    
+        curve = self.state.current_curve
+        if curve:
+            curve.downsampling_mode = mode
+            signal_bus.curve_updated.emit()
+            
+    def _on_apply_downsampling_ratio(self):
+        curve = self.state.current_curve
+        if curve and curve.downsampling_mode == "manual":
+            ratio = self.w.right_panel.downsampling_ratio_input.value()
+            curve.downsampling_ratio = max(1, ratio)
+            signal_bus.curve_updated.emit()
+
+
