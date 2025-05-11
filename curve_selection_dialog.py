@@ -24,9 +24,10 @@ class CurveSelectionDialog(QDialog):
         layout.addWidget(QLabel("Sélectionnez les courbes à importer :"))
 
         self.list_widget = QListWidget()
+
         for curve in curves:
             item = QListWidgetItem(curve.name)
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsEditable)
             item.setCheckState(Qt.Checked)
             self.list_widget.addItem(item)
 
@@ -42,5 +43,10 @@ class CurveSelectionDialog(QDialog):
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
             if item.checkState() == Qt.Checked:
-                selected.append(self.curves[i])
+                curve = self.curves[i]
+                # 🔄 Met à jour le nom de la courbe avec le nom affiché (modifié ou non)
+                new_name = item.text().strip()
+                curve.name = new_name
+                selected.append(curve)
         return selected
+

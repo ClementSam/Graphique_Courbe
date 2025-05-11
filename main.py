@@ -16,13 +16,27 @@ from curve_loader_factory import load_curve_by_format
 from curve_generators import generate_random_curve
 import os
 import json
+from datetime import datetime
+
+def check_expiry_date():
+    # 📆 DATE LIMITE À DÉFINIR ICI
+    expiry = datetime(2025, 5, 19)
+    now = datetime.now()
+
+    if now > expiry:
+        QtWidgets.QMessageBox.critical(
+            None,
+            "Accès expiré",
+            f"Cette version a expiré le {expiry.strftime('%d/%m/%Y')}.\nVeuillez contacter l’auteur."
+        )
+        sys.exit(0)
 
 RECENT_FILE = "recent_projects.json"
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Gestionnaire de courbes")
+        self.setWindowTitle("Gestionnaire de courbes. Version alpha. Clément SAMPERE. Publication restreinte soumise à autorisation")
         self.setGeometry(100, 100, 1200, 700)
         self._current_project_path = None
         self._setup_menu()
@@ -281,6 +295,10 @@ class MainWindow(QtWidgets.QMainWindow):
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
+    
+    # 🔐 Vérifie la validité de la version
+    check_expiry_date()
+    
     win = MainWindow()
     win.show()
     sys.exit(app.exec_())
