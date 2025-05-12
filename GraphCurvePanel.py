@@ -33,7 +33,7 @@ class CombinedDelegate(QStyledItemDelegate):
             bold_font.setBold(True)
             painter.setFont(bold_font)
             painter.setPen(option.palette.text().color())
-            painter.drawText(rect.adjusted(10, 0, 0, 0), Qt.AlignVCenter, name)
+            painter.drawText(rect.adjusted(-20, 0, 0, 0), Qt.AlignVCenter, name)
 
         painter.restore()
 
