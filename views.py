@@ -3,6 +3,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import QTimer
 import time
 import pyqtgraph as pg
+from signal_bus import signal_bus
 
 class MyPlotView:
     def __init__(self, graph_data):
@@ -11,6 +12,8 @@ class MyPlotView:
         self.plot_widget.setBackground('w')
         self.plot_widget.useOpenGL(True)
         self.curves = {}
+        self.plot_widget.scene().sigMouseClicked.connect(self._on_mouse_click)
+
 
     def update_graph_properties(self):
         g = self.graph_data
@@ -38,6 +41,8 @@ class MyPlotView:
                 item = pg.PlotDataItem(x, y, pen=pen, name=curve.name)
             else:
                 item = pg.PlotDataItem(curve.x, curve.y, pen=pen, name=curve.name)
+
+            item.curve_name = curve.name  # Ajout d'un attribut custom
     
             self.plot_widget.addItem(item)
             item.setClipToView(True)
@@ -52,3 +57,31 @@ class MyPlotView:
     
         end = time.perf_counter()
         print(f"[PROFILER] refresh_curves took {end - start:.4f} seconds")
+
+
+    def _on_mouse_click(self, event):
+        scene_pos = event.scenePos()
+        view_pos = self.plot_widget.plotItem.vb.mapSceneToView(scene_pos)
+        x_click, y_click = view_pos.x(), view_pos.y()
+    
+        min_distance = float('inf')
+        selected_curve = None
+    
+        for curve_name, item in self.curves.items():
+            x_data, y_data = item.getData()
+            if x_data is None or y_data is None:
+                continue
+    
+            # Recherche du point le plus proche du clic
+            distances = ((x_data - x_click)**2 + (y_data - y_click)**2)
+            idx_min = distances.argmin()
+            distance = distances[idx_min]**0.5
+    
+            if distance < 10:  # seuil en pixels (adaptable)
+                if distance < min_distance:
+                    min_distance = distance
+                    selected_curve = curve_name
+    
+        if selected_curve:
+            print(f"[CLICK] Courbe cliquée (par distance) : {selected_curve}")
+            signal_bus.curve_selected.emit(selected_curve)

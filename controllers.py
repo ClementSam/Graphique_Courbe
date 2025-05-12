@@ -32,6 +32,8 @@ class GraphController:
 
 
     def __init__(self, main_window):
+        signal_bus.graph_selected.connect(self._on_graph_selected)
+
         self._renaming = False  # Flag explicite pour ignorer les sélections pendant un renommage
         self.w = main_window
         self.state = AppState.get_instance()
@@ -67,6 +69,7 @@ class GraphController:
     def _connect_signals(self):
         signal_bus.graph_selected.connect(self.refresh_graph_ui)
         signal_bus.curve_selected.connect(self.refresh_curve_ui)
+        signal_bus.curve_selected.connect(self._on_curve_selected_by_click)
         signal_bus.curve_list_updated.connect(lambda: self.w.left_panel.refresh_tree(self.state.graphs))
         signal_bus.curve_updated.connect(self._refresh_plot)
         signal_bus.graph_updated.connect(self._refresh_plot)
@@ -92,8 +95,7 @@ class GraphController:
                 self.service.select_graph(graph_name)
                 self.w.import_curve()
         elif kind == "graph":
-            self.service.select_graph(name)
-            signal_bus.graph_selected.emit(name)
+            self._select_graph_from_name(name)
         elif kind == "curve":
             parent = current.parent()
             if parent.isValid():
@@ -325,4 +327,57 @@ class GraphController:
             curve.downsampling_ratio = max(1, ratio)
             signal_bus.curve_updated.emit()
 
+    def _on_graph_selected(self, name):
+        # Empêche double déclenchement si déjà sélectionné
+        if self.state.current_graph and self.state.current_graph.name == name:
+            return
+        self._select_graph_from_name(name)
+    
+    def _select_graph_from_name(self, name):
+        self.service.select_graph(name)
+        self._highlight_selected_graph_view(name)
+        self._select_in_tree(name)
+        signal_bus.graph_selected.emit(name)
+    
+    def _highlight_selected_graph_view(self, name):
+        for graph_name, view in self.views.items():
+            container = view.plot_widget.parent()
+            if hasattr(container, 'set_selected'):
+                container.set_selected(graph_name == name)
+    
+    def _select_in_tree(self, graph_name):
+        model = self.w.left_panel.model
+        for i in range(model.rowCount()):
+            index = model.index(i, 0)
+            item = model.itemFromIndex(index)
+            if item.text() == graph_name:
+                self.w.left_panel.tree.setCurrentIndex(index)
+                break
 
+    def _on_curve_selected_by_click(self, curve_name):
+        graph = self.state.current_graph
+    
+        if not graph:
+            # Si aucun graphe n’est sélectionné, essaie de le retrouver à partir des courbes
+            for g_name, g in self.state.graphs.items():
+                if any(c.name == curve_name for c in g.curves):
+                    self._select_graph_from_name(g_name)
+                    break
+            graph = self.state.current_graph
+    
+        if not graph:
+            return
+    
+        self.service.select_curve(curve_name)
+        self._select_curve_in_tree(curve_name)
+    
+    def _select_curve_in_tree(self, curve_name):
+        model = self.w.left_panel.model
+        for i in range(model.rowCount()):
+            graph_item = model.item(i)
+            for j in range(graph_item.rowCount()):
+                curve_item = graph_item.child(j)
+                if curve_item.data(QtCore.Qt.UserRole + 4) == curve_name:
+                    index = model.indexFromItem(curve_item)
+                    self.w.left_panel.tree.setCurrentIndex(index)
+                    return

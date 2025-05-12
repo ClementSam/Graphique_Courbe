@@ -1,5 +1,6 @@
 
 from PyQt5 import QtWidgets
+from signal_bus import signal_bus
 
 class PlotContainerWidget(QtWidgets.QGroupBox):
     def __init__(self, graph_name, plot_widget, parent=None):
@@ -16,3 +17,14 @@ class PlotContainerWidget(QtWidgets.QGroupBox):
         self.removed = True
         self.setTitle(f"{self.graph_name} (supprimé)")
         self.setDisabled(True)
+
+    def mousePressEvent(self, event):
+        if not self.removed:
+            signal_bus.graph_selected.emit(self.graph_name)
+        super().mousePressEvent(event)
+    
+    def set_selected(self, selected: bool):
+        if selected:
+            self.setStyleSheet("QGroupBox { border: 2px solid #0078d7; }")  # bleu pro
+        else:
+            self.setStyleSheet("")
