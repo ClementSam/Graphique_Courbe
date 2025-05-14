@@ -65,6 +65,11 @@ class GraphController:
         
         rp.downsampling_combo.currentIndexChanged.connect(self._on_downsampling_mode_changed)
         rp.downsampling_apply_btn.clicked.connect(self._on_apply_downsampling_ratio)
+        
+        rp.opacity_slider.valueChanged.connect(self._on_opacity_changed)
+        rp.symbol_combo.currentIndexChanged.connect(self._on_symbol_changed)
+        rp.fill_checkbox.toggled.connect(self._on_fill_toggled)
+        rp.display_mode_combo.currentIndexChanged.connect(self._on_display_mode_changed)
 
     def _connect_signals(self):
         signal_bus.graph_selected.connect(self.refresh_graph_ui)
@@ -176,6 +181,11 @@ class GraphController:
         rp.downsampling_ratio_input.setEnabled(is_manual)
         rp.downsampling_apply_btn.setEnabled(is_manual)
         
+        rp.opacity_slider.setValue(int(curve.opacity))
+        rp.symbol_combo.setCurrentIndex(rp.symbol_combo.findData(curve.symbol))
+        rp.fill_checkbox.setChecked(curve.fill)
+        rp.display_mode_combo.setCurrentIndex(rp.display_mode_combo.findData(curve.display_mode))
+
         self.w.right_panel.setTabEnabled(1, True)
 
     def _on_graph_props_changed(self, *_):
@@ -381,3 +391,29 @@ class GraphController:
                     index = model.indexFromItem(curve_item)
                     self.w.left_panel.tree.setCurrentIndex(index)
                     return
+
+    def _on_opacity_changed(self, value):
+        curve = self.state.current_curve
+        if curve:
+            curve.opacity = value
+            signal_bus.curve_updated.emit()
+    
+    def _on_symbol_changed(self, index):
+        curve = self.state.current_curve
+        if curve:
+            symbol = self.w.right_panel.symbol_combo.itemData(index)
+            curve.symbol = symbol
+            signal_bus.curve_updated.emit()
+    
+    def _on_fill_toggled(self, checked):
+        curve = self.state.current_curve
+        if curve:
+            curve.fill = checked
+            signal_bus.curve_updated.emit()
+    
+    def _on_display_mode_changed(self, index):
+        curve = self.state.current_curve
+        if curve:
+            mode = self.w.right_panel.display_mode_combo.itemData(index)
+            curve.display_mode = mode
+            signal_bus.curve_updated.emit()

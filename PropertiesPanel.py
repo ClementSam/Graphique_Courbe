@@ -83,6 +83,35 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.downsampling_combo)
         layout.addLayout(ds_layout)
 
+        # Opacité
+        self.opacity_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.opacity_slider.setRange(0, 100)
+        self.opacity_slider.setValue(100)
+        layout.addWidget(QtWidgets.QLabel("Opacité (%) :"))
+        layout.addWidget(self.opacity_slider)
+        
+        # Symbole
+        self.symbol_combo = QtWidgets.QComboBox()
+        self.symbol_combo.addItem("Aucun", None)
+        self.symbol_combo.addItem("Cercle", "o")
+        self.symbol_combo.addItem("Carré", "s")
+        self.symbol_combo.addItem("Triangle", "t")
+        self.symbol_combo.addItem("Diamant", "d")
+        layout.addWidget(QtWidgets.QLabel("Symbole :"))
+        layout.addWidget(self.symbol_combo)
+        
+        # Remplissage
+        self.fill_checkbox = QtWidgets.QCheckBox("Remplir sous la courbe")
+        layout.addWidget(self.fill_checkbox)
+        
+        # Mode d'affichage
+        self.display_mode_combo = QtWidgets.QComboBox()
+        self.display_mode_combo.addItem("Ligne", "line")
+        self.display_mode_combo.addItem("Points (scatter)", "scatter")
+        self.display_mode_combo.addItem("Histogramme (barres)", "bar")
+        layout.addWidget(QtWidgets.QLabel("Type d'affichage :"))
+        layout.addWidget(self.display_mode_combo)
+
         layout.addStretch()
 
         self.addTab(tab_curve, "Propriétés de la courbe")

@@ -13,7 +13,11 @@ def curve_to_dict(curve: CurveData) -> dict:
         "width": curve.width,
         "style": curve.style,
         "downsampling_mode": curve.downsampling_mode,
-        "downsampling_ratio": curve.downsampling_ratio
+        "downsampling_ratio": curve.downsampling_ratio,
+        "opacity": curve.opacity,
+        "symbol": curve.symbol,
+        "fill": curve.fill,
+        "display_mode": curve.display_mode
     }
 
 
@@ -26,7 +30,11 @@ def dict_to_curve(data: dict) -> CurveData:
         width=data.get("width", 2),
         style=data.get("style"),
         downsampling_mode=data.get("downsampling_mode", "auto"),
-        downsampling_ratio=data.get("downsampling_ratio", 1)
+        downsampling_ratio=data.get("downsampling_ratio", 1),
+        opacity=data.get("opacity", 100.0),
+        symbol=data.get("symbol"),
+        fill=data.get("fill", False),
+        display_mode=data.get("display_mode", "line")
     )
 
 

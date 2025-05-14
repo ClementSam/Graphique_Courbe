@@ -4,6 +4,7 @@ from PyQt5.QtCore import QTimer
 import time
 import pyqtgraph as pg
 from signal_bus import signal_bus
+from PyQt5.QtGui import QColor
 
 class MyPlotView:
     def __init__(self, graph_data):
@@ -33,30 +34,61 @@ class MyPlotView:
             if not curve.visible:
                 continue
     
-            pen = pg.mkPen(color=curve.color, width=curve.width, style=curve.style)
+            # Créer une couleur avec opacité
+            qcolor = QColor(curve.color)
+            qcolor.setAlphaF(curve.opacity / 100.0)
+    
+            pen = pg.mkPen(color=qcolor, width=curve.width, style=curve.style)
     
             if curve.downsampling_mode == "manual":
                 x = curve.x[::curve.downsampling_ratio]
                 y = curve.y[::curve.downsampling_ratio]
-                item = pg.PlotDataItem(x, y, pen=pen, name=curve.name)
             else:
-                item = pg.PlotDataItem(curve.x, curve.y, pen=pen, name=curve.name)
-
-            item.curve_name = curve.name  # Ajout d'un attribut custom
+                x = curve.x
+                y = curve.y
     
+            if curve.display_mode == "line":
+                item = pg.PlotDataItem(x, y, pen=pen, name=curve.name, symbol=curve.symbol)
+                if curve.fill:
+                    item.setFillLevel(0)
+                    item.setBrush(pg.mkBrush(qcolor))
+            elif curve.display_mode == "scatter":
+                item = pg.ScatterPlotItem(
+                    x=x,
+                    y=y,
+                    pen=pen,
+                    brush=pg.mkBrush(qcolor),
+                    symbol=curve.symbol or 'o',
+                    size=curve.width * 2
+                )
+            elif curve.display_mode == "bar":
+                item = pg.BarGraphItem(
+                    x=x,
+                    height=y,
+                    width=0.1,
+                    brush=pg.mkBrush(qcolor)
+                )
+            else:
+                continue  # mode inconnu, on ignore la courbe
+    
+            item.curve_name = curve.name
             self.plot_widget.addItem(item)
-            item.setClipToView(True)
     
-            if curve.downsampling_mode == "off":
-                item.setDownsampling(auto=False)
-            elif curve.downsampling_mode == "auto":
-                item.setDownsampling(auto=True)
-            # pas besoin de downsampling pour "manual" car déjà sous-échantillonné
+            if hasattr(item, 'setClipToView'):
+                item.setClipToView(True)
+    
+            if hasattr(item, 'setDownsampling'):
+                if curve.downsampling_mode == "off":
+                    item.setDownsampling(auto=False)
+                elif curve.downsampling_mode == "auto":
+                    item.setDownsampling(auto=True)
+                # "manual" est déjà géré en amont
     
             self.curves[curve.name] = item
     
         end = time.perf_counter()
         print(f"[PROFILER] refresh_curves took {end - start:.4f} seconds")
+
 
 
     def _on_mouse_click(self, event):

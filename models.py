@@ -15,6 +15,11 @@ class CurveData:
     visible: bool = True
     downsampling_mode: str = "auto"
     downsampling_ratio: int = 1
+    opacity: float = 100.0  # en pourcentage (0 à 100)
+    symbol: Optional[str] = None  # ex: 'o', 't', 's', 'd'
+    fill: bool = False
+    display_mode: str = "line"  # 'line', 'scatter', 'bar'
+
 
     def __post_init__(self):
         self.x = np.array(self.x)
