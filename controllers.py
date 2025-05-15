@@ -70,6 +70,14 @@ class GraphController:
         rp.symbol_combo.currentIndexChanged.connect(self._on_symbol_changed)
         rp.fill_checkbox.toggled.connect(self._on_fill_toggled)
         rp.display_mode_combo.currentIndexChanged.connect(self._on_display_mode_changed)
+        
+        rp.fix_y_checkbox.toggled.connect(self._on_graph_props_changed)
+        rp.ymin_input.valueChanged.connect(self._on_graph_props_changed)
+        rp.ymax_input.valueChanged.connect(self._on_graph_props_changed)
+        
+        rp.gain_slider.valueChanged.connect(self._on_gain_changed)
+        rp.offset_slider.valueChanged.connect(self._on_offset_changed)
+        rp.zero_line_checkbox.toggled.connect(self._on_show_zero_line_toggled)
 
     def _connect_signals(self):
         signal_bus.graph_selected.connect(self.refresh_graph_ui)
@@ -158,6 +166,9 @@ class GraphController:
             rp.logx_checkbox.setChecked(graph.log_x)
             rp.logy_checkbox.setChecked(graph.log_y)
             rp.font_combo.setCurrentFont(QFont(graph.font))
+            rp.fix_y_checkbox.setChecked(graph.fix_y_range)
+            rp.ymin_input.setValue(graph.y_min)
+            rp.ymax_input.setValue(graph.y_max)
             self.w.right_panel.setTabEnabled(0, True)
         finally:
             self._block_ui_sync = False
@@ -185,6 +196,10 @@ class GraphController:
         rp.symbol_combo.setCurrentIndex(rp.symbol_combo.findData(curve.symbol))
         rp.fill_checkbox.setChecked(curve.fill)
         rp.display_mode_combo.setCurrentIndex(rp.display_mode_combo.findData(curve.display_mode))
+        
+        rp.gain_slider.setValue(int(curve.gain * 100))
+        rp.offset_slider.setValue(int(curve.offset * 100))
+        rp.zero_line_checkbox.setChecked(curve.show_zero_line)
 
         self.w.right_panel.setTabEnabled(1, True)
 
@@ -201,6 +216,12 @@ class GraphController:
         graph.log_y = rp.logy_checkbox.isChecked()
         graph.font = rp.font_combo.currentFont().family()
         signal_bus.graph_updated.emit()
+        
+        graph.fix_y_range = rp.fix_y_checkbox.isChecked()
+        graph.y_min = rp.ymin_input.value()
+        graph.y_max = rp.ymax_input.value()
+        signal_bus.graph_updated.emit()
+
 
     def _on_curve_width_changed(self, value):
         curve = self.state.current_curve
@@ -416,4 +437,22 @@ class GraphController:
         if curve:
             mode = self.w.right_panel.display_mode_combo.itemData(index)
             curve.display_mode = mode
+            signal_bus.curve_updated.emit()
+
+    def _on_gain_changed(self, value):
+        curve = self.state.current_curve
+        if curve:
+            curve.gain = value / 100.0
+            signal_bus.curve_updated.emit()
+    
+    def _on_offset_changed(self, value):
+        curve = self.state.current_curve
+        if curve:
+            curve.offset = value / 100.0
+            signal_bus.curve_updated.emit()
+    
+    def _on_show_zero_line_toggled(self, checked):
+        curve = self.state.current_curve
+        if curve:
+            curve.show_zero_line = checked
             signal_bus.curve_updated.emit()

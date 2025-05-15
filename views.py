@@ -21,9 +21,16 @@ class MyPlotView:
         self.plot_widget.showGrid(g.grid_visible, g.grid_visible)
         self.plot_widget.setLogMode(g.log_x, g.log_y)
         self.plot_widget.setBackground('k' if g.dark_mode else 'w')
+        
+        if self.graph_data.fix_y_range:
+            self.plot_widget.enableAutoRange(False, False)
+            self.plot_widget.setYRange(self.graph_data.y_min, self.graph_data.y_max)
+        else:
+            self.plot_widget.enableAutoRange(True, True)
 
     def refresh_curves(self):
         import time
+        
         start = time.perf_counter()
     
         self.plot_widget.clear()
@@ -45,7 +52,7 @@ class MyPlotView:
                 y = curve.y[::curve.downsampling_ratio]
             else:
                 x = curve.x
-                y = curve.y
+                y = curve.gain * curve.y + curve.offset
     
             if curve.display_mode == "line":
                 item = pg.PlotDataItem(x, y, pen=pen, name=curve.name, symbol=curve.symbol)
@@ -73,6 +80,11 @@ class MyPlotView:
     
             item.curve_name = curve.name
             self.plot_widget.addItem(item)
+            
+            if curve.show_zero_line:
+                zero_line = pg.InfiniteLine(angle=0, pen=pg.mkPen(curve.color, style=QtCore.Qt.DashLine))
+                zero_line.setPos(curve.offset)
+                self.plot_widget.addItem(zero_line)
     
             if hasattr(item, 'setClipToView'):
                 item.setClipToView(True)

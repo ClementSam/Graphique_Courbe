@@ -19,6 +19,10 @@ class CurveData:
     symbol: Optional[str] = None  # ex: 'o', 't', 's', 'd'
     fill: bool = False
     display_mode: str = "line"  # 'line', 'scatter', 'bar'
+    gain: float = 1.0
+    offset: float = 0.0
+    show_zero_line: bool = False
+
 
 
     def __post_init__(self):
@@ -41,6 +45,10 @@ class GraphData:
     log_y: bool = False
     font: str = "Arial"
     visible: bool = True
+    fix_y_range: bool = False
+    y_min: float = -5.0
+    y_max: float = 5.0
+
 
     def add_curve(self, curve: CurveData):
         self.curves.append(curve)

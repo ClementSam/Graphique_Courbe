@@ -36,6 +36,23 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.font_combo)
         layout.addWidget(self.button_reset_zoom)
         layout.addStretch()
+        
+        self.fix_y_checkbox = QtWidgets.QCheckBox("Fixer l'échelle Y")
+        self.ymin_input = QtWidgets.QDoubleSpinBox()
+        self.ymax_input = QtWidgets.QDoubleSpinBox()
+        self.ymin_input.setRange(-1000, 1000)
+        self.ymax_input.setRange(-1000, 1000)
+        self.ymin_input.setValue(-5.0)
+        self.ymax_input.setValue(5.0)
+        
+        ylayout = QtWidgets.QHBoxLayout()
+        ylayout.addWidget(QtWidgets.QLabel("Y min :"))
+        ylayout.addWidget(self.ymin_input)
+        ylayout.addWidget(QtWidgets.QLabel("Y max :"))
+        ylayout.addWidget(self.ymax_input)
+        
+        layout.addWidget(self.fix_y_checkbox)
+        layout.addLayout(ylayout)
 
         self.addTab(tab_graph, "Propriétés du graphique")
 
@@ -113,5 +130,22 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.display_mode_combo)
 
         layout.addStretch()
+        
+        self.gain_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.gain_slider.setRange(1, 500)  # de 0.01 à 5.00
+        self.gain_slider.setValue(100)
+        
+        self.offset_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.offset_slider.setRange(-500, 500)
+        self.offset_slider.setValue(0)
+        
+        self.zero_line_checkbox = QtWidgets.QCheckBox("Afficher ligne de zéro")
+        
+        layout.addWidget(QtWidgets.QLabel("Gain (x0.01 à x5.00) :"))
+        layout.addWidget(self.gain_slider)
+        layout.addWidget(QtWidgets.QLabel("Offset vertical :"))
+        layout.addWidget(self.offset_slider)
+        layout.addWidget(self.zero_line_checkbox)
+
 
         self.addTab(tab_curve, "Propriétés de la courbe")

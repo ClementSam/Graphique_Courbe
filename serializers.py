@@ -17,7 +17,10 @@ def curve_to_dict(curve: CurveData) -> dict:
         "opacity": curve.opacity,
         "symbol": curve.symbol,
         "fill": curve.fill,
-        "display_mode": curve.display_mode
+        "display_mode": curve.display_mode,
+        "gain": curve.gain,
+        "offset": curve.offset,
+        "show_zero_line": curve.show_zero_line
     }
 
 
@@ -34,7 +37,11 @@ def dict_to_curve(data: dict) -> CurveData:
         opacity=data.get("opacity", 100.0),
         symbol=data.get("symbol"),
         fill=data.get("fill", False),
-        display_mode=data.get("display_mode", "line")
+        display_mode=data.get("display_mode", "line"),
+        gain=data.get("gain", 1.0),
+        offset=data.get("offset", 0.0),
+        show_zero_line=data.get("show_zero_line", False)
+
     )
 
 
@@ -46,7 +53,11 @@ def graph_to_dict(graph: GraphData) -> dict:
             "dark_mode": graph.dark_mode,
             "log_x": graph.log_x,
             "log_y": graph.log_y,
-            "font": graph.font
+            "font": graph.font,
+            "fix_y_range": graph.fix_y_range,
+            "y_min": graph.y_min,
+            "y_max": graph.y_max
+
         },
         "curves": [curve_to_dict(c) for c in graph.curves]
     }
@@ -60,6 +71,10 @@ def dict_to_graph(data: dict) -> GraphData:
     g.log_x = props.get("log_x", False)
     g.log_y = props.get("log_y", False)
     g.font = props.get("font", "Arial")
+    g.fix_y_range = props.get("fix_y_range", False)
+    g.y_min = props.get("y_min", -5.0)
+    g.y_max = props.get("y_max", 5.0)
+
     for cdict in data.get("curves", []):
         g.add_curve(dict_to_curve(cdict))
     return g
