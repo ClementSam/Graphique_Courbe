@@ -128,8 +128,6 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.display_mode_combo.addItem("Histogramme (barres)", "bar")
         layout.addWidget(QtWidgets.QLabel("Type d'affichage :"))
         layout.addWidget(self.display_mode_combo)
-
-        layout.addStretch()
         
         self.gain_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.gain_slider.setRange(1, 500)  # de 0.01 à 5.00
@@ -146,6 +144,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(QtWidgets.QLabel("Offset vertical :"))
         layout.addWidget(self.offset_slider)
         layout.addWidget(self.zero_line_checkbox)
+        
+        self.bring_to_front_button = QtWidgets.QPushButton("🔝 Mettre au premier plan")
+        layout.addWidget(self.bring_to_front_button)
 
-
+        layout.addStretch()
+        
         self.addTab(tab_curve, "Propriétés de la courbe")

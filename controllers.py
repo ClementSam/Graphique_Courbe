@@ -78,6 +78,9 @@ class GraphController:
         rp.gain_slider.valueChanged.connect(self._on_gain_changed)
         rp.offset_slider.valueChanged.connect(self._on_offset_changed)
         rp.zero_line_checkbox.toggled.connect(self._on_show_zero_line_toggled)
+        
+        rp.bring_to_front_button.clicked.connect(self._on_bring_curve_to_front)
+
 
     def _connect_signals(self):
         signal_bus.graph_selected.connect(self.refresh_graph_ui)
@@ -455,4 +458,19 @@ class GraphController:
         curve = self.state.current_curve
         if curve:
             curve.show_zero_line = checked
+            signal_bus.curve_updated.emit()
+            
+    def _on_bring_curve_to_front(self):
+        graph = self.state.current_graph
+        curve = self.state.current_curve
+        if not graph or not curve:
+            return
+    
+        # Réorganise la liste en mettant la courbe sélectionnée en premier
+        if curve in graph.curves:
+            graph.curves.remove(curve)
+            graph.curves.insert(0, curve)
+    
+            # Met à jour les vues
+            signal_bus.curve_list_updated.emit()
             signal_bus.curve_updated.emit()
