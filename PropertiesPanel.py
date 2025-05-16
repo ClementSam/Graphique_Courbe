@@ -15,7 +15,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
     def setup_graph_tab(self):
         tab_graph = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(tab_graph)
-
+    
         self.label_graph_name = QtWidgets.QLabel("—")
         self.label_graph_name.setStyleSheet("font-weight:bold")
         self.grid_checkbox = QtWidgets.QCheckBox("Afficher la grille")
@@ -24,7 +24,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.logy_checkbox = QtWidgets.QCheckBox("Échelle Y logarithmique")
         self.font_combo = QtWidgets.QFontComboBox()
         self.button_reset_zoom = QtWidgets.QPushButton("🔍 Réinitialiser le zoom")
-
+    
         layout.addWidget(QtWidgets.QLabel("Graphique sélectionné :"))
         layout.addWidget(self.label_graph_name)
         layout.addSpacing(8)
@@ -35,8 +35,30 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(QtWidgets.QLabel("Police :"))
         layout.addWidget(self.font_combo)
         layout.addWidget(self.button_reset_zoom)
+    
+        # ✅ Ajout : unités et formats des axes
+        unit_layout = QtWidgets.QFormLayout()
+    
+        self.x_unit_input = QtWidgets.QLineEdit()
+        self.y_unit_input = QtWidgets.QLineEdit()
+    
+        self.x_format_combo = QtWidgets.QComboBox()
+        self.y_format_combo = QtWidgets.QComboBox()
+        for combo in [self.x_format_combo, self.y_format_combo]:
+            combo.addItem("Normal", "normal")
+            combo.addItem("Scientifique", "scientific")
+            combo.addItem("Multiplicateur (n, µ, m...)", "scaled")
+    
+        unit_layout.addRow("Unité X :", self.x_unit_input)
+        unit_layout.addRow("Format X :", self.x_format_combo)
+        unit_layout.addRow("Unité Y :", self.y_unit_input)
+        unit_layout.addRow("Format Y :", self.y_format_combo)
+    
+        layout.addSpacing(10)
+        layout.addLayout(unit_layout)
+    
         layout.addStretch()
-        
+    
         self.fix_y_checkbox = QtWidgets.QCheckBox("Fixer l'échelle Y")
         self.ymin_input = QtWidgets.QDoubleSpinBox()
         self.ymax_input = QtWidgets.QDoubleSpinBox()
@@ -44,16 +66,16 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.ymax_input.setRange(-1000, 1000)
         self.ymin_input.setValue(-5.0)
         self.ymax_input.setValue(5.0)
-        
+    
         ylayout = QtWidgets.QHBoxLayout()
         ylayout.addWidget(QtWidgets.QLabel("Y min :"))
         ylayout.addWidget(self.ymin_input)
         ylayout.addWidget(QtWidgets.QLabel("Y max :"))
         ylayout.addWidget(self.ymax_input)
-        
+    
         layout.addWidget(self.fix_y_checkbox)
         layout.addLayout(ylayout)
-
+    
         self.addTab(tab_graph, "Propriétés du graphique")
 
     def setup_curve_tab(self):
@@ -147,6 +169,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         
         self.bring_to_front_button = QtWidgets.QPushButton("🔝 Mettre au premier plan")
         layout.addWidget(self.bring_to_front_button)
+        
+        layout.addSpacing(10)
+        layout.addWidget(QtWidgets.QLabel("Affichage du nom de la courbe :"))
+        self.label_mode_combo = QtWidgets.QComboBox()
+        self.label_mode_combo.addItem("Aucun", "none")
+        self.label_mode_combo.addItem("Texte sur la courbe", "inline")
+        self.label_mode_combo.addItem("Légende", "legend")
+        layout.addWidget(self.label_mode_combo)
 
         layout.addStretch()
         

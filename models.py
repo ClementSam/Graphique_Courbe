@@ -22,7 +22,7 @@ class CurveData:
     gain: float = 1.0
     offset: float = 0.0
     show_zero_line: bool = False
-
+    label_mode: str = "none"  # valeurs possibles : "none", "inline", "legend"
 
 
     def __post_init__(self):
@@ -48,6 +48,11 @@ class GraphData:
     fix_y_range: bool = False
     y_min: float = -5.0
     y_max: float = 5.0
+    x_unit: str = ""
+    y_unit: str = ""
+    x_format: str = "normal"  # valeurs possibles : "normal", "scientific", "scaled"
+    y_format: str = "normal"
+
 
 
     def add_curve(self, curve: CurveData):

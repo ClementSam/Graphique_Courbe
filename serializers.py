@@ -20,7 +20,8 @@ def curve_to_dict(curve: CurveData) -> dict:
         "display_mode": curve.display_mode,
         "gain": curve.gain,
         "offset": curve.offset,
-        "show_zero_line": curve.show_zero_line
+        "show_zero_line": curve.show_zero_line,
+        "label_mode": curve.label_mode
     }
 
 
@@ -40,7 +41,9 @@ def dict_to_curve(data: dict) -> CurveData:
         display_mode=data.get("display_mode", "line"),
         gain=data.get("gain", 1.0),
         offset=data.get("offset", 0.0),
-        show_zero_line=data.get("show_zero_line", False)
+        show_zero_line=data.get("show_zero_line", False),
+        show_label=data.get("show_label", False),
+        label_mode=data.get("label_mode", "none")
 
     )
 
@@ -56,8 +59,11 @@ def graph_to_dict(graph: GraphData) -> dict:
             "font": graph.font,
             "fix_y_range": graph.fix_y_range,
             "y_min": graph.y_min,
-            "y_max": graph.y_max
-
+            "y_max": graph.y_max,
+            "x_unit": graph.x_unit,
+            "y_unit": graph.y_unit,
+            "x_format": graph.x_format,
+            "y_format": graph.y_format
         },
         "curves": [curve_to_dict(c) for c in graph.curves]
     }
@@ -74,6 +80,11 @@ def dict_to_graph(data: dict) -> GraphData:
     g.fix_y_range = props.get("fix_y_range", False)
     g.y_min = props.get("y_min", -5.0)
     g.y_max = props.get("y_max", 5.0)
+    g.x_unit = props.get("x_unit", "")
+    g.y_unit = props.get("y_unit", "")
+    g.x_format = props.get("x_format", "normal")
+    g.y_format = props.get("y_format", "normal")
+
 
     for cdict in data.get("curves", []):
         g.add_curve(dict_to_curve(cdict))

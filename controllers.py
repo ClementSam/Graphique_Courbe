@@ -80,6 +80,14 @@ class GraphController:
         rp.zero_line_checkbox.toggled.connect(self._on_show_zero_line_toggled)
         
         rp.bring_to_front_button.clicked.connect(self._on_bring_curve_to_front)
+        
+        rp.x_unit_input.textChanged.connect(self._on_graph_props_changed)
+        rp.y_unit_input.textChanged.connect(self._on_graph_props_changed)
+        rp.x_format_combo.currentIndexChanged.connect(self._on_graph_props_changed)
+        rp.y_format_combo.currentIndexChanged.connect(self._on_graph_props_changed)
+
+        rp.label_mode_combo.currentIndexChanged.connect(self._on_label_mode_changed)
+
 
 
     def _connect_signals(self):
@@ -172,7 +180,12 @@ class GraphController:
             rp.fix_y_checkbox.setChecked(graph.fix_y_range)
             rp.ymin_input.setValue(graph.y_min)
             rp.ymax_input.setValue(graph.y_max)
+            rp.x_unit_input.setText(graph.x_unit)
+            rp.y_unit_input.setText(graph.y_unit)
+            rp.x_format_combo.setCurrentIndex(rp.x_format_combo.findData(graph.x_format))
+            rp.y_format_combo.setCurrentIndex(rp.y_format_combo.findData(graph.y_format))
             self.w.right_panel.setTabEnabled(0, True)
+            
         finally:
             self._block_ui_sync = False
 
@@ -187,6 +200,7 @@ class GraphController:
         rp.downsampling_combo.setCurrentIndex(index)
         
         rp.label_curve_name.setText(curve.name)
+        rp.label_mode_combo.setCurrentIndex(rp.label_mode_combo.findData(curve.label_mode))
         rp.width_spin.setValue(curve.width)
         rp.style_combo.setCurrentIndex(rp.style_combo.findData(curve.style))
         
@@ -203,7 +217,7 @@ class GraphController:
         rp.gain_slider.setValue(int(curve.gain * 100))
         rp.offset_slider.setValue(int(curve.offset * 100))
         rp.zero_line_checkbox.setChecked(curve.show_zero_line)
-
+        
         self.w.right_panel.setTabEnabled(1, True)
 
     def _on_graph_props_changed(self, *_):
@@ -224,7 +238,12 @@ class GraphController:
         graph.y_min = rp.ymin_input.value()
         graph.y_max = rp.ymax_input.value()
         signal_bus.graph_updated.emit()
-
+        
+        graph.x_unit = rp.x_unit_input.text().strip()
+        graph.y_unit = rp.y_unit_input.text().strip()
+        graph.x_format = rp.x_format_combo.currentData()
+        graph.y_format = rp.y_format_combo.currentData()
+        signal_bus.graph_updated.emit()
 
     def _on_curve_width_changed(self, value):
         curve = self.state.current_curve
@@ -474,3 +493,18 @@ class GraphController:
             # Met à jour les vues
             signal_bus.curve_list_updated.emit()
             signal_bus.curve_updated.emit()
+
+    def _on_show_label_toggled(self, checked):
+        curve = self.state.current_curve
+        if curve:
+            curve.show_label = checked
+            signal_bus.curve_updated.emit()
+
+    def _on_label_mode_changed(self, index):
+        curve = self.state.current_curve
+        if curve:
+            rp = self.w.right_panel
+            mode = rp.label_mode_combo.itemData(index)
+            curve.label_mode = mode
+            signal_bus.curve_updated.emit()
+
