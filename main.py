@@ -44,6 +44,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._setup_toolbar()
         self._connect_signals()
         self.controller = GraphController(self)
+        self.legend = None
 
         try:
             default = lm.get_default_layout()

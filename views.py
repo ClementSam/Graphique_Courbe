@@ -15,7 +15,30 @@ class MyPlotView:
         self.plot_widget.useOpenGL(True)
         self.curves = {}
         self.labels = {}
+        self.legend = None
         self.plot_widget.scene().sigMouseClicked.connect(self._on_mouse_click)
+
+        # Création d'une ViewBox secondaire
+        self.left_vb = pg.ViewBox(enableMouse=False)
+        self.left_vb.setMinimumWidth(30)
+        self.left_vb.setMaximumWidth(30)
+        self.left_vb.setXRange(0, 1, padding=0)
+        self.left_vb.enableAutoRange(x=False, y=True)
+        
+        # Ajout propre à la grille : nouvelle colonne (à gauche)
+        # ➕ IMPORTANT : on ne touche PAS à self.plot_widget.plotItem.vb
+        layout = self.plot_widget.plotItem.layout
+        layout.addItem(self.left_vb, 1, 0)
+        
+        # Assure que l’axe Y est synchronisé (essentiel)
+        self.left_vb.setYLink(self.plot_widget.plotItem.vb)
+        
+        # On peut ajouter un "spacer" si besoin dans la colonne 2 pour la légende ou autre
+
+
+
+
+        self.arrows = {}  # nom de courbe → ArrowItem
 
     def update_graph_properties(self):
         g = self.graph_data
@@ -32,95 +55,118 @@ class MyPlotView:
         self._format_axis(self.plot_widget.getAxis("bottom"), g.x_unit, g.x_format)
         self._format_axis(self.plot_widget.getAxis("left"), g.y_unit, g.y_format)
 
+
+
     def refresh_curves(self):
         start = time.perf_counter()
 
         self.plot_widget.clear()
         self.curves.clear()
-
-        # Nettoyer anciens labels
-        for label in self.labels.values():
-            self.plot_widget.removeItem(label)
         self.labels.clear()
 
-        # Nettoyer ancienne légende
-        self.plot_widget.plotItem.legend = None
+        # Nettoyer flèches
+        for arrow in self.arrows.values():
+            self.left_vb.removeItem(arrow)
+        self.arrows.clear()
 
-        # Ajouter une nouvelle légende si nécessaire
-        use_legend = any(c.label_mode == "legend" for c in self.graph_data.curves)
-        if use_legend:
-            self.plot_widget.addLegend(offset=(30, 30))
+        # Nettoyer les anciens TextItem
+        for item in self.plot_widget.items():
+            if isinstance(item, pg.TextItem):
+                self.plot_widget.removeItem(item)
+
+        if self.legend:
+            for sample, label in self.legend.items[:]:
+                self.legend.removeItem(label.text)
+            self.plot_widget.removeItem(self.legend)
+            self.legend = None
+
+        curves_with_legend = [c for c in self.graph_data.curves if c.label_mode == "legend" and c.visible]
+        if curves_with_legend:
+            self.legend = pg.LegendItem(offset=(30, 30))
+            self.legend.setParentItem(self.plot_widget.plotItem)
+
+        legend_items_added = set()
 
         for curve in self.graph_data.curves:
-            print('[VIEW] Drawing:', curve.name, '| Visible:', curve.visible)
             if not curve.visible:
                 continue
+
+            x = curve.x[::curve.downsampling_ratio] if curve.downsampling_mode == "manual" else curve.x
+            y = curve.gain * curve.y + curve.offset
 
             qcolor = QColor(curve.color)
             qcolor.setAlphaF(curve.opacity / 100.0)
             pen = pg.mkPen(color=qcolor, width=curve.width, style=curve.style)
 
-            if curve.downsampling_mode == "manual":
-                x = curve.x[::curve.downsampling_ratio]
-                y = curve.y[::curve.downsampling_ratio]
-            else:
-                x = curve.x
-                y = curve.gain * curve.y + curve.offset
-
             if curve.display_mode == "line":
-                item = pg.PlotDataItem(x, y, pen=pen, name=curve.name, symbol=curve.symbol)
+                item = pg.PlotDataItem(x, y, pen=pen, symbol=curve.symbol)
                 if curve.fill:
                     item.setFillLevel(0)
                     item.setBrush(pg.mkBrush(qcolor))
             elif curve.display_mode == "scatter":
-                item = pg.ScatterPlotItem(
-                    x=x, y=y,
-                    pen=pen,
-                    brush=pg.mkBrush(qcolor),
-                    symbol=curve.symbol or 'o',
-                    size=curve.width * 2
-                )
+                item = pg.ScatterPlotItem(x=x, y=y, pen=pen, brush=pg.mkBrush(qcolor),
+                                          symbol=curve.symbol or 'o', size=curve.width * 2)
             elif curve.display_mode == "bar":
-                item = pg.BarGraphItem(
-                    x=x, height=y, width=0.1,
-                    brush=pg.mkBrush(qcolor)
-                )
+                item = pg.BarGraphItem(x=x, height=y, width=0.1, brush=pg.mkBrush(qcolor))
             else:
                 continue
 
             item.curve_name = curve.name
             self.plot_widget.addItem(item)
+            self.curves[curve.name] = item
 
-            # --- Affichage du label selon le mode ---
-            if curve.label_mode == "inline":
+            if curve.label_mode == "inline" and len(x) and len(y):
                 text = pg.TextItem(text=curve.name, anchor=(1, 0), color=qcolor)
-                if len(x) > 0 and len(y) > 0:
-                    text.setPos(x[-1], y[-1])
+                text.setPos(x[-1], y[-1])
                 self.plot_widget.addItem(text)
                 self.labels[curve.name] = text
 
-            elif curve.label_mode == "legend":
-                if hasattr(self.plot_widget, 'legend') and self.plot_widget.legend:
-                    self.plot_widget.legend.addItem(item, curve.name)
+            if curve.label_mode == "legend" and self.legend:
+                if curve.name not in legend_items_added:
+                    self.legend.addItem(item, curve.name)
+                    legend_items_added.add(curve.name)
 
-            if curve.show_zero_line:
+            # Ligne de zéro
+            if getattr(curve, 'zero_indicator', 'none') == "line":
                 zero_line = pg.InfiniteLine(angle=0, pen=pg.mkPen(curve.color, style=QtCore.Qt.DashLine))
                 zero_line.setPos(curve.offset)
                 self.plot_widget.addItem(zero_line)
 
+            # Flèche de zéro
+            if getattr(curve, 'zero_indicator', 'none') == "arrow":
+                arrow = pg.ArrowItem(angle=180, tipAngle=30, baseAngle=20, headLen=15,
+                                     pen=pg.mkPen(curve.color), brush=pg.mkBrush(curve.color))
+                zero_y = curve.offset
+
+                # DEBUG
+                print(f"[DEBUG] Courbe : {curve.name}")
+                print(f"         Gain        : {curve.gain}")
+                print(f"         Offset      : {curve.offset}")
+                print(f"         Zero indic. : {curve.zero_indicator}")
+                print(f"         ➜ Position flèche Y : {zero_y}")
+
+                arrow.setPos(0.5, zero_y)
+                self.left_vb.addItem(arrow)
+                self.arrows[curve.name] = arrow
+
+                # ➕ Ajout d'un label texte à côté de la flèche
+                text = pg.TextItem(text=curve.name, anchor=(0, 0.5), color=curve.color)
+                text.setPos(0.6, zero_y)
+                self.left_vb.addItem(text)
+
             if hasattr(item, 'setClipToView'):
                 item.setClipToView(True)
-
             if hasattr(item, 'setDownsampling'):
                 if curve.downsampling_mode == "off":
                     item.setDownsampling(auto=False)
                 elif curve.downsampling_mode == "auto":
                     item.setDownsampling(auto=True)
 
-            self.curves[curve.name] = item
-
         end = time.perf_counter()
         print(f"[PROFILER] refresh_curves took {end - start:.4f} seconds")
+
+
+
 
     def _on_mouse_click(self, event):
         scene_pos = event.scenePos()
@@ -161,7 +207,7 @@ class MyPlotView:
         elif fmt == "scaled":
             axis.tickStrings = lambda values, scale, spacing: [siFormat(v, suffix=unit) for v in values]
 
-        else:  # normal
+        else:
             if hasattr(axis, "setTickFormat"):
                 axis.setTickFormat(None)
             if hasattr(axis, "tickStrings"):

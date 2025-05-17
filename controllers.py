@@ -77,7 +77,7 @@ class GraphController:
         
         rp.gain_slider.valueChanged.connect(self._on_gain_changed)
         rp.offset_slider.valueChanged.connect(self._on_offset_changed)
-        rp.zero_line_checkbox.toggled.connect(self._on_show_zero_line_toggled)
+        rp.zero_indicator_combo.currentIndexChanged.connect(self._on_zero_indicator_changed)
         
         rp.bring_to_front_button.clicked.connect(self._on_bring_curve_to_front)
         
@@ -216,7 +216,7 @@ class GraphController:
         
         rp.gain_slider.setValue(int(curve.gain * 100))
         rp.offset_slider.setValue(int(curve.offset * 100))
-        rp.zero_line_checkbox.setChecked(curve.show_zero_line)
+        rp.zero_indicator_combo.setCurrentIndex(rp.zero_indicator_combo.findData(curve.zero_indicator))
         
         self.w.right_panel.setTabEnabled(1, True)
 
@@ -472,12 +472,6 @@ class GraphController:
         if curve:
             curve.offset = value / 100.0
             signal_bus.curve_updated.emit()
-    
-    def _on_show_zero_line_toggled(self, checked):
-        curve = self.state.current_curve
-        if curve:
-            curve.show_zero_line = checked
-            signal_bus.curve_updated.emit()
             
     def _on_bring_curve_to_front(self):
         graph = self.state.current_graph
@@ -506,5 +500,11 @@ class GraphController:
             rp = self.w.right_panel
             mode = rp.label_mode_combo.itemData(index)
             curve.label_mode = mode
+            signal_bus.curve_updated.emit()
+
+    def _on_zero_indicator_changed(self, index):
+        curve = self.state.current_curve
+        if curve:
+            curve.zero_indicator = self.w.right_panel.zero_indicator_combo.itemData(index)
             signal_bus.curve_updated.emit()
 

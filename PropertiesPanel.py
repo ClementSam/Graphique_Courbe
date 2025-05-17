@@ -159,13 +159,17 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.offset_slider.setRange(-500, 500)
         self.offset_slider.setValue(0)
         
-        self.zero_line_checkbox = QtWidgets.QCheckBox("Afficher ligne de zéro")
+        self.zero_indicator_combo = QtWidgets.QComboBox()
+        self.zero_indicator_combo.addItem("Aucun", "none")
+        self.zero_indicator_combo.addItem("Ligne horizontale", "line")
+        self.zero_indicator_combo.addItem("Flèche (à gauche)", "arrow")
+        layout.addWidget(QtWidgets.QLabel("Indicateur de zéro :"))
+        layout.addWidget(self.zero_indicator_combo)
         
         layout.addWidget(QtWidgets.QLabel("Gain (x0.01 à x5.00) :"))
         layout.addWidget(self.gain_slider)
         layout.addWidget(QtWidgets.QLabel("Offset vertical :"))
         layout.addWidget(self.offset_slider)
-        layout.addWidget(self.zero_line_checkbox)
         
         self.bring_to_front_button = QtWidgets.QPushButton("🔝 Mettre au premier plan")
         layout.addWidget(self.bring_to_front_button)

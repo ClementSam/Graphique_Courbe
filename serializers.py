@@ -21,7 +21,9 @@ def curve_to_dict(curve: CurveData) -> dict:
         "gain": curve.gain,
         "offset": curve.offset,
         "show_zero_line": curve.show_zero_line,
-        "label_mode": curve.label_mode
+        "label_mode": curve.label_mode,
+        "zero_indicator": curve.zero_indicator
+
     }
 
 
@@ -43,7 +45,9 @@ def dict_to_curve(data: dict) -> CurveData:
         offset=data.get("offset", 0.0),
         show_zero_line=data.get("show_zero_line", False),
         show_label=data.get("show_label", False),
-        label_mode=data.get("label_mode", "none")
+        label_mode=data.get("label_mode", "none"),
+        zero_indicator=data.get("zero_indicator", "none")
+
 
     )
 
