@@ -16,29 +16,9 @@ class MyPlotView:
         self.curves = {}
         self.labels = {}
         self.legend = None
+        self.left_widgets = []
+
         self.plot_widget.scene().sigMouseClicked.connect(self._on_mouse_click)
-
-        # Création d'une ViewBox secondaire
-        self.left_vb = pg.ViewBox(enableMouse=False)
-        self.left_vb.setMinimumWidth(30)
-        self.left_vb.setMaximumWidth(30)
-        self.left_vb.setXRange(0, 1, padding=0)
-        self.left_vb.enableAutoRange(x=False, y=True)
-        
-        # Ajout propre à la grille : nouvelle colonne (à gauche)
-        # ➕ IMPORTANT : on ne touche PAS à self.plot_widget.plotItem.vb
-        layout = self.plot_widget.plotItem.layout
-        layout.addItem(self.left_vb, 1, 0)
-        
-        # Assure que l’axe Y est synchronisé (essentiel)
-        self.left_vb.setYLink(self.plot_widget.plotItem.vb)
-        
-        # On peut ajouter un "spacer" si besoin dans la colonne 2 pour la légende ou autre
-
-
-
-
-        self.arrows = {}  # nom de courbe → ArrowItem
 
     def update_graph_properties(self):
         g = self.graph_data
@@ -63,11 +43,8 @@ class MyPlotView:
         self.plot_widget.clear()
         self.curves.clear()
         self.labels.clear()
-
-        # Nettoyer flèches
-        for arrow in self.arrows.values():
-            self.left_vb.removeItem(arrow)
-        self.arrows.clear()
+        
+        self.left_widgets.clear()  # <-- important ici
 
         # Nettoyer les anciens TextItem
         for item in self.plot_widget.items():
@@ -132,27 +109,15 @@ class MyPlotView:
                 zero_line.setPos(curve.offset)
                 self.plot_widget.addItem(zero_line)
 
-            # Flèche de zéro
             if getattr(curve, 'zero_indicator', 'none') == "arrow":
-                arrow = pg.ArrowItem(angle=180, tipAngle=30, baseAngle=20, headLen=15,
-                                     pen=pg.mkPen(curve.color), brush=pg.mkBrush(curve.color))
-                zero_y = curve.offset
+                print(f"[DEBUG] Ajout flèche pour {curve.name}")
+                label = QtWidgets.QLabel(f"⟵ {curve.name}")
+                label.setMinimumWidth(50)
+                label.setStyleSheet(f"color: {curve.color}; font-weight: bold;")
+                label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            
+                self.left_widgets.append(label)
 
-                # DEBUG
-                print(f"[DEBUG] Courbe : {curve.name}")
-                print(f"         Gain        : {curve.gain}")
-                print(f"         Offset      : {curve.offset}")
-                print(f"         Zero indic. : {curve.zero_indicator}")
-                print(f"         ➜ Position flèche Y : {zero_y}")
-
-                arrow.setPos(0.5, zero_y)
-                self.left_vb.addItem(arrow)
-                self.arrows[curve.name] = arrow
-
-                # ➕ Ajout d'un label texte à côté de la flèche
-                text = pg.TextItem(text=curve.name, anchor=(0, 0.5), color=curve.color)
-                text.setPos(0.6, zero_y)
-                self.left_vb.addItem(text)
 
             if hasattr(item, 'setClipToView'):
                 item.setClipToView(True)

@@ -1,3 +1,4 @@
+#controllers.py
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import Qt
@@ -145,24 +146,35 @@ class GraphController:
             signal_bus.curve_updated.emit()
         except Exception as e:
             QtWidgets.QMessageBox.warning(self.w, "Erreur", str(e))
+            
+        curve = self.state.current_graph.curves[-1]
+        curve.zero_indicator = "arrow"
 
     def _remove_item(self, kind, name):
         confirm = QtWidgets.QMessageBox.question(self.w, "Confirmer", f"Supprimer {kind} '{name}' ?")
         if confirm != QtWidgets.QMessageBox.Yes:
             return
         try:
+            print(f"[DEBUG] Suppression demandée pour {kind}: {name}")
             if kind == "graph":
                 self.service.delete_graph(name)
                 view = self.views.pop(name, None)
                 if view:
-                    container = view.plot_widget.parent()
-                    self.w.center_area_widget.remove_plot_widget(container)
+                    container = view.plot_widget
+                    while container is not None and not isinstance(container, PlotContainerWidget):
+                        container = container.parent()
+                    if container:
+                        self.w.center_area_widget.remove_plot_widget(container)
             elif kind == "curve":
                 self.service.remove_curve(name)
+    
             self.w.left_panel.refresh_tree(self.state.graphs)
             signal_bus.curve_updated.emit()
         except Exception as e:
+            import traceback
+            print("[ERROR] Exception lors de la suppression :", traceback.format_exc())
             QtWidgets.QMessageBox.warning(self.w, "Erreur", str(e))
+
 
     def refresh_graph_ui(self):
         graph = self.state.current_graph
@@ -266,19 +278,43 @@ class GraphController:
                 curve.color = color.name()
                 signal_bus.curve_updated.emit()
 
+
     def _refresh_plot(self):
         for name, view in self.views.items():
             graph = self.state.graphs.get(name)
-            if graph:
-                view.graph_data = graph
-                view.plot_widget.setVisible(graph.visible)
-                view.update_graph_properties()
-                view.refresh_curves()
+            if not graph:
+                continue
+    
+            # Mise à jour des données
+            view.graph_data = graph
+            view.plot_widget.setVisible(graph.visible)
+            view.update_graph_properties()
+            view.refresh_curves()
+    
+            # Mise à jour de l'affichage des flèches (à gauche)
+            container = view.plot_widget.parent()  # → PlotContainerWidget
+            if hasattr(container, "get_advanced_container"):
+                adv = container.get_advanced_container()
+    
+                # Nettoyer la colonne gauche
+                while adv.left_box.layout().count():
+                    item = adv.left_box.layout().takeAt(0)
+                    widget = item.widget()
+                    if widget:
+                        widget.deleteLater()
+    
+                # Ajouter les nouvelles flèches
+                for widget in view.left_widgets:
+                    adv.add_to_left(widget)
+    
+        # Mise à jour spéciale pour la vue courante (au cas où elle serait traitée différemment)
         view = self.get_current_view()
         if view:
             view.graph_data = self.state.current_graph
             view.update_graph_properties()
             view.refresh_curves()
+
+      
 
     def get_current_view(self):
         graph = self.state.current_graph
@@ -291,7 +327,21 @@ class GraphController:
         if view:
             view.auto_range()
 
+    def _find_dock_for_view(self, widget):
+        parent = widget.parent()
+        while parent:
+            if isinstance(parent, QtWidgets.QDockWidget):
+                return parent
+            parent = parent.parent()
+        return None
+
+
+
     def _handle_rename_requested(self, kind, old_name, new_name):
+        print("old_name", old_name)
+        print("new_name", new_name)
+
+        
         # Annuler si aucun changement
         if old_name == new_name:
             return
@@ -319,10 +369,19 @@ class GraphController:
                         self.views[new_name] = self.views.pop(old_name)
 
                     view = self.views.get(new_name)
-                    if view:
-                        container = view.plot_widget.parent()
-                        if hasattr(container, 'setTitle'):
-                            container.setTitle(new_name)
+
+                    # Trouver le PlotContainerWidget parent réel
+                    container = view.plot_widget
+                    while container is not None and not isinstance(container, PlotContainerWidget):
+                        container = container.parent()
+                    
+                    if isinstance(container, PlotContainerWidget):
+                        print("[DEBUG] ✅ PlotContainerWidget trouvé, renommage appliqué")
+                        container.set_graph_name(new_name)
+                    else:
+                        print("[DEBUG] ❌ PlotContainerWidget introuvable")
+
+                    
 
                     self._block_ui_sync = False
                     self._refresh_plot()
@@ -338,6 +397,9 @@ class GraphController:
 
         except Exception as e:
             QtWidgets.QMessageBox.warning(self.w, "Erreur", str(e))
+
+
+ 
     def _restore_item_name(self, name):
         # Rétablit le nom dans l'arbre si le renommage a échoué
         model = self.w.left_panel.model
@@ -507,4 +569,3 @@ class GraphController:
         if curve:
             curve.zero_indicator = self.w.right_panel.zero_indicator_combo.itemData(index)
             signal_bus.curve_updated.emit()
-
