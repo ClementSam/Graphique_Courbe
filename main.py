@@ -20,7 +20,7 @@ from datetime import datetime
 
 def check_expiry_date():
     # 📆 DATE LIMITE À DÉFINIR ICI
-    expiry = datetime(2025, 5, 19)
+    expiry = datetime(2025, 5, 30)
     now = datetime.now()
 
     if now > expiry:
@@ -276,7 +276,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _enable_graph_props(self, *_):
         self.right_panel.setTabEnabled(0, True)
 
-    def _enable_curve_props(self, *_):
+    def _enable_curve_props(self, graph_name, curve_name):
         self.right_panel.setTabEnabled(1, True)
 
     def _show_about(self):

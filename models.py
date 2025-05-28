@@ -21,7 +21,7 @@ class CurveData:
     display_mode: str = "line"  # 'line', 'scatter', 'bar'
     gain: float = 1.0
     offset: float = 0.0
-    zero_indicator: str = "none"  # "none", "line", "arrow"
+    zero_indicator: str = "none"  # "none", "line"
     label_mode: str = "none"  # valeurs possibles : "none", "inline", "legend"
 
 
@@ -52,7 +52,20 @@ class GraphData:
     y_unit: str = ""
     x_format: str = "normal"  # valeurs possibles : "normal", "scientific", "scaled"
     y_format: str = "normal"
+    satellite_zones_visible = {"left": True, "right": True, "top": True, "bottom": True}
 
+    satellite_visibility = {
+        "left": False,
+        "right": False,
+        "top": False,
+        "bottom": False
+    }
+    satellite_content = {
+        "left": None,
+        "right": None,
+        "top": None,
+        "bottom": None
+    }
 
 
     def add_curve(self, curve: CurveData):
