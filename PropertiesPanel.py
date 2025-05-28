@@ -3,16 +3,22 @@ from PyQt5 import QtWidgets, QtCore
 
 class PropertiesPanel(QtWidgets.QTabWidget):
     def __init__(self, parent=None):
+        print("[PropertiesPanel.py > __init__()] ▶️ Entrée dans __init__()")
+
         super().__init__(parent)
         self.setup_ui()
 
     def setup_ui(self):
+        print("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")
+
         self.setup_graph_tab()
         self.setup_curve_tab()
         self.setTabEnabled(0, False)
         self.setTabEnabled(1, False)
 
     def setup_graph_tab(self):
+        print("[PropertiesPanel.py > setup_graph_tab()] ▶️ Entrée dans setup_graph_tab()")
+
         tab_graph = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(tab_graph)
     
@@ -75,10 +81,48 @@ class PropertiesPanel(QtWidgets.QTabWidget):
     
         layout.addWidget(self.fix_y_checkbox)
         layout.addLayout(ylayout)
+        
+        self.satellite_left_checkbox = QtWidgets.QCheckBox("Zone gauche")
+        self.satellite_left_combo = QtWidgets.QComboBox()
+        self.satellite_left_combo.addItem("Aucun", None)
+        self.satellite_left_combo.addItem("Exemple: Texte", "label")
+        self.satellite_left_combo.addItem("Exemple: Bouton", "button")
+        
+        layout.addWidget(self.satellite_left_checkbox)
+        layout.addWidget(self.satellite_left_combo)
+        
+        self.satellite_right_checkbox = QtWidgets.QCheckBox("Zone droite")
+        self.satellite_right_combo = QtWidgets.QComboBox()
+        self.satellite_right_combo.addItem("Aucun", None)
+        self.satellite_right_combo.addItem("Exemple: Texte", "label")
+        self.satellite_right_combo.addItem("Exemple: Bouton", "button")
+        
+        layout.addWidget(self.satellite_right_checkbox)
+        layout.addWidget(self.satellite_right_combo)
+        
+        self.satellite_top_checkbox = QtWidgets.QCheckBox("Zone haut")
+        self.satellite_top_combo = QtWidgets.QComboBox()
+        self.satellite_top_combo.addItem("Aucun", None)
+        self.satellite_top_combo.addItem("Exemple: Texte", "label")
+        self.satellite_top_combo.addItem("Exemple: Bouton", "button")
+        
+        layout.addWidget(self.satellite_top_checkbox)
+        layout.addWidget(self.satellite_top_combo)
+        
+        self.satellite_bottom_checkbox = QtWidgets.QCheckBox("Zone bas")
+        self.satellite_bottom_combo = QtWidgets.QComboBox()
+        self.satellite_bottom_combo.addItem("Aucun", None)
+        self.satellite_bottom_combo.addItem("Exemple: Texte", "label")
+        self.satellite_bottom_combo.addItem("Exemple: Bouton", "button")
+        
+        layout.addWidget(self.satellite_bottom_checkbox)
+        layout.addWidget(self.satellite_bottom_combo)
     
         self.addTab(tab_graph, "Propriétés du graphique")
 
     def setup_curve_tab(self):
+        print("[PropertiesPanel.py > setup_curve_tab()] ▶️ Entrée dans setup_curve_tab()")
+
         tab_curve = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(tab_curve)
 
@@ -162,7 +206,6 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.zero_indicator_combo = QtWidgets.QComboBox()
         self.zero_indicator_combo.addItem("Aucun", "none")
         self.zero_indicator_combo.addItem("Ligne horizontale", "line")
-        self.zero_indicator_combo.addItem("Flèche (à gauche)", "arrow")
         layout.addWidget(QtWidgets.QLabel("Indicateur de zéro :"))
         layout.addWidget(self.zero_indicator_combo)
         

@@ -6,6 +6,8 @@ from AdvancedPlotContainer import AdvancedPlotContainer
 
 class PlotContainerWidget(QtWidgets.QGroupBox):
     def __init__(self, graph_name, plot_widget, parent=None):
+        print("[plot_container.py > __init__()] ▶️ Entrée dans __init__()")
+
         super().__init__(graph_name, parent)
         self.setObjectName(graph_name)
         self.setLayout(QtWidgets.QVBoxLayout())
@@ -16,28 +18,45 @@ class PlotContainerWidget(QtWidgets.QGroupBox):
         self.plot_widget = plot_widget  # garde pour compatibilité
         self.graph_name = graph_name
         self.removed = False
+        
+        # Forcer taille minimale pour laisser place aux satellites
+        self.setMinimumWidth(400)
+        self.advanced_container.setMinimumWidth(400)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.MinimumExpanding)
+
+
 
 
     def mark_removed(self):
+        print("[plot_container.py > mark_removed()] ▶️ Entrée dans mark_removed()")
+
         self.removed = True
         self.setTitle(f"{self.graph_name} (supprimé)")
         self.setDisabled(True)
 
     def mousePressEvent(self, event):
+        print("[plot_container.py > mousePressEvent()] ▶️ Entrée dans mousePressEvent()")
+
         if not self.removed:
             signal_bus.graph_selected.emit(self.graph_name)
         super().mousePressEvent(event)
     
     def set_selected(self, selected: bool):
+        print("[plot_container.py > set_selected()] ▶️ Entrée dans set_selected()")
+
         if selected:
             self.setStyleSheet("QGroupBox { border: 2px solid #0078d7; }")  # bleu pro
         else:
             self.setStyleSheet("")
             
     def get_advanced_container(self):
+        print("[plot_container.py > get_advanced_container()] ▶️ Entrée dans get_advanced_container()")
+
         return self.advanced_container
 
     def set_graph_name(self, new_name):
+        print("[plot_container.py > set_graph_name()] ▶️ Entrée dans set_graph_name()")
+
         print(f"[DEBUG_plot_container] set_graph_name appelé avec: {new_name}")
         self.graph_name = new_name
         self.setTitle(new_name)
