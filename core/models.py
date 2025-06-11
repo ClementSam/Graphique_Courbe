@@ -52,20 +52,32 @@ class GraphData:
     y_unit: str = ""
     x_format: str = "normal"  # valeurs possibles : "normal", "scientific", "scaled"
     y_format: str = "normal"
-    satellite_zones_visible = {"left": True, "right": True, "top": True, "bottom": True}
+    satellite_zones_visible: dict[str, bool] = field(
+        default_factory=lambda: {
+            "left": True,
+            "right": True,
+            "top": True,
+            "bottom": True,
+        }
+    )
 
-    satellite_visibility = {
-        "left": False,
-        "right": False,
-        "top": False,
-        "bottom": False
-    }
-    satellite_content = {
-        "left": None,
-        "right": None,
-        "top": None,
-        "bottom": None
-    }
+    satellite_visibility: dict[str, bool] = field(
+        default_factory=lambda: {
+            "left": False,
+            "right": False,
+            "top": False,
+            "bottom": False,
+        }
+    )
+
+    satellite_content: dict[str, Optional[object]] = field(
+        default_factory=lambda: {
+            "left": None,
+            "right": None,
+            "top": None,
+            "bottom": None,
+        }
+    )
 
 
     def add_curve(self, curve: CurveData):
