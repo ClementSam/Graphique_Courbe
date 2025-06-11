@@ -1,4 +1,4 @@
-#Application_coordiantor.py
+# application_coordinator.py
 
 from controllers import GraphController
 from ui.GraphCurvePanel import GraphCurvePanel
