@@ -63,6 +63,11 @@ class ApplicationCoordinator:
         signal_bus.curve_selected.connect(self._on_curve_selected)
         signal_bus.graph_selected.connect(self._on_graph_selected)
 
+        # 🔍 Réinitialisation du zoom depuis le panneau de propriétés
+        self.properties_panel.button_reset_zoom.clicked.connect(
+            self.controller.reset_zoom
+        )
+
     def _handle_add_requested(self, kind_or_graphname):
         if kind_or_graphname == "graph":
             self.controller.add_graph(None)
