@@ -5,6 +5,9 @@ from ui.ui_main_window import MainWindow
 from layout_manager import get_default_layout, load_layout
 import sys
 from ui.application_coordinator import ApplicationCoordinator
+import logging
+
+logger = logging.getLogger(__name__)
 
 def launch_app():
     window = MainWindow()
@@ -22,7 +25,7 @@ def launch_app():
         if default:
             load_layout(default, window)
     except Exception as e:
-        print(f"[launch_app] ⚠️ Erreur lors du chargement du layout : {e}")
+        logger.warning(f"[launch_app] ⚠️ Erreur lors du chargement du layout : {e}")
 
     window.show()
     sys.exit(QtWidgets.QApplication.instance().exec_())

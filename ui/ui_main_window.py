@@ -2,6 +2,9 @@
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
+import logging
+
+logger = logging.getLogger(__name__)
 from ui.application_coordinator import ApplicationCoordinator
 from layout_manager_dialog import LayoutManagerDialog
 import layout_manager as lm
@@ -42,7 +45,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._setup_ui()         # Crée tous les panneaux (left, right, etc.)
         self._setup_toolbar()
     
-        #print("\n🏗️ [MainWindow] Instanciation du ApplicationCoordinator")
+        #logger.debug("\n🏗️ [MainWindow] Instanciation du ApplicationCoordinator")
         #self.app = ApplicationCoordinator(self)  # 👈 Seulement après que right_panel existe
     
         # Connecte la bonne instance du centre à l'UI
@@ -53,9 +56,9 @@ class MainWindow(QtWidgets.QMainWindow):
             default = lm.get_default_layout()
             if default:
                 lm.load_layout(default, self)
-                print(f"🗂 [Layout] Disposition par défaut chargée : {default}")
+                logger.debug(f"🗂 [Layout] Disposition par défaut chargée : {default}")
         except Exception as e:
-            print("[Layout] ❌ Impossible de charger la disposition par défaut:", e)
+            logger.warning("[Layout] ❌ Impossible de charger la disposition par défaut:", e)
 
 
     def _setup_ui(self):
@@ -230,7 +233,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 action = self.recent_menu.addAction(path)
                 action.triggered.connect(lambda checked, p=path: self._load_recent_project(p))
         except Exception as e:
-            print("Erreur chargement projets récents:", e)
+            logger.warning("Erreur chargement projets récents:", e)
 
     def _add_to_recent(self, path):
         data = {"recent": []}
@@ -278,12 +281,12 @@ class MainWindow(QtWidgets.QMainWindow):
             export_curve_to_json(curve, path)
 
     def show_graph_tab(self):
-        print("[MainWindow] Activation de l'onglet Graphique")
+        logger.debug("[MainWindow] Activation de l'onglet Graphique")
         self.right_panel.setTabEnabled(0, True)
         self.right_panel.setCurrentIndex(0)
     
     def show_curve_tab(self, graph_name=None, curve_name=None):
-        print(f"[MainWindow] Activation de l'onglet Courbe : {graph_name} > {curve_name}")
+        logger.debug(f"[MainWindow] Activation de l'onglet Courbe : {graph_name} > {curve_name}")
         self.right_panel.setTabEnabled(1, True)
         self.right_panel.setCurrentIndex(1)
     
@@ -308,3 +311,4 @@ if __name__ == "__main__":
     win = MainWindow()
     win.show()
     sys.exit(app.exec_())
+
