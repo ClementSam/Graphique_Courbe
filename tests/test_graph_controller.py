@@ -87,3 +87,17 @@ def test_controller_rename_operations(controller):
     c.select_graph("RenamedGraph")
     c.rename_curve("Courbe 1", "C1")
     assert state.current_graph.curves[0].name == "C1"
+
+
+def test_controller_reset_zoom_invokes_ui(controller):
+    c, state, _ = controller
+
+    called = {"count": 0}
+
+    def stub():
+        called["count"] += 1
+
+    c.ui.reset_zoom = stub
+    c.reset_zoom()
+
+    assert called["count"] == 1
