@@ -62,6 +62,8 @@ class ApplicationCoordinator:
         signal_bus.curve_updated.connect(self._on_curve_updated)
         signal_bus.curve_selected.connect(self._on_curve_selected)
         signal_bus.graph_selected.connect(self._on_graph_selected)
+        signal_bus.rename_requested.connect(self._handle_rename_requested)
+        signal_bus.remove_requested.connect(self._handle_remove_requested)
 
     def _handle_add_requested(self, kind_or_graphname):
         if kind_or_graphname == "graph":
@@ -95,3 +97,20 @@ class ApplicationCoordinator:
 
     def _on_curve_selected(self, graph_name, curve_name):
         self.main_window.show_curve_tab(graph_name, curve_name)
+
+    def _handle_rename_requested(self, kind, old_name, new_name):
+        if kind == "graph":
+            self.controller.rename_graph(old_name, new_name)
+            signal_bus.graph_updated.emit()
+        elif kind == "curve":
+            self.controller.rename_curve(old_name, new_name)
+            signal_bus.curve_updated.emit()
+        self.graph_ui_coordinator.refresh_plot()
+
+    def _handle_remove_requested(self, kind, name):
+        if kind == "graph":
+            self.controller.remove_graph(name)
+        elif kind == "curve":
+            self.controller.remove_curve(name)
+            self.graph_ui_coordinator.refresh_plot()
+
