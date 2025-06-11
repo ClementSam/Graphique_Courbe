@@ -3,14 +3,16 @@
 from core.app_state import AppState
 from ui.views import MyPlotView
 from ui.PropertiesPanel import PropertiesPanel
+from signal_bus import SignalBus, signal_bus
 
 
 class GraphUICoordinator:
-    def __init__(self, state: AppState, views: dict, central_area):
+    def __init__(self, state: AppState, views: dict, central_area, bus: SignalBus = signal_bus):
         print("[GraphUICoordinator.__init__] Initialisation")
         self.state = state
         self.views = views
         self.central_area = central_area  # 🆕 pour gérer dynamiquement les widgets
+        self.bus = bus
         print(f"[GraphUICoordinator.__init__] Vues disponibles : {list(self.views.keys())}")
         
     def refresh_curve_ui(self):
@@ -33,7 +35,7 @@ class GraphUICoordinator:
             print(f"📌 [refresh_plot] Vérification de la vue pour : {name}")
             if name not in self.views:
                 print(f"🆕 [refresh_plot] Création de la vue pour le graphique : {name}")
-                view = MyPlotView(graph)
+                view = MyPlotView(graph, self.bus)
                 self.views[name] = view
                 if self.central_area:
                     print(f"📤 [refresh_plot] Tentative d’ajout du widget à la zone centrale")

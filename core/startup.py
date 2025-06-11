@@ -3,25 +3,27 @@ from core.app_state import AppState
 from controllers import GraphController
 from core.graph_service import GraphService
 from ui.graph_ui_coordinator import GraphUICoordinator
+from signal_bus import SignalBus, signal_bus
 from datetime import datetime
 import sys
 from PyQt5 import QtWidgets
 
-def initialize_application(center_area_widget):
-    state = AppState.get_instance()
+def initialize_application(center_area_widget, state: AppState = None, bus: SignalBus = signal_bus):
+    state = state or AppState.get_instance()
+    bus = bus or signal_bus
     default_graph_name = "Graphique"
-    graph_service = GraphService(state)
+    graph_service = GraphService(state, bus)
     graph_service.add_graph(default_graph_name)
     
     # Prépare les vues associées
     from ui.views import MyPlotView
     
     graph = state.graphs[default_graph_name]
-    plot_view = MyPlotView(graph)
+    plot_view = MyPlotView(graph, bus)
     center_area_widget.add_plot_widget(plot_view.plot_widget)
     
     views = {default_graph_name: plot_view}
-    controller = GraphController(views)
+    controller = GraphController(state, bus, views, center_area_widget)
 
     return controller, plot_view
 

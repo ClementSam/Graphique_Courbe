@@ -3,13 +3,15 @@
 from core.app_state import AppState
 from core.graph_service import GraphService
 from ui.graph_ui_coordinator import GraphUICoordinator
+from signal_bus import SignalBus, signal_bus
 
 class GraphController:
-    def __init__(self, views: dict, central_area):
+    def __init__(self, state: AppState, bus: SignalBus, views: dict, central_area):
         print("🧠 [GraphController.__init__] Initialisation du contrôleur")
-        self.state = AppState.get_instance()
-        self.service = GraphService(self.state)
-        self.ui = GraphUICoordinator(self.state, views, central_area)
+        self.state = state
+        self.bus = bus
+        self.service = GraphService(self.state, self.bus)
+        self.ui = GraphUICoordinator(self.state, views, central_area, self.bus)
 
     def load_project(self, graphs: dict):
         print("📂 [GraphController.load_project] Chargement du projet...")

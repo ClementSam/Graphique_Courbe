@@ -2,7 +2,7 @@
 
 from core.app_state import AppState
 from core.models import GraphData, CurveData
-from signal_bus import signal_bus
+from signal_bus import SignalBus, signal_bus
 from core.utils.naming import get_next_graph_name
 
 
@@ -12,9 +12,10 @@ class GraphService:
     indépendamment de l'interface utilisateur.
     """
 
-    def __init__(self, state: AppState):
+    def __init__(self, state: AppState, bus: SignalBus = signal_bus):
         print("🧠 [GraphService.__init__] Initialisation du service avec AppState")
         self.state = state
+        self.bus = bus
 
     def create_graph(self):
         print("🧱 [GraphService.create_graph] Création d'un nouveau graphique...")
@@ -41,7 +42,7 @@ class GraphService:
         self.state.select_graph(name)
         print(f"🎯 [GraphService.select_graph] Graphique sélectionné : {self.state.current_graph.name if self.state.current_graph else 'None'}")
         print(f"📢 [GraphService.select_graph] Emission du signal graph_selected")
-        #signal_bus.graph_selected.emit(name)
+        # self.bus.graph_selected.emit(name)
     
     def select_curve(self, curve_name: str):
         print(f"🖱 [GraphService.select_curve] Sélection de la courbe : {curve_name}")
@@ -75,7 +76,7 @@ class GraphService:
         print(f"📥 [GraphService.add_graph] Appel avec nom = {name}")
     
         if not name or name.strip() == "":
-            name = get_next_graph_name()
+            name = get_next_graph_name(self.state)
             print(f"🆕 [GraphService.add_graph] Nom généré automatiquement : {name}")
         else:
             print(f"🏷️ [GraphService.add_graph] Nom spécifié : {name}")
@@ -94,10 +95,10 @@ class GraphService:
         
         # 👇 Signaler qu’un graphique a été sélectionné (utile pour afficher les propriétés)
         print(f"📢 [GraphService.add_graph] Emission du signal graph_selected pour '{name}'")
-        signal_bus.graph_selected.emit(name)
-    
+        self.bus.graph_selected.emit(name)
+
         print(f"📢 [GraphService.add_graph] Emission du signal graph_updated")
-        signal_bus.graph_updated.emit()
+        self.bus.graph_updated.emit()
 
 
     def add_curve(self, graph_name: str, curve: CurveData = None):
@@ -132,11 +133,11 @@ class GraphService:
     
         # 👇 Sélectionne automatiquement la courbe ajoutée
         print(f"📢 [GraphService.add_curve] Emission du signal curve_selected pour '{curve.name}' dans '{graph.name}'")
-        signal_bus.curve_selected.emit(graph.name, curve.name)
-    
+        self.bus.curve_selected.emit(graph.name, curve.name)
+
         print(f"📢 [GraphService.add_curve] Emission des signaux curve_list_updated et curve_updated")
-        signal_bus.curve_list_updated.emit()
-        signal_bus.curve_updated.emit()
+        self.bus.curve_list_updated.emit()
+        self.bus.curve_updated.emit()
             
 
     def remove_graph(self, name: str):
@@ -152,7 +153,7 @@ class GraphService:
             self.state.current_curve = None
             
         print(f"📢 [GraphService.remove_graph] Emission du signal graph_updated")
-        signal_bus.graph_updated.emit()
+        self.bus.graph_updated.emit()
 
             
     def remove_curve(self, curve_name: str):
@@ -174,7 +175,7 @@ class GraphService:
     
         print(f"✅ [GraphService.remove_curve] Courbe '{curve_name}' supprimée.")
         print(f"📢 [GraphService.remove_curve] Emission du signal curve_updated")
-        signal_bus.curve_updated.emit()
+        self.bus.curve_updated.emit()
 
 
     def import_graph(self, graph_data: GraphData):

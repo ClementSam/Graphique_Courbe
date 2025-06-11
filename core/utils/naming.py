@@ -2,9 +2,10 @@
 
 from core.app_state import AppState
 
-def get_next_graph_name():
+
+def get_next_graph_name(state: AppState) -> str:
+    """Return a unique graph name based on the current content of *state*."""
     print("🔍 [get_next_graph_name] Début de génération de nom...")
-    state = AppState.get_instance()
 
     if not state.graphs:
         print("📭 Aucun graphique existant, on commence à Graphique 1")

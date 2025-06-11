@@ -5,10 +5,11 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 class PropertiesPanel(QtWidgets.QTabWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, state: AppState, parent=None):
         print("[PropertiesPanel.py > __init__()] ▶️ Entrée dans __init__()")
 
         super().__init__(parent)
+        self.state = state
         self.setup_ui()
 
     def setup_ui(self):
@@ -242,7 +243,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
     def update_graph_ui(self):
         """Met à jour les champs de l'onglet graphique en fonction du graphique sélectionné."""
-        state = AppState.get_instance()
+        state = self.state
         graph = state.current_graph
         if not graph:
             print("[PropertiesPanel] ⚠️ Aucun graphique sélectionné")
@@ -296,7 +297,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
     def update_curve_ui(self):
         """Met à jour les champs de l'onglet courbe en fonction de la courbe sélectionnée."""
-        state = AppState.get_instance()
+        state = self.state
         curve = state.current_curve
         if not curve:
             print("[PropertiesPanel] ⚠️ Aucune courbe sélectionnée")

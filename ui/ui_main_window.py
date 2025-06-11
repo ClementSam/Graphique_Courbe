@@ -12,7 +12,7 @@ from import_curve_dialog import ImportCurveDialog
 from curve_loader_factory import load_curve_by_format
 from curve_generators import generate_random_curve
 from core.app_state import AppState
-from signal_bus import signal_bus
+from signal_bus import SignalBus, signal_bus
 import os
 import json
 from datetime import datetime
@@ -32,11 +32,13 @@ def check_expiry_date():
         sys.exit(0)
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, state: AppState = None, bus: SignalBus = signal_bus):
         super().__init__()
         self.setWindowTitle("Gestionnaire de courbes. Version alpha. Clément SAMPERE. Publication restreinte soumise à autorisation")
         self.setGeometry(100, 100, 1200, 700)
         self._current_project_path = None
+        self.state = state or AppState.get_instance()
+        self.bus = bus
     
         self._setup_menu()
         self._setup_ui()         # Crée tous les panneaux (left, right, etc.)
@@ -70,7 +72,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_graph_to_view_menu("Zone centrale", self.dock_center)
     
         # Panneau gauche
-        self.left_panel = GraphCurvePanel()
+        self.left_panel = GraphCurvePanel(self.state, self.bus)
         self.dock_left = QtWidgets.QDockWidget("Graphiques et courbes", self)
         self.dock_left.setWidget(self.left_panel)
         self.dock_left.setFeatures(QtWidgets.QDockWidget.AllDockWidgetFeatures)
@@ -78,7 +80,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_graph_to_view_menu("Graphiques et courbes", self.dock_left)
     
         # Panneau droit
-        self.right_panel = PropertiesPanel()
+        self.right_panel = PropertiesPanel(self.state)
         self.dock_right = QtWidgets.QDockWidget("Propriétés", self)
         self.dock_right.setWidget(self.right_panel)
         self.dock_right.setFeatures(QtWidgets.QDockWidget.AllDockWidgetFeatures)
@@ -166,13 +168,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self._current_project_path:
             self.save_project_as()
             return
-        export_project_to_json(AppState.get_instance().graphs, self._current_project_path)
+        export_project_to_json(self.state.graphs, self._current_project_path)
 
     def save_project_as(self):
         path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Sauvegarder le projet", "", "Fichiers JSON (*.json)")
         if path:
             self._current_project_path = path
-            export_project_to_json(AppState.get_instance().graphs, path)
+            export_project_to_json(self.state.graphs, path)
             self._add_to_recent(path)
 
     def load_project(self):
@@ -191,7 +193,7 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.information(self, "Import réussi", f"Graphique '{graph.name}' importé.")
 
     def import_curve(self):
-        state = AppState.get_instance()
+        state = self.state
         graph = state.current_graph
         if not graph:
             QtWidgets.QMessageBox.warning(self, "Aucun graphique sélectionné", "Veuillez sélectionner un graphique pour y ajouter la courbe.")
@@ -213,8 +215,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 for curve in curves:
                     self.app.controller.service.add_curve(graph.name, curve)
-                signal_bus.curve_list_updated.emit()
-                signal_bus.curve_updated.emit()
+                self.bus.curve_list_updated.emit()
+                self.bus.curve_updated.emit()
                 QtWidgets.QMessageBox.information(self, "Import réussi", f"{len(curves)} courbe(s) importée(s) dans '{graph.name}'.")
             except Exception as e:
                 QtWidgets.QMessageBox.warning(self, "Erreur", str(e))
@@ -258,7 +260,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self._populate_recent_projects()
 
     def export_graph(self):
-        state = AppState.get_instance()
+        state = self.state
         graph = state.current_graph
         if not graph:
             QtWidgets.QMessageBox.warning(self, "Aucun graphique", "Veuillez sélectionner un graphique.")
@@ -268,7 +270,7 @@ class MainWindow(QtWidgets.QMainWindow):
             export_graph_to_json(graph, path)
 
     def export_curve(self):
-        state = AppState.get_instance()
+        state = self.state
         curve = state.current_curve
         if not curve:
             QtWidgets.QMessageBox.warning(self, "Aucune courbe", "Veuillez sélectionner une courbe.")

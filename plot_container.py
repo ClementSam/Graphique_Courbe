@@ -1,11 +1,11 @@
 #plot_container.py
 
 from PyQt5 import QtWidgets
-from signal_bus import signal_bus
+from signal_bus import SignalBus, signal_bus
 from AdvancedPlotContainer import AdvancedPlotContainer
 
 class PlotContainerWidget(QtWidgets.QGroupBox):
-    def __init__(self, graph_name, plot_widget, parent=None):
+    def __init__(self, graph_name, plot_widget, bus: SignalBus = signal_bus, parent=None):
         print("[plot_container.py > __init__()] ▶️ Entrée dans __init__()")
 
         super().__init__(graph_name, parent)
@@ -17,6 +17,7 @@ class PlotContainerWidget(QtWidgets.QGroupBox):
 
         self.plot_widget = plot_widget  # garde pour compatibilité
         self.graph_name = graph_name
+        self.bus = bus
         self.removed = False
         
         # Forcer taille minimale pour laisser place aux satellites
@@ -38,7 +39,7 @@ class PlotContainerWidget(QtWidgets.QGroupBox):
         print("[plot_container.py > mousePressEvent()] ▶️ Entrée dans mousePressEvent()")
 
         if not self.removed:
-            signal_bus.graph_selected.emit(self.graph_name)
+            self.bus.graph_selected.emit(self.graph_name)
         super().mousePressEvent(event)
     
     def set_selected(self, selected: bool):

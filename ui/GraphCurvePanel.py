@@ -5,9 +5,12 @@ from PyQt5.QtWidgets import QTreeView, QStyledItemDelegate, QMessageBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPainter, QFont
 from PyQt5.QtCore import Qt, QRect, QSize
 from core.app_state import AppState
-from signal_bus import signal_bus
+from signal_bus import SignalBus, signal_bus
 
 class CombinedDelegate(QStyledItemDelegate):
+    def __init__(self, bus: SignalBus = signal_bus, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.bus = bus
     def paint(self, painter, option, index):
         painter.save()
         if option.state & QtWidgets.QStyle.State_Selected:
@@ -64,8 +67,8 @@ class CombinedDelegate(QStyledItemDelegate):
                 val = index.data(Qt.UserRole + 1)
                 print(f"👁️ [Toggle Visibility] {name} → {not val}")
                 model.setData(index, not val, Qt.UserRole + 1)
-                signal_bus.curve_updated.emit()
-                signal_bus.graph_updated.emit()
+                self.bus.curve_updated.emit()
+                self.bus.graph_updated.emit()
                 return True
     
             if delete_rect.contains(pos) and kind in ("graph", "curve"):
@@ -73,20 +76,20 @@ class CombinedDelegate(QStyledItemDelegate):
                 confirm = QMessageBox.question(None, "Supprimer", f"Supprimer {kind} '{name}' ?", QMessageBox.Yes | QMessageBox.No)
                 if confirm == QMessageBox.Yes:
                     print(f"✅ [Confirmé] Suppression de {kind} '{name}'")
-                    signal_bus.remove_requested.emit(kind, name)
+                    self.bus.remove_requested.emit(kind, name)
                 else:
                     print(f"❌ [Annulé] Suppression de {kind} '{name}'")
                 return True
     
             if kind == "action" and name == "add_graph":
                 print("➕ [Delegate] Demande d'ajout de graphique")
-                signal_bus.add_graph_requested.emit("graph")
+                self.bus.add_graph_requested.emit("graph")
                 return True
     
             if kind == "action" and name.startswith("add_curve:"):
                 graph_name = name.split(":")[1]
                 print(f"➕ [Delegate] Demande d'ajout de courbe au graphique : {graph_name}")
-                signal_bus.add_curve_requested.emit(graph_name)
+                self.bus.add_curve_requested.emit(graph_name)
                 return True
 
     
@@ -99,12 +102,14 @@ class CombinedDelegate(QStyledItemDelegate):
 
 
 class GraphCurvePanel(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, state: AppState, bus: SignalBus = signal_bus, parent=None):
         super().__init__(parent)
         print("🔧 [GraphCurvePanel.__init__] Initialisation du panneau graphique")
+        self.state = state
+        self.bus = bus
         self.setup_ui()
-        signal_bus.graph_updated.connect(self.refresh_tree)
-        signal_bus.curve_updated.connect(self.refresh_tree)
+        self.bus.graph_updated.connect(self.refresh_tree)
+        self.bus.curve_updated.connect(self.refresh_tree)
 
     def setup_ui(self):
         print("🛠 [GraphCurvePanel.setup_ui] Construction de l'UI")
@@ -112,7 +117,7 @@ class GraphCurvePanel(QtWidgets.QWidget):
 
         self.tree = QTreeView()
         self.tree.setHeaderHidden(True)
-        self.tree.setItemDelegate(CombinedDelegate())
+        self.tree.setItemDelegate(CombinedDelegate(self.bus))
         self.tree.setEditTriggers(QtWidgets.QAbstractItemView.EditKeyPressed | QtWidgets.QAbstractItemView.SelectedClicked | QtWidgets.QAbstractItemView.DoubleClicked)
 
         self.model = QStandardItemModel()
@@ -127,7 +132,7 @@ class GraphCurvePanel(QtWidgets.QWidget):
 
     def populate_from_state(self):
         print("🧠 [populate_from_state] Début de la reconstruction de l'arbre")
-        state = AppState.get_instance()
+        state = self.state
         print(f"📦 [AppState] Graphs détectés : {list(state.graphs.keys())}")
         
         expanded_names = set()
@@ -181,7 +186,7 @@ class GraphCurvePanel(QtWidgets.QWidget):
                     break
 
     def refresh_tree(self, *args):
-        print("🔁 [refresh_tree] Rafraîchissement demandé depuis signal_bus")
+        print("🔁 [refresh_tree] Rafraîchissement demandé depuis bus")
         self.populate_from_state()
 
     def on_item_renamed(self, item):
@@ -198,9 +203,9 @@ class GraphCurvePanel(QtWidgets.QWidget):
         item.setData(new_name, Qt.UserRole + 4)
 
         if kind == "graph":
-            signal_bus.rename_requested.emit("graph", old_name, new_name)
+            self.bus.rename_requested.emit("graph", old_name, new_name)
         elif kind == "curve":
-            signal_bus.rename_requested.emit("curve", old_name, new_name)
+            self.bus.rename_requested.emit("curve", old_name, new_name)
 
     def create_item(self, name, kind, visible, active):
         item = QStandardItem(name)
@@ -221,9 +226,9 @@ class GraphCurvePanel(QtWidgets.QWidget):
     
         if kind == "graph":
             print(f"📌 [GraphCurvePanel] Graphique sélectionné: {name}")
-            signal_bus.graph_selected.emit(name)
+            self.bus.graph_selected.emit(name)
         elif kind == "curve":
             parent_index = current.parent()
             graph_name = parent_index.data(Qt.UserRole + 4) if parent_index.isValid() else None
             print(f"📌 [GraphCurvePanel] Courbe sélectionnée: {name} dans {graph_name}")
-            signal_bus.curve_selected.emit(graph_name, name)
+            self.bus.curve_selected.emit(graph_name, name)

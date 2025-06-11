@@ -1,16 +1,16 @@
-from core.app_state import AppState
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QTimer
 import time
 import pyqtgraph as pg
-from signal_bus import signal_bus
+from signal_bus import SignalBus, signal_bus
 from PyQt5.QtGui import QColor
     
 class MyPlotView:
-    def __init__(self, graph_data):
+    def __init__(self, graph_data, bus: SignalBus = signal_bus):
         print("[views.py > __init__()] ▶️ Entrée dans __init__()")
 
         self.graph_data = graph_data
+        self.bus = bus
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground('w')
         self.plot_widget.useOpenGL(True)
@@ -161,7 +161,7 @@ class MyPlotView:
 
         if selected_curve:
             print(f"[CLICK] Courbe cliquée (par distance) : {selected_curve}")
-            signal_bus.curve_selected.emit(self.graph_data.name, selected_curve)
+            self.bus.curve_selected.emit(self.graph_data.name, selected_curve)
 
     def _format_axis(self, axis, unit: str, fmt: str):
         print("[views.py > _format_axis()] ▶️ Entrée dans _format_axis()")

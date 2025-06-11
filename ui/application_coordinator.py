@@ -4,28 +4,28 @@ from controllers import GraphController
 from ui.GraphCurvePanel import GraphCurvePanel
 from ui.CentralPlotArea import CentralPlotArea
 from ui.PropertiesPanel import PropertiesPanel
-from signal_bus import signal_bus
+from signal_bus import SignalBus, signal_bus
 from core.models import GraphData
 from ui.views import MyPlotView
 from core.app_state import AppState
-from signal_bus import signal_bus
 from ui.graph_ui_coordinator import GraphUICoordinator
 
 
 class ApplicationCoordinator:
-    def __init__(self, main_window):
+    def __init__(self, main_window, state: AppState = None, bus: SignalBus = signal_bus):
         print("[ApplicationCoordinator] ▶️ Initialisation du coordinateur")
 
         self.main_window = main_window
-        self.state = AppState.get_instance()
+        self.state = state or AppState.get_instance()
+        self.bus = bus
 
-        self.graph_panel = GraphCurvePanel()
-        self.properties_panel = PropertiesPanel()
+        self.graph_panel = GraphCurvePanel(self.state, self.bus)
+        self.properties_panel = PropertiesPanel(self.state)
         self.center_area = CentralPlotArea()
         self.views = {}
 
         # 👇 Coordinateur UI des graphes
-        self.graph_ui_coordinator = GraphUICoordinator(self.state, self.views, self.center_area)
+        self.graph_ui_coordinator = GraphUICoordinator(self.state, self.views, self.center_area, self.bus)
 
         self._setup_controller()
         self._connect_signals()
@@ -33,32 +33,32 @@ class ApplicationCoordinator:
         print("[ApplicationCoordinator] ✅ Initialisation terminée")
 
     def _setup_controller(self):
-        self.controller = GraphController(self.views, self.center_area)
+        self.controller = GraphController(self.state, self.bus, self.views, self.center_area)
         print("[ApplicationCoordinator] 🧠 Contrôleur initialisé")
 
     def _connect_signals(self):
         # ➕ Ajout de graphes ou courbes
-        signal_bus.add_graph_requested.connect(lambda _: self._handle_add_requested("graph"))
-        signal_bus.add_curve_requested.connect(self._handle_add_requested)
+        self.bus.add_graph_requested.connect(lambda _: self._handle_add_requested("graph"))
+        self.bus.add_curve_requested.connect(self._handle_add_requested)
 
         # 🎯 Sélections
-        signal_bus.graph_selected.connect(self.controller.select_graph)
-        signal_bus.curve_selected.connect(lambda g, c: self.controller.select_curve(c))
+        self.bus.graph_selected.connect(self.controller.select_graph)
+        self.bus.curve_selected.connect(lambda g, c: self.controller.select_curve(c))
 
         # 🔄 Mise à jour des panneaux de propriétés
-        signal_bus.graph_updated.connect(self.properties_panel.refresh_graph_tab)
-        signal_bus.curve_updated.connect(self.properties_panel.refresh_curve_tab)
-        signal_bus.curve_list_updated.connect(self.properties_panel.refresh_curve_tab)
+        self.bus.graph_updated.connect(self.properties_panel.refresh_graph_tab)
+        self.bus.curve_updated.connect(self.properties_panel.refresh_curve_tab)
+        self.bus.curve_list_updated.connect(self.properties_panel.refresh_curve_tab)
 
         # 🧠 Mise à jour de l’état interne
-        signal_bus.graph_selected.connect(self.on_graph_selected)
-        signal_bus.graph_updated.connect(self.on_graph_updated)
+        self.bus.graph_selected.connect(self.on_graph_selected)
+        self.bus.graph_updated.connect(self.on_graph_updated)
 
         # ✅ ➕ Connexions vers l'UI passive (nouvelle logique)
-        signal_bus.graph_updated.connect(self._on_graph_updated)
-        signal_bus.curve_updated.connect(self._on_curve_updated)
-        signal_bus.curve_selected.connect(self._on_curve_selected)
-        signal_bus.graph_selected.connect(self._on_graph_selected)
+        self.bus.graph_updated.connect(self._on_graph_updated)
+        self.bus.curve_updated.connect(self._on_curve_updated)
+        self.bus.curve_selected.connect(self._on_curve_selected)
+        self.bus.graph_selected.connect(self._on_graph_selected)
 
     def _handle_add_requested(self, kind_or_graphname):
         if kind_or_graphname == "graph":
