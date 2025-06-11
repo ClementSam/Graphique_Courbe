@@ -2,7 +2,7 @@
 import json
 from typing import Dict
 from core.models import GraphData
-from serializers import project_to_dict, dict_to_project
+from .serializers import project_to_dict, dict_to_project
 
 def export_project_to_json(graphs: Dict[str, GraphData], path: str):
     """Exporte un projet (ensemble de graphiques) vers un fichier JSON."""

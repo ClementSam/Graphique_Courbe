@@ -8,10 +8,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from core.models import CurveData, GraphData
 
-from curve_io import export_curve_to_json, import_curve_from_json
-from graph_io import export_graph_to_json, import_graph_from_json
-from project_io import export_project_to_json, import_project_from_json
-import serializers
+from io.curve_io import export_curve_to_json, import_curve_from_json
+from io.graph_io import export_graph_to_json, import_graph_from_json
+from io.project_io import export_project_to_json, import_project_from_json
+from io import serializers
 
 
 def create_sample_curve(name="c1"):
@@ -48,7 +48,7 @@ def patch_serializers(monkeypatch):
         return curve
 
     monkeypatch.setattr(serializers, "dict_to_curve", patched_dict_to_curve)
-    import curve_io
+    import io.curve_io as curve_io
     monkeypatch.setattr(curve_io, "dict_to_curve", patched_dict_to_curve)
 
 

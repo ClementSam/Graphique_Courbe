@@ -2,7 +2,7 @@
 
 from PyQt5 import QtWidgets
 from ui.ui_main_window import MainWindow
-from layout_manager import get_default_layout, load_layout
+from ui.layout_manager import get_default_layout, load_layout
 import sys
 from ui.application_coordinator import ApplicationCoordinator
 import logging

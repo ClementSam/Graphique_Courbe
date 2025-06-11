@@ -1,12 +1,12 @@
 import json
 from typing import List
 from core.models import CurveData
-from serializers import dict_to_curve
-from import_utils import load_curves_from_file
+from .serializers import dict_to_curve
+from .import_utils import load_curves_from_file
 import struct
 from collections import namedtuple
 import numpy as np
-from curve_selection_dialog import CurveSelectionDialog
+from ui.dialogs.curve_selection_dialog import CurveSelectionDialog
 
 
 def load_curve_by_format(path: str, fmt: str) -> List[CurveData]:

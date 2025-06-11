@@ -2,7 +2,7 @@
 import json
 from typing import List
 from core.models import CurveData
-from serializers import curve_to_dict, dict_to_curve
+from .serializers import curve_to_dict, dict_to_curve
 
 
 def export_curve_to_json(curve: CurveData, path: str):
