@@ -80,32 +80,3 @@ class AdvancedPlotContainer(QtWidgets.QWidget):
         print("[AdvancedPlotContainer.py > add_to_bottom()] ▶️ Entrée dans add_to_bottom()")
         self.bottom_box.layout().addWidget(widget)
         print(f"[AdvancedPlotContainer] ➕ Widget ajouté en bas: {widget}")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -49,4 +49,3 @@ class CurveSelectionDialog(QDialog):
                 curve.name = new_name
                 selected.append(curve)
         return selected
-

@@ -339,5 +339,3 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.downsampling_ratio_input.setEnabled(is_manual)
         self.downsampling_apply_btn.setEnabled(is_manual)
     
-
-
