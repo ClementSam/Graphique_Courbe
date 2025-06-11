@@ -3,16 +3,16 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from ui.application_coordinator import ApplicationCoordinator
-from layout_manager_dialog import LayoutManagerDialog
-import layout_manager as lm
+from ui.dialogs.layout_manager_dialog import LayoutManagerDialog
+from ui import layout_manager as lm
 import logging
 
 logger = logging.getLogger(__name__)
-from project_io import export_project_to_json, import_project_from_json
-from graph_io import export_graph_to_json, import_graph_from_json
-from curve_io import export_curve_to_json, import_curve_from_json
-from import_curve_dialog import ImportCurveDialog
-from curve_loader_factory import load_curve_by_format
+from io.project_io import export_project_to_json, import_project_from_json
+from io.graph_io import export_graph_to_json, import_graph_from_json
+from io.curve_io import export_curve_to_json, import_curve_from_json
+from ui.dialogs.import_curve_dialog import ImportCurveDialog
+from io.curve_loader_factory import load_curve_by_format
 from curve_generators import generate_random_curve
 from core.app_state import AppState
 from signal_bus import signal_bus

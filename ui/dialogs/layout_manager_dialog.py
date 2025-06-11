@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton,
                              QLineEdit, QHBoxLayout, QMessageBox)
-import layout_manager as lm
+from .. import layout_manager as lm
 
 
 class LayoutManagerDialog(QDialog):
