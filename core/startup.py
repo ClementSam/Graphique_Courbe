@@ -14,8 +14,7 @@ def initialize_application(center_area_widget):
     graph_service.add_graph(default_graph_name)
     
     # Prépare les vues associées
-    from MyPlotView import MyPlotView
-    from core.models import GraphData
+    from ui.views import MyPlotView
     
     graph = state.graphs[default_graph_name]
     plot_view = MyPlotView(graph)
