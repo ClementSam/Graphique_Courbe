@@ -3,6 +3,7 @@
 from core.app_state import AppState
 from core.graph_service import GraphService
 from ui.graph_ui_coordinator import GraphUICoordinator
+from signal_bus import signal_bus
 
 class GraphController:
     def __init__(self, views: dict, central_area):
@@ -21,8 +22,10 @@ class GraphController:
 
     def add_graph(self, name: str = None):
         print(f"➕ [GraphController.add_graph] Requête d'ajout de graphique : {name}")
-        self.service.add_graph() #naming automatique avec la fonction appropriée
-        print(f"✅ [GraphController.add_graph] Graphique '{name}' ajouté via service.")
+        created_name = self.service.add_graph(name)
+        print(f"✅ [GraphController.add_graph] Graphique '{created_name}' ajouté via service.")
+        signal_bus.graph_selected.emit(created_name)
+        signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
         
     def add_curve(self, graph_name: str):
@@ -39,8 +42,11 @@ class GraphController:
             index += 1
     
         curve = generate_random_curve(index)
-        self.service.add_curve(graph_name, curve)
-        print(f"✅ [GraphController.add_curve] Courbe '{curve.name}' ajoutée à '{graph_name}'")
+        created_curve_name = self.service.add_curve(graph_name, curve)
+        print(f"✅ [GraphController.add_curve] Courbe '{created_curve_name}' ajoutée à '{graph_name}'")
+        signal_bus.curve_selected.emit(graph_name, created_curve_name)
+        signal_bus.curve_list_updated.emit()
+        signal_bus.curve_updated.emit()
         self.ui.refresh_plot()
 
     def select_graph(self, name: str):
@@ -56,11 +62,13 @@ class GraphController:
     def remove_graph(self, name: str):
         print(f"🗑 [GraphController.remove_graph] Suppression du graphique : {name}")
         self.service.remove_graph(name)
+        signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
         
     def remove_curve(self, name: str):
         print(f"🗑 [GraphController.remove_curve] Suppression de la courbe : {name}")
         self.service.remove_curve(name)
+        signal_bus.curve_updated.emit()
         self.ui.refresh_curve_ui()
 
     def rename_graph(self, old_name: str, new_name: str):
