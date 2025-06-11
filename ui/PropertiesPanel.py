@@ -2,17 +2,20 @@
 
 from core.app_state import AppState
 from PyQt5 import QtWidgets, QtCore, QtGui
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PropertiesPanel(QtWidgets.QTabWidget):
 
     def __init__(self, parent=None):
-        print("[PropertiesPanel.py > __init__()] ▶️ Entrée dans __init__()")
+        logger.debug("[PropertiesPanel.py > __init__()] ▶️ Entrée dans __init__()")
 
         super().__init__(parent)
         self.setup_ui()
 
     def setup_ui(self):
-        print("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")
+        logger.debug("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")
 
         self.setup_graph_tab()
         self.setup_curve_tab()
@@ -20,7 +23,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.setTabEnabled(1, False)
 
     def setup_graph_tab(self):
-        print("[PropertiesPanel.py > setup_graph_tab()] ▶️ Entrée dans setup_graph_tab()")
+        logger.debug("[PropertiesPanel.py > setup_graph_tab()] ▶️ Entrée dans setup_graph_tab()")
 
         tab_graph = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(tab_graph)
@@ -124,7 +127,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.addTab(tab_graph, "Propriétés du graphique")
 
     def setup_curve_tab(self):
-        print("[PropertiesPanel.py > setup_curve_tab()] ▶️ Entrée dans setup_curve_tab()")
+        logger.debug("[PropertiesPanel.py > setup_curve_tab()] ▶️ Entrée dans setup_curve_tab()")
 
         tab_curve = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(tab_curve)
@@ -233,11 +236,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.addTab(tab_curve, "Propriétés de la courbe")
         
     def refresh_curve_tab(self):
-        print("[PropertiesPanel] 🔁 Rafraîchissement de l’onglet courbe")
+        logger.debug("[PropertiesPanel] 🔁 Rafraîchissement de l’onglet courbe")
         self.update_curve_ui()
 
     def refresh_graph_tab(self):
-        print("[PropertiesPanel] 🔁 Rafraîchissement de l’onglet graphique")
+        logger.debug("[PropertiesPanel] 🔁 Rafraîchissement de l’onglet graphique")
         self.update_graph_ui()
 
     def update_graph_ui(self):
@@ -245,10 +248,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         state = AppState.get_instance()
         graph = state.current_graph
         if not graph:
-            print("[PropertiesPanel] ⚠️ Aucun graphique sélectionné")
+            logger.debug("[PropertiesPanel] ⚠️ Aucun graphique sélectionné")
             return
     
-        print(f"[PropertiesPanel] 🔄 Mise à jour des champs pour le graphique '{graph.name}'")
+        logger.debug(f"[PropertiesPanel] 🔄 Mise à jour des champs pour le graphique '{graph.name}'")
     
         # Nom du graphique
         self.label_graph_name.setText(graph.name)
@@ -299,10 +302,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         state = AppState.get_instance()
         curve = state.current_curve
         if not curve:
-            print("[PropertiesPanel] ⚠️ Aucune courbe sélectionnée")
+            logger.debug("[PropertiesPanel] ⚠️ Aucune courbe sélectionnée")
             return
     
-        print(f"[PropertiesPanel] 🔄 Mise à jour des champs pour la courbe '{curve.name}'")
+        logger.debug(f"[PropertiesPanel] 🔄 Mise à jour des champs pour la courbe '{curve.name}'")
     
         self.label_curve_name.setText(curve.name)
         self.color_button.setStyleSheet(f"background-color: {curve.color}")

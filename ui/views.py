@@ -5,10 +5,13 @@ import time
 import pyqtgraph as pg
 from signal_bus import signal_bus
 from PyQt5.QtGui import QColor
+import logging
+
+logger = logging.getLogger(__name__)
     
 class MyPlotView:
     def __init__(self, graph_data):
-        print("[views.py > __init__()] ▶️ Entrée dans __init__()")
+        logger.debug("[views.py > __init__()] ▶️ Entrée dans __init__()")
 
         self.graph_data = graph_data
         self.plot_widget = pg.PlotWidget()
@@ -25,7 +28,7 @@ class MyPlotView:
 
 
     def update_graph_properties(self):
-        print("[views.py > update_graph_properties()] ▶️ Entrée dans update_graph_properties()")
+        logger.debug("[views.py > update_graph_properties()] ▶️ Entrée dans update_graph_properties()")
 
         g = self.graph_data
         self.plot_widget.showGrid(g.grid_visible, g.grid_visible)
@@ -43,7 +46,7 @@ class MyPlotView:
 
 
     def refresh_curves(self):
-        print("[views.py > refresh_curves()] ▶️ Entrée dans refresh_curves()")
+        logger.debug("[views.py > refresh_curves()] ▶️ Entrée dans refresh_curves()")
 
     
         start = time.perf_counter()
@@ -74,7 +77,7 @@ class MyPlotView:
         self.zero_arrows = []
     
         for curve in self.graph_data.curves:
-            print(f"[DEBUG] Courbe '{curve.name}' → id={id(curve)} zero_indicator = {curve.zero_indicator}")
+            logger.debug(f"[DEBUG] Courbe '{curve.name}' → id={id(curve)} zero_indicator = {curve.zero_indicator}")
     
             if not curve.visible:
                 continue
@@ -132,12 +135,12 @@ class MyPlotView:
                     item.setDownsampling(auto=True)
     
         end = time.perf_counter()
-        print(f"[PROFILER] refresh_curves took {end - start:.4f} seconds")
+        logger.debug(f"[PROFILER] refresh_curves took {end - start:.4f} seconds")
 
 
 
     def _on_mouse_click(self, event):
-        print("[views.py > _on_mouse_click()] ▶️ Entrée dans _on_mouse_click()")
+        logger.debug("[views.py > _on_mouse_click()] ▶️ Entrée dans _on_mouse_click()")
 
         scene_pos = event.scenePos()
         view_pos = self.plot_widget.plotItem.vb.mapSceneToView(scene_pos)
@@ -160,11 +163,11 @@ class MyPlotView:
                 selected_curve = curve_name
 
         if selected_curve:
-            print(f"[CLICK] Courbe cliquée (par distance) : {selected_curve}")
+            logger.debug(f"[CLICK] Courbe cliquée (par distance) : {selected_curve}")
             signal_bus.curve_selected.emit(self.graph_data.name, selected_curve)
 
     def _format_axis(self, axis, unit: str, fmt: str):
-        print("[views.py > _format_axis()] ▶️ Entrée dans _format_axis()")
+        logger.debug("[views.py > _format_axis()] ▶️ Entrée dans _format_axis()")
 
         from pyqtgraph import siFormat
 
@@ -186,6 +189,6 @@ class MyPlotView:
                 axis.tickStrings = lambda values, scale, spacing: [str(v) for v in values]
 
     def auto_range(self):
-        print("[views.py > auto_range()] ▶️ Entrée dans auto_range()")
+        logger.debug("[views.py > auto_range()] ▶️ Entrée dans auto_range()")
 
         self.plot_widget.enableAutoRange()
