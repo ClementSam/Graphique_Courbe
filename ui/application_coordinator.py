@@ -10,11 +10,14 @@ from ui.views import MyPlotView
 from core.app_state import AppState
 from signal_bus import signal_bus
 from ui.graph_ui_coordinator import GraphUICoordinator
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ApplicationCoordinator:
     def __init__(self, main_window):
-        print("[ApplicationCoordinator] ▶️ Initialisation du coordinateur")
+        logger.debug("[ApplicationCoordinator] ▶️ Initialisation du coordinateur")
 
         self.main_window = main_window
         self.state = AppState.get_instance()
@@ -30,11 +33,11 @@ class ApplicationCoordinator:
         self._setup_controller()
         self._connect_signals()
 
-        print("[ApplicationCoordinator] ✅ Initialisation terminée")
+        logger.debug("[ApplicationCoordinator] ✅ Initialisation terminée")
 
     def _setup_controller(self):
         self.controller = GraphController(self.views, self.center_area)
-        print("[ApplicationCoordinator] 🧠 Contrôleur initialisé")
+        logger.debug("[ApplicationCoordinator] 🧠 Contrôleur initialisé")
 
     def _connect_signals(self):
         # ➕ Ajout de graphes ou courbes
@@ -67,17 +70,17 @@ class ApplicationCoordinator:
             self.controller.add_curve(kind_or_graphname)
 
     def on_graph_selected(self, name):
-        print(f"📥 [ApplicationCoordinator] Signal graph_selected reçu pour : {name}")
+        logger.debug(f"📥 [ApplicationCoordinator] Signal graph_selected reçu pour : {name}")
         graph = self.state.graphs.get(name)
         if graph:
             self.state.current_graph = graph
-            print(f"🧠 [on_graph_selected] current_graph mis à jour : {graph.name}")
+            logger.debug(f"🧠 [on_graph_selected] current_graph mis à jour : {graph.name}")
             if self.properties_panel:
                 self.properties_panel.update_graph_ui()
         self.graph_ui_coordinator.refresh_plot()
 
     def on_graph_updated(self):
-        print("📥 [ApplicationCoordinator] Signal graph_updated reçu")
+        logger.debug("📥 [ApplicationCoordinator] Signal graph_updated reçu")
         self.graph_ui_coordinator.refresh_plot()
 
     # 🆕 Méthodes pour pilotage de l’UI
