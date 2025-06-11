@@ -1,4 +1,5 @@
 from PyQt5 import QtCore
+from PyQt5.QtCore import QObject, pyqtSignal
 
 class SignalBus(QtCore.QObject):
     graph_selected = QtCore.pyqtSignal(str)
@@ -6,7 +7,12 @@ class SignalBus(QtCore.QObject):
     curve_list_updated = QtCore.pyqtSignal()
     curve_updated = QtCore.pyqtSignal()
     graph_updated = QtCore.pyqtSignal()
+
     remove_requested = QtCore.pyqtSignal(str, str)
     rename_requested = QtCore.pyqtSignal(str, str, str)  # kind, old_name, new_name
+
+    # 🚨 Deux signaux séparés !
+    add_graph_requested = pyqtSignal(str)  # "graph"
+    add_curve_requested = pyqtSignal(str)  # "NomGraphique"
 
 signal_bus = SignalBus()

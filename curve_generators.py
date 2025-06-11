@@ -1,6 +1,6 @@
 # curve_generators.py
 import numpy as np
-from models import CurveData
+from core.models import CurveData
 from PyQt5.QtCore import Qt
 import random
 

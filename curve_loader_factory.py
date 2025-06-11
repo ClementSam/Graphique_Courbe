@@ -1,6 +1,6 @@
 import json
 from typing import List
-from models import CurveData
+from core.models import CurveData
 from serializers import dict_to_curve
 from import_utils import load_curves_from_file
 import struct

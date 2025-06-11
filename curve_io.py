@@ -1,7 +1,7 @@
 
 import json
 from typing import List
-from models import CurveData
+from core.models import CurveData
 from serializers import curve_to_dict, dict_to_curve
 
 

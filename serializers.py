@@ -1,7 +1,7 @@
 
 import numpy as np
 from typing import List, Dict
-from models import CurveData, GraphData
+from core.models import CurveData, GraphData
 
 
 def curve_to_dict(curve: CurveData) -> dict:

@@ -1,7 +1,7 @@
 
 import pandas as pd
 from typing import List
-from models import CurveData
+from core.models import CurveData
 
 
 def load_curves_from_file(path: str) -> List[CurveData]:

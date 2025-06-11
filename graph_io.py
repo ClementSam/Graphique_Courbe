@@ -1,6 +1,6 @@
 
 import json
-from models import GraphData
+from core.models import GraphData
 from serializers import graph_to_dict, dict_to_graph
 
 def export_graph_to_json(graph: GraphData, path: str):
