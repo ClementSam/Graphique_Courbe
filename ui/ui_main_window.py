@@ -15,21 +15,10 @@ from core.app_state import AppState
 from signal_bus import signal_bus
 import os
 import json
-from datetime import datetime
 import sys
+from core.startup import check_expiry_date
 
 RECENT_FILE = "recent_projects.json"
-
-def check_expiry_date():
-    expiry = datetime(2025, 6, 30)
-    now = datetime.now()
-    if now > expiry:
-        QtWidgets.QMessageBox.critical(
-            None,
-            "Accès expiré",
-            f"Cette version a expiré le {expiry.strftime('%d/%m/%Y')}.Veuillez contacter l’auteur."
-        )
-        sys.exit(0)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
