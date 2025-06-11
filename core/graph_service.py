@@ -18,21 +18,12 @@ class GraphService:
 
     def create_graph(self):
         print("🧱 [GraphService.create_graph] Création d'un nouveau graphique...")
-        name = self._generate_unique_graph_name()
+        name = get_next_graph_name()
         print(f"📛 [GraphService.create_graph] Nom généré : {name}")
         self.state.add_graph(name)
         print(f"✅ [GraphService.create_graph] Graphique '{name}' ajouté à l'état.")
         return name
 
-    def _generate_unique_graph_name(self):
-        print("🔄 [GraphService._generate_unique_graph_name] Recherche d'un nom unique...")
-        index = 1
-        while f"Graphique {index}" in self.state.graphs:
-            print(f"🔁 [GraphService._generate_unique_graph_name] Graphique {index} existe déjà")
-            index += 1
-        result = f"Graphique {index}"
-        print(f"🎯 [GraphService._generate_unique_graph_name] Nom unique trouvé : {result}")
-        return result
 
     def select_graph(self, name: str):
         print(f"🖱 [GraphService.select_graph] Sélection du graphique : {name}")
