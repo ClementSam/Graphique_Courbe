@@ -51,26 +51,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def _setup_ui(self):
-        from ui.GraphCurvePanel import GraphCurvePanel
-        from ui.CentralPlotArea import CentralPlotArea
-        from ui.PropertiesPanel import PropertiesPanel
-    
-        # Widget central docké — le vrai contenu sera injecté après instanciation de self.app
+        # Widget central docké — le vrai contenu sera injecté après instanciation de l'application
         self.dock_center = QtWidgets.QDockWidget("Zone centrale", self)
         self.dock_center.setFeatures(QtWidgets.QDockWidget.AllDockWidgetFeatures)
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock_center)
         self.add_graph_to_view_menu("Zone centrale", self.dock_center)
-    
+
         # Panneau gauche
-        self.left_panel = GraphCurvePanel()
+        self.left_panel = QtWidgets.QWidget()
         self.dock_left = QtWidgets.QDockWidget("Graphiques et courbes", self)
         self.dock_left.setWidget(self.left_panel)
         self.dock_left.setFeatures(QtWidgets.QDockWidget.AllDockWidgetFeatures)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.dock_left)
         self.add_graph_to_view_menu("Graphiques et courbes", self.dock_left)
-    
+
         # Panneau droit
-        self.right_panel = PropertiesPanel()
+        self.right_panel = QtWidgets.QWidget()
         self.dock_right = QtWidgets.QDockWidget("Propriétés", self)
         self.dock_right.setWidget(self.right_panel)
         self.dock_right.setFeatures(QtWidgets.QDockWidget.AllDockWidgetFeatures)

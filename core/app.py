@@ -19,6 +19,12 @@ def launch_app():
     window.center_area_widget = app_coordinator.center_area
     window.dock_center.setWidget(window.center_area_widget)
 
+    # Injecte les panneaux gérés par le coordinateur
+    window.left_panel = app_coordinator.graph_panel
+    window.dock_left.setWidget(window.left_panel)
+    window.right_panel = app_coordinator.properties_panel
+    window.dock_right.setWidget(window.right_panel)
+
     # Chargement du layout s'il existe
     try:
         default = get_default_layout()
