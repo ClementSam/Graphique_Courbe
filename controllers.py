@@ -9,11 +9,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 class GraphController:
-    def __init__(self, views: dict, central_area):
+    def __init__(self, views: dict, central_area, properties_panel=None):
         logger.debug("🧠 [GraphController.__init__] Initialisation du contrôleur")
         self.state = AppState.get_instance()
         self.service = GraphService(self.state)
-        self.ui = GraphUICoordinator(self.state, views, central_area)
+        try:
+            self.ui = GraphUICoordinator(
+                self.state, views, central_area, properties_panel
+            )
+        except TypeError:
+            # fallback for older coordinator stubs without properties panel
+            self.ui = GraphUICoordinator(self.state, views, central_area)
+            if properties_panel is not None:
+                self.ui.properties_panel = properties_panel
 
     def load_project(self, graphs: dict):
         logger.debug("📂 [GraphController.load_project] Chargement du projet...")
