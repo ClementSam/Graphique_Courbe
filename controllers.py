@@ -94,6 +94,31 @@ class GraphController:
         self.service.bring_curve_to_front()
         self.ui.refresh_plot()
 
+    # ----- Paramètres du graphique -----
+    def set_grid_visible(self, visible: bool):
+        logger.debug(f"📐 [GraphController.set_grid_visible] {visible}")
+        self.service.set_grid_visible(visible)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_dark_mode(self, enabled: bool):
+        logger.debug(f"🌒 [GraphController.set_dark_mode] {enabled}")
+        self.service.set_dark_mode(enabled)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_log_x(self, enabled: bool):
+        logger.debug(f"📈 [GraphController.set_log_x] {enabled}")
+        self.service.set_log_x(enabled)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_log_y(self, enabled: bool):
+        logger.debug(f"📉 [GraphController.set_log_y] {enabled}")
+        self.service.set_log_y(enabled)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
     def set_graph_visible(self, graph_name: str, visible: bool):
         logger.debug(f"👁 [GraphController.set_graph_visible] {graph_name} → {visible}")
         self.service.set_graph_visible(graph_name, visible)

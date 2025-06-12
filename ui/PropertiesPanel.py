@@ -59,6 +59,20 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             lambda: self._call_controller(self.controller.bring_curve_to_front)
         )
 
+        # Connexions pour l'onglet graphique
+        self.grid_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(self.controller.set_grid_visible, val)
+        )
+        self.darkmode_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(self.controller.set_dark_mode, val)
+        )
+        self.logx_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(self.controller.set_log_x, val)
+        )
+        self.logy_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(self.controller.set_log_y, val)
+        )
+
     def setup_ui(self):
         logger.debug("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")
 
@@ -285,6 +299,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             return
         func(*args)
         signal_bus.curve_updated.emit()
+
+    def _call_graph_controller(self, func, *args):
+        if not self.controller:
+            return
+        func(*args)
+        signal_bus.graph_updated.emit()
 
     def _choose_color(self):
         color = QtWidgets.QColorDialog.getColor(parent=self)

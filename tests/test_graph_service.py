@@ -71,3 +71,20 @@ def test_set_visibility(service):
 
     svc.set_curve_visible(graph, "Courbe 1", False)
     assert state.graphs[graph].curves[0].visible is False
+
+
+def test_graph_options(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    svc.set_dark_mode(True)
+    svc.set_grid_visible(True)
+    svc.set_log_x(True)
+    svc.set_log_y(True)
+
+    assert state.current_graph.dark_mode is True
+    assert state.current_graph.grid_visible is True
+    assert state.current_graph.log_x is True
+    assert state.current_graph.log_y is True

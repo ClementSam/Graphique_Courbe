@@ -82,7 +82,7 @@ class ApplicationCoordinator:
     def _handle_curve_selected(self, graph_name, curve_name):
         """Handle selection of a curve from the UI tree."""
         if graph_name:
-            self.controller.select_graph(graph_name)
+            signal_bus.graph_selected.emit(graph_name)
         self.controller.select_curve(curve_name)
 
     def _handle_add_requested(self, kind_or_graphname):
