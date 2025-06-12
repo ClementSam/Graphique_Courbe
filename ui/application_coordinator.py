@@ -31,6 +31,8 @@ class ApplicationCoordinator:
         # Prépare le panneau de propriétés
         self._setup_controller()
         self.properties_panel = PropertiesPanel(self.controller)
+        # expose the properties panel to the controller's coordinator as well
+        self.controller.ui.properties_panel = self.properties_panel
 
         # 👇 Coordinateur UI des graphes
         self.graph_ui_coordinator = GraphUICoordinator(
