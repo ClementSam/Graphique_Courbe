@@ -8,6 +8,10 @@ class SignalBus(QtCore.QObject):
     curve_updated = QtCore.pyqtSignal()
     graph_updated = QtCore.pyqtSignal()
 
+    # Visible state toggles
+    graph_visibility_changed = QtCore.pyqtSignal(str, bool)
+    curve_visibility_changed = QtCore.pyqtSignal(str, str, bool)
+
     remove_requested = QtCore.pyqtSignal(str, str)
     rename_requested = QtCore.pyqtSignal(str, str, str)  # kind, old_name, new_name
 

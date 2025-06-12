@@ -58,3 +58,16 @@ def test_rename_graph_and_curve(service):
     svc.select_graph("NewGraph")
     svc.rename_curve("Courbe 1", "Renamed")
     assert state.current_graph.curves[0].name == "Renamed"
+
+
+def test_set_visibility(service):
+    svc, state, _ = service
+    svc.add_graph()
+    graph = list(state.graphs.keys())[0]
+    svc.add_curve(graph, curve=CurveData(name="tmp", x=[0], y=[0]))
+
+    svc.set_graph_visible(graph, False)
+    assert state.graphs[graph].visible is False
+
+    svc.set_curve_visible(graph, "Courbe 1", False)
+    assert state.graphs[graph].curves[0].visible is False

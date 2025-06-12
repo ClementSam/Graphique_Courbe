@@ -94,6 +94,20 @@ class GraphController:
         self.service.bring_curve_to_front()
         self.ui.refresh_plot()
 
+    def set_graph_visible(self, graph_name: str, visible: bool):
+        logger.debug(f"👁 [GraphController.set_graph_visible] {graph_name} → {visible}")
+        self.service.set_graph_visible(graph_name, visible)
+        signal_bus.graph_updated.emit()
+        signal_bus.curve_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_curve_visible(self, graph_name: str, curve_name: str, visible: bool):
+        logger.debug(f"👁 [GraphController.set_curve_visible] {curve_name} in {graph_name} → {visible}")
+        self.service.set_curve_visible(graph_name, curve_name, visible)
+        signal_bus.graph_updated.emit()
+        signal_bus.curve_updated.emit()
+        self.ui.refresh_plot()
+
     def set_opacity(self, value: float):
         logger.debug(f"🎨 [GraphController.set_opacity] Opacité = {value}")
         self.service.set_opacity(value)

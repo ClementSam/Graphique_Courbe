@@ -236,3 +236,19 @@ class GraphService:
         logger.debug(f"👁 [GraphService.set_show_label] Étiquette visible = {visible}")
         if self.state.current_curve:
             self.state.current_curve.show_label = visible
+
+    def set_graph_visible(self, graph_name: str, visible: bool):
+        logger.debug(f"👁 [GraphService.set_graph_visible] {graph_name} → {visible}")
+        graph = self.state.graphs.get(graph_name)
+        if graph:
+            graph.visible = visible
+
+    def set_curve_visible(self, graph_name: str, curve_name: str, visible: bool):
+        logger.debug(f"👁 [GraphService.set_curve_visible] {curve_name} in {graph_name} → {visible}")
+        graph = self.state.graphs.get(graph_name)
+        if not graph:
+            return
+        for curve in graph.curves:
+            if curve.name == curve_name:
+                curve.visible = visible
+                break
