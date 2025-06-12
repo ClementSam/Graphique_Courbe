@@ -22,6 +22,8 @@ def make_signal_bus():
         curve_list_updated=DummySignal(),
         curve_updated=DummySignal(),
         graph_updated=DummySignal(),
+        graph_visibility_changed=DummySignal(),
+        curve_visibility_changed=DummySignal(),
     )
 
 class DummyCoordinator:
@@ -101,3 +103,24 @@ def test_controller_reset_zoom_invokes_ui(controller):
     c.reset_zoom()
 
     assert called["count"] == 1
+
+
+def test_controller_set_visibility(controller):
+    c, state, bus = controller
+    c.add_graph()
+    graph = list(state.graphs.keys())[0]
+    c.add_curve(graph)
+
+    bus.graph_updated.emitted.clear()
+    bus.curve_updated.emitted.clear()
+    c.set_graph_visible(graph, False)
+    assert state.graphs[graph].visible is False
+    assert len(bus.graph_updated.emitted) == 1
+    assert len(bus.curve_updated.emitted) == 1
+
+    bus.graph_updated.emitted.clear()
+    bus.curve_updated.emitted.clear()
+    c.set_curve_visible(graph, "Courbe 1", False)
+    assert state.graphs[graph].curves[0].visible is False
+    assert len(bus.graph_updated.emitted) == 1
+    assert len(bus.curve_updated.emitted) == 1

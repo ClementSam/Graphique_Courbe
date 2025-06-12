@@ -65,10 +65,15 @@ class CombinedDelegate(QStyledItemDelegate):
     
             if eye_rect.contains(pos) and kind in ("graph", "curve"):
                 val = index.data(Qt.UserRole + 1)
-                logger.debug(f"👁️ [Toggle Visibility] {name} → {not val}")
-                model.setData(index, not val, Qt.UserRole + 1)
-                signal_bus.curve_updated.emit()
-                signal_bus.graph_updated.emit()
+                new_val = not val
+                logger.debug(f"👁️ [Toggle Visibility] {name} → {new_val}")
+                model.setData(index, new_val, Qt.UserRole + 1)
+                if kind == "graph":
+                    signal_bus.graph_visibility_changed.emit(name, new_val)
+                else:
+                    parent_index = index.parent()
+                    graph_name = parent_index.data(Qt.UserRole + 4) if parent_index.isValid() else None
+                    signal_bus.curve_visibility_changed.emit(graph_name, name, new_val)
                 return True
     
             if delete_rect.contains(pos) and kind in ("graph", "curve"):

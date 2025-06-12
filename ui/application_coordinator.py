@@ -64,6 +64,8 @@ class ApplicationCoordinator:
         signal_bus.graph_selected.connect(self._on_graph_selected)
         signal_bus.rename_requested.connect(self._handle_rename_requested)
         signal_bus.remove_requested.connect(self._handle_remove_requested)
+        signal_bus.graph_visibility_changed.connect(self.controller.set_graph_visible)
+        signal_bus.curve_visibility_changed.connect(self.controller.set_curve_visible)
 
         # 🔍 Réinitialisation du zoom depuis le panneau de propriétés
         self.properties_panel.button_reset_zoom.clicked.connect(
