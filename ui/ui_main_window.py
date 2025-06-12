@@ -8,11 +8,11 @@ from ui import layout_manager as lm
 import logging
 
 logger = logging.getLogger(__name__)
-from io.project_io import export_project_to_json, import_project_from_json
-from io.graph_io import export_graph_to_json, import_graph_from_json
-from io.curve_io import export_curve_to_json, import_curve_from_json
+from IO_dossier.project_io import export_project_to_json, import_project_from_json
+from IO_dossier.graph_io import export_graph_to_json, import_graph_from_json
+from IO_dossier.curve_io import export_curve_to_json, import_curve_from_json
 from ui.dialogs.import_curve_dialog import ImportCurveDialog
-from io.curve_loader_factory import load_curve_by_format
+from IO_dossier.curve_loader_factory import load_curve_by_format
 from curve_generators import generate_random_curve
 from core.app_state import AppState
 from signal_bus import signal_bus
