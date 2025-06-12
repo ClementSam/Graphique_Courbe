@@ -5,6 +5,8 @@ from PyQt5.QtCore import Qt
 from ui.application_coordinator import ApplicationCoordinator
 from ui.dialogs.layout_manager_dialog import LayoutManagerDialog
 from ui import layout_manager as lm
+from ui.GraphCurvePanel import GraphCurvePanel
+from ui.PropertiesPanel import PropertiesPanel
 import logging
 
 logger = logging.getLogger(__name__)
@@ -58,7 +60,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_graph_to_view_menu("Zone centrale", self.dock_center)
 
         # Panneau gauche
-        self.left_panel = QtWidgets.QWidget()
+        self.left_panel = GraphCurvePanel()
         self.dock_left = QtWidgets.QDockWidget("Graphiques et courbes", self)
         self.dock_left.setWidget(self.left_panel)
         self.dock_left.setFeatures(QtWidgets.QDockWidget.AllDockWidgetFeatures)
@@ -66,7 +68,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_graph_to_view_menu("Graphiques et courbes", self.dock_left)
 
         # Panneau droit
-        self.right_panel = QtWidgets.QWidget()
+        self.right_panel = PropertiesPanel()
         self.dock_right = QtWidgets.QDockWidget("Propriétés", self)
         self.dock_right.setWidget(self.right_panel)
         self.dock_right.setFeatures(QtWidgets.QDockWidget.AllDockWidgetFeatures)
