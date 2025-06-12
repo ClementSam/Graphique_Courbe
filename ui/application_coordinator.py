@@ -23,7 +23,6 @@ class ApplicationCoordinator:
         self.state = AppState.get_instance()
 
         self.graph_panel = GraphCurvePanel()
-        self.properties_panel = PropertiesPanel()
         self.center_area = CentralPlotArea()
         self.views = {}
 
@@ -31,6 +30,8 @@ class ApplicationCoordinator:
         self.graph_ui_coordinator = GraphUICoordinator(self.state, self.views, self.center_area)
 
         self._setup_controller()
+        self.properties_panel = PropertiesPanel(self.controller)
+        self.graph_ui_coordinator.properties_panel = self.properties_panel
         self._connect_signals()
 
         logger.debug("[ApplicationCoordinator] ✅ Initialisation terminée")

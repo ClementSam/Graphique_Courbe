@@ -2,17 +2,62 @@
 
 from core.app_state import AppState
 from PyQt5 import QtWidgets, QtCore, QtGui
+from signal_bus import signal_bus
 import logging
 
 logger = logging.getLogger(__name__)
 
 class PropertiesPanel(QtWidgets.QTabWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, controller=None, parent=None):
         logger.debug("[PropertiesPanel.py > __init__()] ▶️ Entrée dans __init__()")
 
         super().__init__(parent)
+        self.controller = controller
         self.setup_ui()
+        self._connect_signals()
+
+    def set_controller(self, controller):
+        """Expose le contrôleur au panneau après initialisation."""
+        self.controller = controller
+        self._connect_signals()
+
+    def _connect_signals(self):
+        """Connecte les interactions utilisateur aux méthodes du contrôleur."""
+        if not self.controller:
+            return
+
+        self.color_button.clicked.connect(self._choose_color)
+        self.gain_slider.valueChanged.connect(
+            lambda v: self._call_controller(self.controller.set_gain, v / 100)
+        )
+        self.offset_slider.valueChanged.connect(
+            lambda v: self._call_controller(self.controller.set_offset, float(v))
+        )
+        self.style_combo.currentIndexChanged.connect(
+            lambda i: self._call_controller(self.controller.set_style, self.style_combo.itemData(i))
+        )
+        self.symbol_combo.currentIndexChanged.connect(
+            lambda i: self._call_controller(self.controller.set_symbol, self.symbol_combo.itemData(i))
+        )
+        self.fill_checkbox.toggled.connect(
+            lambda val: self._call_controller(self.controller.set_fill, val)
+        )
+        self.display_mode_combo.currentIndexChanged.connect(
+            lambda i: self._call_controller(self.controller.set_display_mode, self.display_mode_combo.itemData(i))
+        )
+        self.label_mode_combo.currentIndexChanged.connect(
+            lambda i: self._call_controller(self.controller.set_label_mode, self.label_mode_combo.itemData(i))
+        )
+        self.zero_indicator_combo.currentIndexChanged.connect(
+            lambda i: self._call_controller(self.controller.set_zero_indicator, self.zero_indicator_combo.itemData(i))
+        )
+        self.opacity_slider.valueChanged.connect(
+            lambda v: self._call_controller(self.controller.set_opacity, float(v))
+        )
+        self.bring_to_front_button.clicked.connect(
+            lambda: self._call_controller(self.controller.bring_curve_to_front)
+        )
 
     def setup_ui(self):
         logger.debug("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")
@@ -234,6 +279,18 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addStretch()
         
         self.addTab(tab_curve, "Propriétés de la courbe")
+
+    def _call_controller(self, func, *args):
+        if not self.controller:
+            return
+        func(*args)
+        signal_bus.curve_updated.emit()
+
+    def _choose_color(self):
+        color = QtWidgets.QColorDialog.getColor(parent=self)
+        if color.isValid():
+            self.color_button.setStyleSheet(f"background-color: {color.name()}")
+            self._call_controller(self.controller.set_color, color.name())
         
     def refresh_curve_tab(self):
         logger.debug("[PropertiesPanel] 🔁 Rafraîchissement de l’onglet courbe")
