@@ -55,11 +55,17 @@ class GraphController:
     def select_graph(self, name: str):
         logger.debug(f"🎯 [GraphController.select_graph] Sélection du graphique : {name}")
         self.service.select_graph(name)
+        logger.debug(
+            f"   ➡️ Graphique courant : {self.state.current_graph.name if self.state.current_graph else 'None'}"
+        )
         self.ui.refresh_plot()
 
     def select_curve(self, curve_name: str):
         logger.debug(f"🎯 [GraphController.select_curve] Sélection de la courbe : {curve_name}")
         self.service.select_curve(curve_name)
+        logger.debug(
+            f"   ➡️ Courbe courante : {self.state.current_curve.name if self.state.current_curve else 'None'}"
+        )
         self.ui.refresh_curve_ui()
 
     def remove_graph(self, name: str):
