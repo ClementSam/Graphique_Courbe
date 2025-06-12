@@ -27,25 +27,24 @@ class ApplicationCoordinator:
         self.graph_panel = GraphCurvePanel()
         self.center_area = CentralPlotArea()
         self.views = {}
-        
-        # Prépare le panneau de propriétés
-        self._setup_controller()
-        self.properties_panel = PropertiesPanel(self.controller)
-        # expose the properties panel to the controller's coordinator as well
-        self.controller.ui.properties_panel = self.properties_panel
 
-        # 👇 Coordinateur UI des graphes
-        self.graph_ui_coordinator = GraphUICoordinator(
-            self.state, self.views, self.center_area, self.properties_panel
-        )
-        # assure la disponibilité du panneau de propriétés pour le coordinateur
-        self.graph_ui_coordinator.properties_panel = self.properties_panel
+        # Réutilise le panneau de propriétés existant dans la fenêtre principale
+        self.properties_panel = self.main_window.right_panel
+
+        # Prépare le contrôleur et la coordination UI
+        self._setup_controller()
+        self.properties_panel.set_controller(self.controller)
+
+        # Utilise le coordinateur créé par le contrôleur
+        self.graph_ui_coordinator = self.controller.ui
         self._connect_signals()
 
         logger.debug("[ApplicationCoordinator] ✅ Initialisation terminée")
 
     def _setup_controller(self):
-        self.controller = GraphController(self.views, self.center_area)
+        self.controller = GraphController(
+            self.views, self.center_area, self.properties_panel
+        )
         logger.debug("[ApplicationCoordinator] 🧠 Contrôleur initialisé")
 
     def _connect_signals(self):
