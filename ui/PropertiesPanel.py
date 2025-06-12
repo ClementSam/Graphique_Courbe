@@ -380,6 +380,22 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         curve = state.current_curve
         if not curve:
             logger.debug("[PropertiesPanel] ⚠️ Aucune courbe sélectionnée")
+            self.label_curve_name.setText("—")
+            self.color_button.setStyleSheet("")
+            self.style_combo.setCurrentIndex(0)
+            self.width_spin.setValue(1)
+            self.symbol_combo.setCurrentIndex(0)
+            self.display_mode_combo.setCurrentIndex(0)
+            self.label_mode_combo.setCurrentIndex(0)
+            self.opacity_slider.setValue(100)
+            self.fill_checkbox.setChecked(False)
+            self.gain_slider.setValue(100)
+            self.offset_slider.setValue(0)
+            self.zero_indicator_combo.setCurrentIndex(0)
+            self.downsampling_combo.setCurrentIndex(0)
+            self.downsampling_ratio_input.setValue(10)
+            self.downsampling_ratio_input.setEnabled(False)
+            self.downsampling_apply_btn.setEnabled(False)
             return
     
         logger.debug(f"[PropertiesPanel] 🔄 Mise à jour des champs pour la courbe '{curve.name}'")

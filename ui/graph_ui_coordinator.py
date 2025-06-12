@@ -21,10 +21,11 @@ class GraphUICoordinator:
         logger.debug("[graph_ui_coordinator > refresh_curve_ui()] ▶️ Rafraîchissement des propriétés de courbe")
         if self.state.current_curve:
             logger.debug(f"🔍 Courbe courante : {self.state.current_curve.name}")
-            if self.properties_panel:
-                self.properties_panel.update_curve_ui()
         else:
             logger.debug("ℹ️ Aucune courbe sélectionnée")
+
+        if self.properties_panel:
+            self.properties_panel.update_curve_ui()
 
     def refresh_plot(self):
         logger.debug("\n[GraphUICoordinator.refresh_plot] ▶️ Début du rafraîchissement des graphes")
