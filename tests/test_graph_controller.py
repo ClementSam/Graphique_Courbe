@@ -124,3 +124,19 @@ def test_controller_set_visibility(controller):
     assert state.graphs[graph].curves[0].visible is False
     assert len(bus.graph_updated.emitted) == 1
     assert len(bus.curve_updated.emitted) == 1
+
+def test_controller_graph_options(controller):
+    c, state, bus = controller
+    c.add_graph()
+    graph = list(state.graphs.keys())[0]
+    c.select_graph(graph)
+
+    bus.graph_updated.emitted.clear()
+    c.set_dark_mode(True)
+    assert state.graphs[graph].dark_mode is True
+    assert len(bus.graph_updated.emitted) == 1
+
+    bus.graph_updated.emitted.clear()
+    c.set_grid_visible(True)
+    assert state.graphs[graph].grid_visible is True
+    assert len(bus.graph_updated.emitted) == 1
