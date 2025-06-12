@@ -9,19 +9,19 @@ logger = logging.getLogger(__name__)
 
 
 class GraphUICoordinator:
-    def __init__(self, state: AppState, views: dict, central_area):
+    def __init__(self, state: AppState, views: dict, central_area, properties_panel: PropertiesPanel | None = None):
         logger.debug("[GraphUICoordinator.__init__] Initialisation")
         self.state = state
         self.views = views
         self.central_area = central_area  # 🆕 pour gérer dynamiquement les widgets
+        self.properties_panel = properties_panel
         logger.debug(f"[GraphUICoordinator.__init__] Vues disponibles : {list(self.views.keys())}")
         
     def refresh_curve_ui(self):
         logger.debug("[graph_ui_coordinator > refresh_curve_ui()] ▶️ Rafraîchissement des propriétés de courbe")
         if self.state.current_curve:
             logger.debug(f"🔍 Courbe courante : {self.state.current_curve.name}")
-            # ⚠️ À adapter : Assure-toi que self.properties_panel est bien défini quelque part
-            if hasattr(self, 'properties_panel') and self.properties_panel:
+            if self.properties_panel:
                 self.properties_panel.update_curve_ui()
         else:
             logger.debug("ℹ️ Aucune courbe sélectionnée")
