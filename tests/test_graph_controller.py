@@ -140,3 +140,22 @@ def test_controller_graph_options(controller):
     c.set_grid_visible(True)
     assert state.graphs[graph].grid_visible is True
     assert len(bus.graph_updated.emitted) == 1
+
+
+def test_selection_flow_updates_state_and_ui(controller):
+    c, state, bus = controller
+    c.add_graph()
+    graph_name = list(state.graphs.keys())[0]
+
+    bus.curve_selected.emitted.clear()
+    c.add_curve(graph_name)
+
+    assert state.current_graph.name == graph_name
+    assert state.current_curve.name == "Courbe 1"
+    assert bus.curve_selected.emitted[0] == (graph_name, "Courbe 1")
+
+    c.ui.curve_calls = 0
+    c.select_curve("Courbe 1")
+
+    assert state.current_curve.name == "Courbe 1"
+    assert c.ui.curve_calls == 1

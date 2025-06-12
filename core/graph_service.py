@@ -37,6 +37,9 @@ class GraphService:
     def select_curve(self, curve_name: str):
         logger.debug(f"🖱 [GraphService.select_curve] Sélection de la courbe : {curve_name}")
         self.state.select_curve(curve_name)
+        logger.debug(
+            f"🔎 [GraphService.select_curve] Courbe active : {self.state.current_curve.name if self.state.current_curve else 'None'}"
+        )
 
     def rename_graph(self, old_name: str, new_name: str):
         logger.debug(f"✏️ [GraphService.rename_graph] Renommage du graphique : {old_name} → {new_name}")
