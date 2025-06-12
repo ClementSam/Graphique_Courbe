@@ -181,7 +181,27 @@ class GraphService:
             graph.curves.insert(0, curve)
             logger.debug(f"✅ [GraphService.bring_curve_to_front] Courbe '{curve.name}' déplacée en tête")
 
-    # ----- Méthodes métier explicites sur les courbes -----
+    # ----- Méthodes métier pour les propriétés du graphique -----
+    def set_grid_visible(self, visible: bool):
+        logger.debug(f"📐 [GraphService.set_grid_visible] {visible}")
+        if self.state.current_graph:
+            self.state.current_graph.grid_visible = visible
+
+    def set_dark_mode(self, enabled: bool):
+        logger.debug(f"🌒 [GraphService.set_dark_mode] {enabled}")
+        if self.state.current_graph:
+            self.state.current_graph.dark_mode = enabled
+
+    def set_log_x(self, enabled: bool):
+        logger.debug(f"📈 [GraphService.set_log_x] {enabled}")
+        if self.state.current_graph:
+            self.state.current_graph.log_x = enabled
+
+    def set_log_y(self, enabled: bool):
+        logger.debug(f"📉 [GraphService.set_log_y] {enabled}")
+        if self.state.current_graph:
+            self.state.current_graph.log_y = enabled
+
     def set_opacity(self, value: float):
         logger.debug(f"🎨 [GraphService.set_opacity] Opacité = {value}")
         if self.state.current_curve:
