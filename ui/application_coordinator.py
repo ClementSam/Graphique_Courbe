@@ -28,7 +28,11 @@ class ApplicationCoordinator:
         self.views = {}
 
         # 👇 Coordinateur UI des graphes
-        self.graph_ui_coordinator = GraphUICoordinator(self.state, self.views, self.center_area)
+        self.graph_ui_coordinator = GraphUICoordinator(
+            self.state, self.views, self.center_area, self.properties_panel
+        )
+        # assure la disponibilité du panneau de propriétés pour le coordinateur
+        self.graph_ui_coordinator.properties_panel = self.properties_panel
 
         self._setup_controller()
         self._connect_signals()
