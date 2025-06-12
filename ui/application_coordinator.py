@@ -10,6 +10,8 @@ from ui.views import MyPlotView
 from core.app_state import AppState
 from signal_bus import signal_bus
 from ui.graph_ui_coordinator import GraphUICoordinator
+from ui.dialogs.import_curve_dialog import ImportCurveDialog
+from IO_dossier.curve_loader_factory import load_curve_by_format
 import logging
 
 logger = logging.getLogger(__name__)
@@ -80,8 +82,40 @@ class ApplicationCoordinator:
     def _handle_add_requested(self, kind_or_graphname):
         if kind_or_graphname == "graph":
             self.controller.add_graph(None)
-        else:
-            self.controller.add_curve(kind_or_graphname)
+            return
+
+        dialog = ImportCurveDialog()
+        if dialog.exec_():
+            path, fmt = dialog.get_selected_path_and_format()
+            if not fmt:
+                return
+
+            try:
+                if fmt == "random_curve":
+                    from curve_generators import generate_random_curve
+
+                    graph = self.state.graphs.get(kind_or_graphname)
+                    existing = [c.name for c in graph.curves] if graph else []
+                    index = 1
+                    while f"Courbe {index}" in existing:
+                        index += 1
+                    curves = [generate_random_curve(index)]
+                else:
+                    curves = load_curve_by_format(path, fmt)
+
+                last_name = None
+                for curve in curves:
+                    last_name = self.controller.service.add_curve(kind_or_graphname, curve)
+
+                if last_name:
+                    signal_bus.curve_selected.emit(kind_or_graphname, last_name)
+                signal_bus.curve_list_updated.emit()
+                signal_bus.curve_updated.emit()
+                self.controller.ui.refresh_plot()
+
+            except Exception as e:
+                from PyQt5.QtWidgets import QMessageBox
+                QMessageBox.critical(None, "Erreur", f"Échec de l'importation : {str(e)}")
 
     def on_graph_selected(self, name):
         logger.debug(f"📥 [ApplicationCoordinator] Signal graph_selected reçu pour : {name}")
