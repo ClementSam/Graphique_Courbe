@@ -53,7 +53,7 @@ class ApplicationCoordinator:
 
         # 🎯 Sélections
         signal_bus.graph_selected.connect(self.controller.select_graph)
-        signal_bus.curve_selected.connect(lambda g, c: self.controller.select_curve(c))
+        signal_bus.curve_selected.connect(self._handle_curve_selected)
 
         # 🔄 Mise à jour des panneaux de propriétés
         signal_bus.graph_updated.connect(self.properties_panel.refresh_graph_tab)
@@ -78,6 +78,12 @@ class ApplicationCoordinator:
         self.properties_panel.button_reset_zoom.clicked.connect(
             self.controller.reset_zoom
         )
+
+    def _handle_curve_selected(self, graph_name, curve_name):
+        """Handle selection of a curve from the UI tree."""
+        if graph_name:
+            self.controller.select_graph(graph_name)
+        self.controller.select_curve(curve_name)
 
     def _handle_add_requested(self, kind_or_graphname):
         if kind_or_graphname == "graph":
@@ -159,4 +165,5 @@ class ApplicationCoordinator:
         elif kind == "curve":
             self.controller.remove_curve(name)
             self.graph_ui_coordinator.refresh_plot()
+
 
