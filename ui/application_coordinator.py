@@ -1,14 +1,10 @@
 # application_coordinator.py
 
 from controllers import GraphController
-from ui.GraphCurvePanel import GraphCurvePanel
 from ui.CentralPlotArea import CentralPlotArea
 from ui.PropertiesPanel import PropertiesPanel
 from signal_bus import signal_bus
-from core.models import GraphData
-from ui.views import MyPlotView
 from core.app_state import AppState
-from signal_bus import signal_bus
 from ui.graph_ui_coordinator import GraphUICoordinator
 from ui.dialogs.import_curve_dialog import ImportCurveDialog
 from IO_dossier.curve_loader_factory import load_curve_by_format
@@ -24,7 +20,8 @@ class ApplicationCoordinator:
         self.main_window = main_window
         self.state = AppState.get_instance()
 
-        self.graph_panel = GraphCurvePanel()
+        # Reuse the panel created by the main window
+        self.graph_panel = self.main_window.left_panel
         self.center_area = CentralPlotArea()
         self.views = {}
 
