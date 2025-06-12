@@ -24,15 +24,16 @@ class ImportCurveDialog(QDialog):
         self.format_combo.addItem("Oscilloscope TEKTRO V1.2 / JSON", "tektro_json_v1_2")
         self.format_combo.addItem("CSV Standard", "csv_standard")
         self.format_combo.addItem("➕ Générer une courbe aléatoire", "random_curve")
+        self.format_combo.currentIndexChanged.connect(self._on_format_changed)
         layout.addWidget(self.format_combo)
 
         # Sélecteur de fichier
         file_layout = QHBoxLayout()
         self.path_edit = QLineEdit()
-        browse_btn = QPushButton("Parcourir")
-        browse_btn.clicked.connect(self._on_browse)
+        self.browse_btn = QPushButton("Parcourir")
+        self.browse_btn.clicked.connect(self._on_browse)
         file_layout.addWidget(self.path_edit)
-        file_layout.addWidget(browse_btn)
+        file_layout.addWidget(self.browse_btn)
         layout.addLayout(file_layout)
 
         # Boutons bas
@@ -48,18 +49,25 @@ class ImportCurveDialog(QDialog):
 
         self.setLayout(layout)
 
+    def _on_format_changed(self):
+        fmt = self.format_combo.currentData()
+        disabled = fmt == "random_curve"
+        self.path_edit.setDisabled(disabled)
+        self.browse_btn.setDisabled(disabled)
+
     def _on_browse(self):
         path, _ = QFileDialog.getOpenFileName(self, "Sélectionner un fichier", "", "Tous les fichiers (*)")
         if path:
             self.path_edit.setText(path)
 
     def _on_accept(self):
+        fmt = self.format_combo.currentData()
         path = self.path_edit.text().strip()
-        if not path:
+        if fmt != "random_curve" and not path:
             QtWidgets.QMessageBox.warning(self, "Erreur", "Veuillez sélectionner un fichier.")
             return
-        self.selected_path = path
-        self.selected_format = self.format_combo.currentData()
+        self.selected_path = path if fmt != "random_curve" else None
+        self.selected_format = fmt
         self.accept()
 
     def get_selected_path_and_format(self):
