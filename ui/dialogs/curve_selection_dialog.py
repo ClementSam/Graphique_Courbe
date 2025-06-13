@@ -8,15 +8,12 @@ from PyQt5.QtWidgets import (
     QDialogButtonBox,
     QPushButton,
     QLineEdit,
-    QSpinBox,
-    QCheckBox,
 )
 from PyQt5.QtCore import Qt
 import fnmatch
 
 from typing import List
 from core.models import CurveData
-import numpy as np
 
 class CurveSelectionDialog(QDialog):
     """
@@ -39,21 +36,6 @@ class CurveSelectionDialog(QDialog):
         self.filter_edit.textChanged.connect(self._apply_filter)
         filter_layout.addWidget(self.filter_edit)
         main_layout.addLayout(filter_layout)
-
-        # Bit extraction option
-        bit_layout = QHBoxLayout()
-        # Clarify that the bit extraction applies to all selected curves
-        self.bit_checkbox = QCheckBox("Extraire le bit (toutes les courbes) :")
-        self.bit_spin = QSpinBox()
-        self.bit_spin.setRange(0, 31)
-        self.bit_spin.setValue(0)
-        self.bit_spin.setEnabled(False)
-        self.bit_checkbox.stateChanged.connect(
-            lambda state: self.bit_spin.setEnabled(state == Qt.Checked)
-        )
-        bit_layout.addWidget(self.bit_checkbox)
-        bit_layout.addWidget(self.bit_spin)
-        main_layout.addLayout(bit_layout)
 
         lists_layout = QHBoxLayout()
         self.available_list = QListWidget()
@@ -98,12 +80,6 @@ class CurveSelectionDialog(QDialog):
             curve = item.data(Qt.UserRole)
             new_name = item.text().strip()
             curve.name = new_name
-            if self.bit_checkbox.isChecked():
-                bit = self.bit_spin.value()
-                y_int = np.array(curve.y, dtype=int)
-                curve.y = ((y_int >> bit) & 1).astype(curve.y.dtype)
-                # Append the bit number to the curve name for clarity
-                curve.name = f"{curve.name}-[{bit}]"
             selected.append(curve)
         return selected
 
