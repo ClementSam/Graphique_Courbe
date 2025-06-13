@@ -31,6 +31,7 @@ class ApplicationCoordinator:
         # Prépare le contrôleur et la coordination UI
         self._setup_controller()
         self.properties_panel.set_controller(self.controller)
+        self.graph_panel.set_controller(self.controller)
 
         # Utilise le coordinateur créé par le contrôleur
         self.graph_ui_coordinator = self.controller.ui

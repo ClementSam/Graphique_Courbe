@@ -112,9 +112,14 @@ class GraphCurvePanel(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         logger.debug("🔧 [GraphCurvePanel.__init__] Initialisation du panneau graphique")
+        self.controller = None
         self.setup_ui()
         signal_bus.graph_updated.connect(self.refresh_tree)
         signal_bus.curve_updated.connect(self.refresh_tree)
+
+    def set_controller(self, controller):
+        """Expose le contrôleur pour déclencher des actions directement."""
+        self.controller = controller
 
     def setup_ui(self):
         logger.debug("🛠 [GraphCurvePanel.setup_ui] Construction de l'UI")
@@ -130,6 +135,8 @@ class GraphCurvePanel(QtWidgets.QWidget):
         self.tree.setModel(self.model)
         layout.addWidget(self.tree)
         layout.addStretch()
+
+        self.tree.expanded.connect(self.on_item_expanded)
 
         self.populate_from_state()
         
@@ -169,6 +176,12 @@ class GraphCurvePanel(QtWidgets.QWidget):
                         graph_item.appendRow(item)
                 else:
                     graph_item.appendRow(item)
+                    has_bits = any(c.parent_curve == curve.name for c in graph.curves)
+                    if not has_bits and not getattr(curve, "parent_curve", None):
+                        placeholder = QStandardItem("<bits>")
+                        placeholder.setEditable(False)
+                        placeholder.setData("placeholder", Qt.UserRole + 3)
+                        item.appendRow(placeholder)
 
             logger.debug(f"    ➕ Ajout du bouton 'Ajouter une courbe' pour : {graph.name}")
             add_curve_item = QStandardItem("➕ Ajouter une courbe")
@@ -248,3 +261,58 @@ class GraphCurvePanel(QtWidgets.QWidget):
             graph_name = parent_index.data(Qt.UserRole + 4) if parent_index.isValid() else None
             logger.debug(f"📌 [GraphCurvePanel] Courbe sélectionnée: {name} dans {graph_name}")
             signal_bus.curve_selected.emit(graph_name, name)
+
+    def on_item_expanded(self, index):
+        if not self.controller:
+            return
+
+        kind = index.data(Qt.UserRole + 3)
+        if kind != "curve":
+            return
+
+        item = self.model.itemFromIndex(index)
+        if item.rowCount() == 0:
+            return
+        first_child = item.child(0)
+        if first_child.data(Qt.UserRole + 3) != "placeholder":
+            return
+
+        parent_index = index.parent()
+        if parent_index.data(Qt.UserRole + 3) == "curve":
+            return  # ignore expansion of bit curves
+
+        graph_name = parent_index.data(Qt.UserRole + 4) if parent_index.isValid() else None
+        curve_name = index.data(Qt.UserRole + 4)
+
+        state = AppState.get_instance()
+        graph = state.graphs.get(graph_name)
+        curve = next((c for c in graph.curves if c.name == curve_name), None) if graph else None
+        if curve is None:
+            return
+
+        import numpy as np
+        if not np.allclose(curve.y, np.round(curve.y)):
+            QtWidgets.QMessageBox.warning(self, "Erreur", "Les données ne sont pas entières")
+            return
+
+        values = curve.y.astype(np.int64)
+        min_bits = max(int(values.max()).bit_length(), 1)
+        bit_count, ok = QtWidgets.QInputDialog.getInt(
+            self,
+            "Décomposer la courbe",
+            f"Nombre de bits à générer (minimum {min_bits})",
+            min_bits,
+            min_bits,
+            64,
+            1,
+        )
+        if not ok:
+            return
+
+        item.removeRows(0, item.rowCount())
+        try:
+            self.controller.select_graph(graph_name)
+            self.controller.select_curve(curve_name)
+            self.controller.create_bit_curves(curve_name, bit_count)
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(self, "Erreur", str(e))
