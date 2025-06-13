@@ -55,6 +55,18 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.opacity_slider.valueChanged.connect(
             lambda v: self._call_controller(self.controller.set_opacity, float(v))
         )
+        self.downsampling_combo.currentIndexChanged.connect(
+            lambda i: self._call_controller(
+                self.controller.set_downsampling_mode,
+                self.downsampling_combo.itemData(i),
+            )
+        )
+        self.downsampling_apply_btn.clicked.connect(
+            lambda: self._call_controller(
+                self.controller.set_downsampling_ratio,
+                int(self.downsampling_ratio_input.value()),
+            )
+        )
         self.bring_to_front_button.clicked.connect(
             lambda: self._call_controller(self.controller.bring_curve_to_front)
         )

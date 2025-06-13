@@ -159,3 +159,16 @@ def test_selection_flow_updates_state_and_ui(controller):
 
     assert state.current_curve.name == "Courbe 1"
     assert c.ui.curve_calls == 1
+
+
+def test_downsampling_settings(controller):
+    c, state, _ = controller
+    c.add_graph()
+    graph_name = list(state.graphs.keys())[0]
+    c.add_curve(graph_name)
+
+    c.set_downsampling_mode("manual")
+    assert state.current_curve.downsampling_mode == "manual"
+
+    c.set_downsampling_ratio(7)
+    assert state.current_curve.downsampling_ratio == 7

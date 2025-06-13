@@ -87,3 +87,16 @@ def test_graph_options(service):
     assert state.current_graph.grid_visible is True
     assert state.current_graph.log_x is True
     assert state.current_graph.log_y is True
+
+
+def test_downsampling_settings(service):
+    svc, state, _ = service
+    svc.add_graph()
+    graph = list(state.graphs.keys())[0]
+    svc.add_curve(graph, curve=CurveData(name="tmp", x=[0, 1], y=[0, 1]))
+
+    svc.set_downsampling_mode("manual")
+    svc.set_downsampling_ratio(5)
+
+    assert state.current_curve.downsampling_mode == "manual"
+    assert state.current_curve.downsampling_ratio == 5

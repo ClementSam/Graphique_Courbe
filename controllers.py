@@ -202,6 +202,16 @@ class GraphController:
         self.service.set_show_label(visible)
         self.ui.refresh_curve_ui()
 
+    def set_downsampling_mode(self, mode: str):
+        logger.debug(f"📉 [GraphController.set_downsampling_mode] Mode = {mode}")
+        self.service.set_downsampling_mode(mode)
+        self.ui.refresh_curve_ui()
+
+    def set_downsampling_ratio(self, ratio: int):
+        logger.debug(f"📉 [GraphController.set_downsampling_ratio] Ratio = {ratio}")
+        self.service.set_downsampling_ratio(ratio)
+        self.ui.refresh_curve_ui()
+
     def reset_zoom(self):
         logger.debug("🔍 [GraphController.reset_zoom] Réinitialisation du zoom")
         self.ui.reset_zoom()

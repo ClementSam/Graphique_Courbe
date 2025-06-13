@@ -260,6 +260,16 @@ class GraphService:
         if self.state.current_curve:
             self.state.current_curve.show_label = visible
 
+    def set_downsampling_mode(self, mode: str):
+        logger.debug(f"📉 [GraphService.set_downsampling_mode] Mode = {mode}")
+        if self.state.current_curve:
+            self.state.current_curve.downsampling_mode = mode
+
+    def set_downsampling_ratio(self, ratio: int):
+        logger.debug(f"📉 [GraphService.set_downsampling_ratio] Ratio = {ratio}")
+        if self.state.current_curve:
+            self.state.current_curve.downsampling_ratio = ratio
+
     def set_graph_visible(self, graph_name: str, visible: bool):
         logger.debug(f"👁 [GraphService.set_graph_visible] {graph_name} → {visible}")
         graph = self.state.graphs.get(graph_name)
