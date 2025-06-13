@@ -6,6 +6,7 @@ from .import_utils import (
     load_curves_from_file,
     import_curves_from_csv,
     import_curves_from_excel,
+    TimeMode,
 )
 import struct
 from collections import namedtuple
@@ -23,18 +24,22 @@ def _select_curves(curves: List[CurveData]) -> List[CurveData]:
     return []
 
 
-def load_curve_by_format(path: str, fmt: str, *, sep: str = ",") -> List[CurveData]:
+def load_curve_by_format(
+    path: str, fmt: str, *, sep: str = ",", mode: TimeMode = TimeMode.NUMERIC
+) -> List[CurveData]:
     """Load curves according to the given format and ask the user which ones to keep."""
+    if isinstance(mode, str):
+        mode = TimeMode(mode)
     if fmt == "internal_json":
         curves = [load_internal_json(path)]
     elif fmt == "keysight_bin":
         curves = load_keysight_bin(path)
     elif fmt == "csv_standard":
-        curves = import_curves_from_csv(path, sep=sep)
+        curves = import_curves_from_csv(path, sep=sep, mode=mode)
     elif fmt == "excel":
-        curves = import_curves_from_excel(path)
+        curves = import_curves_from_excel(path, mode=mode)
     elif fmt == "csv_or_excel":  # backward compatibility
-        curves = load_curves_from_file(path, sep=sep)
+        curves = load_curves_from_file(path, sep=sep, mode=mode)
     elif fmt == "keysight_json_v5":
         curves = load_keysight_json_v5(path)
     elif fmt == "tektro_json_v1_2":
