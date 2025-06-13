@@ -2,7 +2,11 @@ import json
 from typing import List
 from core.models import CurveData
 from .serializers import dict_to_curve
-from .import_utils import load_curves_from_file
+from .import_utils import (
+    load_curves_from_file,
+    import_curves_from_csv,
+    import_curves_from_excel,
+)
 import struct
 from collections import namedtuple
 import numpy as np
@@ -26,6 +30,10 @@ def load_curve_by_format(path: str, fmt: str, *, sep: str = ",") -> List[CurveDa
     elif fmt == "keysight_bin":
         curves = load_keysight_bin(path)
     elif fmt == "csv_standard":
+        curves = import_curves_from_csv(path, sep=sep)
+    elif fmt == "excel":
+        curves = import_curves_from_excel(path)
+    elif fmt == "csv_or_excel":  # backward compatibility
         curves = load_curves_from_file(path, sep=sep)
     elif fmt == "keysight_json_v5":
         curves = load_keysight_json_v5(path)
