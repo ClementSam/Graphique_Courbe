@@ -31,12 +31,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.width_spin.valueChanged.connect(
             lambda v: self._call_controller(self.controller.set_width, int(v))
         )
-        self.gain_slider.valueChanged.connect(
-            lambda v: self._call_controller(self.controller.set_gain, v / 100)
-        )
-        self.offset_slider.valueChanged.connect(
-            lambda v: self._call_controller(self.controller.set_offset, float(v))
-        )
+        self.gain_slider.valueChanged.connect(self._on_gain_slider)
+        self.gain_apply_btn.clicked.connect(self._apply_gain)
+        self.offset_slider.valueChanged.connect(self._on_offset_slider)
+        self.offset_apply_btn.clicked.connect(self._apply_offset)
         self.time_offset_apply_btn.clicked.connect(
             lambda: self._call_controller(
                 self.controller.set_time_offset,
@@ -341,10 +339,20 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.gain_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.gain_slider.setRange(1, 500)  # de 0.01 à 5.00
         self.gain_slider.setValue(100)
-        
+        self.gain_input = QtWidgets.QDoubleSpinBox()
+        self.gain_input.setRange(0.01, 5.0)
+        self.gain_input.setDecimals(2)
+        self.gain_input.setSingleStep(0.01)
+        self.gain_apply_btn = QtWidgets.QPushButton("Appliquer")
+
         self.offset_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.offset_slider.setRange(-500, 500)
         self.offset_slider.setValue(0)
+        self.offset_input = QtWidgets.QDoubleSpinBox()
+        self.offset_input.setRange(-500.0, 500.0)
+        self.offset_input.setDecimals(2)
+        self.offset_input.setSingleStep(0.1)
+        self.offset_apply_btn = QtWidgets.QPushButton("Appliquer")
 
         self.time_offset_input = QtWidgets.QDoubleSpinBox()
         self.time_offset_input.setRange(-1000.0, 1000.0)
@@ -359,9 +367,19 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.zero_indicator_combo)
         
         layout.addWidget(QtWidgets.QLabel("Gain (x0.01 à x5.00) :"))
-        layout.addWidget(self.gain_slider)
+        gain_layout = QtWidgets.QHBoxLayout()
+        gain_layout.addWidget(self.gain_slider)
+        gain_layout.addWidget(self.gain_input)
+        gain_layout.addWidget(self.gain_apply_btn)
+        layout.addLayout(gain_layout)
+
         layout.addWidget(QtWidgets.QLabel("Offset vertical :"))
-        layout.addWidget(self.offset_slider)
+        off_layout = QtWidgets.QHBoxLayout()
+        off_layout.addWidget(self.offset_slider)
+        off_layout.addWidget(self.offset_input)
+        off_layout.addWidget(self.offset_apply_btn)
+        layout.addLayout(off_layout)
+
         h_time = QtWidgets.QHBoxLayout()
         h_time.addWidget(QtWidgets.QLabel("Décalage temporel :"))
         h_time.addWidget(self.time_offset_input)
@@ -400,6 +418,24 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         if color.isValid():
             self.color_button.setStyleSheet(f"background-color: {color.name()}")
             self._call_controller(self.controller.set_color, color.name())
+
+    def _on_gain_slider(self, value: int):
+        self.gain_input.setValue(value / 100)
+        self._call_controller(self.controller.set_gain, value / 100)
+
+    def _apply_gain(self):
+        val = float(self.gain_input.value())
+        self.gain_slider.setValue(int(val * 100))
+        self._call_controller(self.controller.set_gain, val)
+
+    def _on_offset_slider(self, value: int):
+        self.offset_input.setValue(float(value))
+        self._call_controller(self.controller.set_offset, float(value))
+
+    def _apply_offset(self):
+        val = float(self.offset_input.value())
+        self.offset_slider.setValue(int(val))
+        self._call_controller(self.controller.set_offset, val)
         
     def refresh_curve_tab(self):
         logger.debug("[PropertiesPanel] 🔁 Rafraîchissement de l’onglet courbe")
@@ -479,7 +515,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.opacity_slider.setValue(100)
             self.fill_checkbox.setChecked(False)
             self.gain_slider.setValue(100)
+            self.gain_input.setValue(1.0)
             self.offset_slider.setValue(0)
+            self.offset_input.setValue(0.0)
             self.time_offset_input.setValue(0.0)
             self.zero_indicator_combo.setCurrentIndex(0)
             self.downsampling_combo.setCurrentIndex(0)
@@ -509,9 +547,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
     
         self.opacity_slider.setValue(int(curve.opacity))
         self.fill_checkbox.setChecked(curve.fill)
-    
+
         self.gain_slider.setValue(int(curve.gain * 100))  # gain 1.0 → slider 100
+        self.gain_input.setValue(curve.gain)
         self.offset_slider.setValue(int(curve.offset))    # offset en pixels/valeur
+        self.offset_input.setValue(curve.offset)
         self.time_offset_input.setValue(curve.time_offset)
     
         index_zero = self.zero_indicator_combo.findData(curve.zero_indicator)

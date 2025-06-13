@@ -14,6 +14,7 @@ class TimeMode(Enum):
     TIMESTAMP_ABSOLUTE = "timestamp_absolute"  # Parse timestamps as seconds since epoch.
 
 from core.models import CurveData
+from core.utils import generate_random_color
 import logging
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,9 @@ def _curves_from_dataframe(df: pd.DataFrame, mode: TimeMode) -> List[CurveData]:
         logger.debug(
             f"📈 [_curves_from_dataframe] Courbe '{col}' avec {len(x)} points"
         )
-        curves.append(CurveData(name=col, x=x, y=y_data))
+        curves.append(
+            CurveData(name=col, x=x, y=y_data, color=generate_random_color())
+        )
 
     return curves
 
