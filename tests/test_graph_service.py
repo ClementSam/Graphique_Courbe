@@ -45,7 +45,8 @@ def test_add_graph_and_curve(service):
     assert state.current_graph.name == name
     svc.add_curve(name, curve=CurveData(name="tmp", x=[0], y=[0]))
     assert len(state.current_graph.curves) == 1
-    assert state.current_curve.name == "Courbe 1"
+    # the provided name should be kept since no conflict exists
+    assert state.current_curve.name == "tmp"
 
 
 def test_rename_graph_and_curve(service):
@@ -56,7 +57,7 @@ def test_rename_graph_and_curve(service):
     svc.rename_graph(name, "NewGraph")
     assert "NewGraph" in state.graphs
     svc.select_graph("NewGraph")
-    svc.rename_curve("Courbe 1", "Renamed")
+    svc.rename_curve("tmp", "Renamed")
     assert state.current_graph.curves[0].name == "Renamed"
 
 
@@ -69,7 +70,7 @@ def test_set_visibility(service):
     svc.set_graph_visible(graph, False)
     assert state.graphs[graph].visible is False
 
-    svc.set_curve_visible(graph, "Courbe 1", False)
+    svc.set_curve_visible(graph, "tmp", False)
     assert state.graphs[graph].curves[0].visible is False
 
 def test_graph_options(service):
@@ -130,8 +131,20 @@ def test_bring_curve_to_front_moves_curve(service):
     svc.add_curve(graph, curve=CurveData(name="a", x=[0], y=[0]))
     svc.add_curve(graph, curve=CurveData(name="b", x=[0], y=[0]))
 
-    svc.select_curve("Courbe 1")
+    svc.select_curve("a")
     svc.bring_curve_to_front()
 
     curves = [c.name for c in state.current_graph.curves]
-    assert curves[-1] == "Courbe 1"
+    assert curves[-1] == "a"
+
+
+def test_add_curve_duplicate_name_appends_index(service):
+    svc, state, _ = service
+    svc.add_graph()
+    graph = list(state.graphs.keys())[0]
+
+    svc.add_curve(graph, curve=CurveData(name="dup", x=[0], y=[0]))
+    svc.add_curve(graph, curve=CurveData(name="dup", x=[0], y=[0]))
+
+    assert state.graphs[graph].curves[0].name == "dup"
+    assert state.graphs[graph].curves[1].name == "dup (1)"
