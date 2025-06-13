@@ -148,3 +148,30 @@ def test_add_curve_duplicate_name_appends_index(service):
 
     assert state.graphs[graph].curves[0].name == "dup"
     assert state.graphs[graph].curves[1].name == "dup (1)"
+
+
+def test_create_bit_curves(service):
+    svc, state, _ = service
+    svc.add_graph()
+    graph = list(state.graphs.keys())[0]
+    curve = CurveData(name="base", x=[0, 1, 2, 3], y=[0, 1, 2, 3])
+    svc.add_curve(graph, curve=curve)
+
+    created = svc.create_bit_curves("base")
+
+    assert created == ["base[0]", "base[1]"]
+    assert len(state.current_graph.curves) == 3
+    bit0 = state.current_graph.curves[1]
+    assert bit0.parent_curve == "base"
+    assert bit0.bit_index == 0
+
+
+def test_create_bit_curves_invalid_data_raises(service):
+    svc, state, _ = service
+    svc.add_graph()
+    graph = list(state.graphs.keys())[0]
+    curve = CurveData(name="bad", x=[0, 1], y=[0.1, 1.2])
+    svc.add_curve(graph, curve=curve)
+
+    with pytest.raises(ValueError):
+        svc.create_bit_curves("bad")

@@ -2,6 +2,7 @@ import os
 import sys
 import types
 import importlib
+import numpy as np
 import pytest
 
 # add repo root to path
@@ -197,3 +198,20 @@ def test_bring_curve_to_front_invokes_service_and_refresh(controller):
     curves = [curve.name for curve in state.current_graph.curves]
     assert curves[-1] == "Courbe 1"
     assert c.ui.plot_calls == 1
+
+
+def test_controller_create_bit_curves(controller):
+    c, state, bus = controller
+    c.add_graph()
+    graph = list(state.graphs.keys())[0]
+    c.add_curve(graph)
+    curve = state.current_curve
+    curve.y = np.array([0, 1, 2, 3])
+    curve.x = np.array([0, 1, 2, 3])
+
+    bus.curve_updated.emitted.clear()
+    created = c.create_bit_curves(curve.name)
+
+    assert created == [f"{curve.name}[0]", f"{curve.name}[1]"]
+    assert len(state.current_graph.curves) == 3
+    assert len(bus.curve_updated.emitted) == 1
