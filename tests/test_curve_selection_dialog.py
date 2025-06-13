@@ -39,3 +39,4 @@ def test_bit_extraction():
     selected = dlg.get_selected_curves()
     assert len(selected) == 1
     assert np.array_equal(selected[0].y, np.array([0, 1, 0, 1]))
+    assert selected[0].name == "c1-[0]"

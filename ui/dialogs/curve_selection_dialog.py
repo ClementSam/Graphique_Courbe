@@ -42,7 +42,8 @@ class CurveSelectionDialog(QDialog):
 
         # Bit extraction option
         bit_layout = QHBoxLayout()
-        self.bit_checkbox = QCheckBox("Extraire le bit :")
+        # Clarify that the bit extraction applies to all selected curves
+        self.bit_checkbox = QCheckBox("Extraire le bit (toutes les courbes) :")
         self.bit_spin = QSpinBox()
         self.bit_spin.setRange(0, 31)
         self.bit_spin.setValue(0)
@@ -101,6 +102,8 @@ class CurveSelectionDialog(QDialog):
                 bit = self.bit_spin.value()
                 y_int = np.array(curve.y, dtype=int)
                 curve.y = ((y_int >> bit) & 1).astype(curve.y.dtype)
+                # Append the bit number to the curve name for clarity
+                curve.name = f"{curve.name}-[{bit}]"
             selected.append(curve)
         return selected
 
