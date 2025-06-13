@@ -17,4 +17,6 @@ python main.py
 ```
 
 When importing curves from files (CSV, JSON, BIN, etc.) a selection dialog
-lets you choose which curves are actually added to the project.
+lets you choose which curves are actually added to the project. If you opt to
+extract a specific bit from the selected curves, the resulting curve name is
+automatically suffixed with the bit number, e.g. `mycurve-[0]`.
