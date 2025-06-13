@@ -162,6 +162,11 @@ class GraphController:
         self.service.set_offset(value)
         self.ui.refresh_curve_ui()
 
+    def set_width(self, value: int):
+        logger.debug(f"📏 [GraphController.set_width] Width = {value}")
+        self.service.set_width(value)
+        self.ui.refresh_curve_ui()
+
     def set_style(self, style: int):
         logger.debug(f"🖌 [GraphController.set_style] Style = {style}")
         self.service.set_style(style)

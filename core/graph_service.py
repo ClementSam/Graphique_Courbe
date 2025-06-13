@@ -220,6 +220,11 @@ class GraphService:
         if self.state.current_curve:
             self.state.current_curve.offset = value
 
+    def set_width(self, value: int):
+        logger.debug(f"📏 [GraphService.set_width] Width = {value}")
+        if self.state.current_curve:
+            self.state.current_curve.width = value
+
     def set_style(self, style: int):
         logger.debug(f"🖌 [GraphService.set_style] Style = {style}")
         if self.state.current_curve:
