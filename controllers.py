@@ -168,6 +168,14 @@ class GraphController:
         self.service.set_y_limits(y_min, y_max)
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
+
+    def set_satellite_content(self, zone: str, content: str | None):
+        logger.debug(
+            f"🛰 [GraphController.set_satellite_content] zone={zone} content={content}"
+        )
+        self.service.set_satellite_content(zone, content)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
     
     def set_graph_visible(self, graph_name: str, visible: bool):
         logger.debug(f"👁 [GraphController.set_graph_visible] {graph_name} → {visible}")
