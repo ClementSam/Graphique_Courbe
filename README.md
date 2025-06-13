@@ -15,3 +15,6 @@ Then run the application:
 ```bash
 python main.py
 ```
+
+When importing curves from files (CSV, JSON, BIN, etc.) a selection dialog
+lets you choose which curves are actually added to the project.
