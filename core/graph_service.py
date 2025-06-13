@@ -3,6 +3,7 @@
 from core.app_state import AppState
 from core.models import GraphData, CurveData
 from core.utils.naming import get_next_graph_name, get_unique_curve_name
+from core.utils import generate_random_color
 from typing import Optional
 import logging
 
@@ -115,7 +116,7 @@ class GraphService:
             logger.debug(
                 f"🔧 [GraphService.add_curve] Génération d'une courbe vide nommée '{curve_name}'"
             )
-            curve = CurveData(name=curve_name)
+            curve = CurveData(name=curve_name, color=generate_random_color())
         else:
             # Keep the provided curve name when importing. If it already exists
             # in the target graph, append " (x)" where x is the smallest index
@@ -126,6 +127,8 @@ class GraphService:
                 f"📥 [GraphService.add_curve] Courbe fournie nommée '{curve.name}', renommée '{curve_name}'"
             )
             curve.name = curve_name
+            if curve.color.lower() in {"#000000", "black", "#ffffff", "white", "b", "w"}:
+                curve.color = generate_random_color()
     
         graph.curves.append(curve)
         self.state.current_graph = graph

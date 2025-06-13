@@ -147,12 +147,7 @@ class GraphCurvePanel(QtWidgets.QWidget):
         state = AppState.get_instance()
         logger.debug(f"📦 [AppState] Graphs détectés : {list(state.graphs.keys())}")
         
-        expanded_names = set()
-        for i in range(self.model.rowCount()):
-            idx = self.model.index(i, 0)
-            if self.tree.isExpanded(idx):
-                item = self.model.itemFromIndex(idx)
-                expanded_names.add(item.text())
+        expanded_paths = self._collect_expanded_paths()
 
         selected_index = self.tree.currentIndex()
         selected_name = selected_index.data(Qt.UserRole + 4) if selected_index.isValid() else None
@@ -199,11 +194,7 @@ class GraphCurvePanel(QtWidgets.QWidget):
         add_graph_item.setData("add_graph", Qt.UserRole + 4)
         self.model.appendRow(add_graph_item)
 
-        for i in range(self.model.rowCount()):
-            idx = self.model.index(i, 0)
-            item = self.model.itemFromIndex(idx)
-            if item.text() in expanded_names:
-                self.tree.setExpanded(idx, True)
+        self._restore_expanded_paths(expanded_paths)
 
         if selected_name and not selected_name.startswith("add_graph") and not selected_name.startswith("add_curve"):
             for i in range(self.model.rowCount()):
@@ -316,3 +307,34 @@ class GraphCurvePanel(QtWidgets.QWidget):
             self.controller.create_bit_curves(curve_name, bit_count)
         except Exception as e:
             QtWidgets.QMessageBox.warning(self, "Erreur", str(e))
+
+    def _collect_expanded_paths(self):
+        paths = set()
+
+        def recurse(parent_index, path):
+            for row in range(self.model.rowCount(parent_index)):
+                idx = self.model.index(row, 0, parent_index)
+                item = self.model.itemFromIndex(idx)
+                name = item.data(Qt.UserRole + 4)
+                kind = item.data(Qt.UserRole + 3)
+                new_path = path + (name,)
+                if self.tree.isExpanded(idx) and kind != "action":
+                    paths.add(new_path)
+                recurse(idx, new_path)
+
+        recurse(QtCore.QModelIndex(), tuple())
+        return paths
+
+    def _restore_expanded_paths(self, paths):
+        def recurse(parent_index, path):
+            for row in range(self.model.rowCount(parent_index)):
+                idx = self.model.index(row, 0, parent_index)
+                item = self.model.itemFromIndex(idx)
+                name = item.data(Qt.UserRole + 4)
+                kind = item.data(Qt.UserRole + 3)
+                new_path = path + (name,)
+                if new_path in paths and kind != "action":
+                    self.tree.setExpanded(idx, True)
+                recurse(idx, new_path)
+
+        recurse(QtCore.QModelIndex(), tuple())

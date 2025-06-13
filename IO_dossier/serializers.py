@@ -2,6 +2,7 @@
 import numpy as np
 from typing import List, Dict
 from core.models import CurveData, GraphData
+from core.utils import generate_random_color
 
 
 def curve_to_dict(curve: CurveData) -> dict:
@@ -29,11 +30,14 @@ def curve_to_dict(curve: CurveData) -> dict:
 
 
 def dict_to_curve(data: dict) -> CurveData:
+    color = data.get("color")
+    if not color or color.lower() in {"#000000", "black", "#ffffff", "white", "b", "w"}:
+        color = generate_random_color()
     return CurveData(
         name=data["name"],
         x=data["x"],
         y=data["y"],
-        color=data.get("color", "b"),
+        color=color,
         width=data.get("width", 2),
         style=data.get("style"),
         downsampling_mode=data.get("downsampling_mode", "auto"),
