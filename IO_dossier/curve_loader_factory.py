@@ -9,19 +9,32 @@ import numpy as np
 from ui.dialogs.curve_selection_dialog import CurveSelectionDialog
 
 
+def _select_curves(curves: List[CurveData]) -> List[CurveData]:
+    """Display dialog to let the user pick which curves to import."""
+    if not curves:
+        return []
+    dlg = CurveSelectionDialog(curves)
+    if dlg.exec_() == dlg.Accepted:
+        return dlg.get_selected_curves()
+    return []
+
+
 def load_curve_by_format(path: str, fmt: str, *, sep: str = ",") -> List[CurveData]:
+    """Load curves according to the given format and ask the user which ones to keep."""
     if fmt == "internal_json":
-        return [load_internal_json(path)]
+        curves = [load_internal_json(path)]
     elif fmt == "keysight_bin":
-        return load_keysight_bin(path)
+        curves = load_keysight_bin(path)
     elif fmt == "csv_standard":
-        return load_curves_from_file(path, sep=sep)
+        curves = load_curves_from_file(path, sep=sep)
     elif fmt == "keysight_json_v5":
-        return load_keysight_json_v5(path)
+        curves = load_keysight_json_v5(path)
     elif fmt == "tektro_json_v1_2":
-        return load_tektro_json_v1_2(path)
+        curves = load_tektro_json_v1_2(path)
     else:
         raise ValueError(f"Format inconnu : {fmt}")
+
+    return _select_curves(curves)
 
 
 def load_internal_json(path: str) -> CurveData:
@@ -104,8 +117,4 @@ def load_keysight_bin(path: str) -> List[CurveData]:
 
             curves.append(CurveData(name=label, x=x, y=y))
 
-    # Affichage du sélecteur de courbes
-    dlg = CurveSelectionDialog(curves)
-    if dlg.exec_() == dlg.Accepted:
-        return dlg.get_selected_curves()
-    return []
+    return curves
