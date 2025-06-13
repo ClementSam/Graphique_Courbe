@@ -197,6 +197,70 @@ class GraphService:
             graph.curves.append(curve)
             logger.debug(f"✅ [GraphService.bring_curve_to_front] Courbe '{curve.name}' déplacée en tête")
 
+    def create_bit_curves(self, curve_name: str, bit_count: Optional[int] = None) -> list[str]:
+        """Generate bit curves from the given curve.
+
+        Parameters
+        ----------
+        curve_name: str
+            Name of the curve to decompose.
+        bit_count: int | None
+            Number of bits to generate. If ``None``, the minimal bit width able
+            to represent all values is used.
+        Returns
+        -------
+        list[str]
+            Names of the created curves in order from LSB to MSB.
+        """
+        graph = self.state.current_graph
+        if not graph:
+            raise ValueError("Aucun graphique sélectionné")
+
+        curve = next((c for c in graph.curves if c.name == curve_name), None)
+        if not curve:
+            raise ValueError(f"Courbe '{curve_name}' introuvable")
+
+        import numpy as np
+
+        if not np.allclose(curve.y, np.round(curve.y)):
+            raise ValueError("Les données ne sont pas entières")
+
+        values = curve.y.astype(np.int64)
+        min_bits = max(int(values.max()).bit_length(), 1)
+
+        if bit_count is None:
+            bit_count = min_bits
+        else:
+            if values.min() < 0 or values.max() >= 2 ** bit_count:
+                raise ValueError("La plage de valeurs dépasse le nombre de bits spécifié")
+
+        bits = ((values[:, None] >> np.arange(bit_count)) & 1).astype(float)
+
+        from core.utils.naming import get_unique_curve_name
+        existing = {c.name for c in graph.curves}
+        insert_index = graph.curves.index(curve) + 1
+        created = []
+
+        for i in range(bit_count):
+            base_name = f"{curve.name}[{i}]"
+            name = get_unique_curve_name(base_name, existing)
+            existing.add(name)
+            bit_curve = CurveData(
+                name=name,
+                x=curve.x.copy(),
+                y=bits[:, i],
+                color=curve.color,
+                width=curve.width,
+                style=curve.style,
+            )
+            bit_curve.bit_index = i
+            bit_curve.parent_curve = curve.name
+            graph.curves.insert(insert_index, bit_curve)
+            insert_index += 1
+            created.append(name)
+
+        return created
+
     # ----- Méthodes métier pour les propriétés du graphique -----
     def set_grid_visible(self, visible: bool):
         logger.debug(f"📐 [GraphService.set_grid_visible] {visible}")

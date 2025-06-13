@@ -24,6 +24,11 @@ class CurveData:
     time_offset: float = 0.0
     zero_indicator: str = "none"  # "none", "line"
     label_mode: str = "none"  # valeurs possibles : "none", "inline", "legend"
+    # When this curve represents a single bit extracted from another curve,
+    # *bit_index* stores the index (0 = LSB) and *parent_curve* references the
+    # source curve name. These fields remain ``None`` for normal curves.
+    bit_index: Optional[int] = None
+    parent_curve: Optional[str] = None
 
 
     def __post_init__(self):
@@ -35,6 +40,10 @@ class CurveData:
             raise ValueError("x et y doivent avoir la même longueur.")
         if self.width < 1:
             raise ValueError("L'épaisseur de la ligne doit être >= 1.")
+
+    @property
+    def is_bit_curve(self) -> bool:
+        return self.bit_index is not None
 
 @dataclass
 class GraphData:

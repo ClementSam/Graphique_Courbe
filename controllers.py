@@ -4,6 +4,7 @@ from core.app_state import AppState
 from core.graph_service import GraphService
 from ui.graph_ui_coordinator import GraphUICoordinator
 from signal_bus import signal_bus
+from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -102,6 +103,14 @@ class GraphController:
         logger.debug(f"📥 [GraphController.import_graph] Import du graphique : {graph_data.name}")
         self.service.import_graph(graph_data)
         self.ui.refresh_plot()
+
+    def create_bit_curves(self, curve_name: str, bit_count: Optional[int] = None):
+        logger.debug(f"🔬 [GraphController.create_bit_curves] Decomposition de {curve_name} en {bit_count or 'auto'} bits")
+        names = self.service.create_bit_curves(curve_name, bit_count)
+        signal_bus.curve_list_updated.emit()
+        signal_bus.curve_updated.emit()
+        self.ui.refresh_plot()
+        return names
 
     def bring_curve_to_front(self):
         logger.debug("🔝 [GraphController.bring_curve_to_front] Priorisation de la courbe")

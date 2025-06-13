@@ -72,6 +72,8 @@ class CombinedDelegate(QStyledItemDelegate):
                     signal_bus.graph_visibility_changed.emit(name, new_val)
                 else:
                     parent_index = index.parent()
+                    if parent_index.data(Qt.UserRole + 3) == "curve":
+                        parent_index = parent_index.parent()
                     graph_name = parent_index.data(Qt.UserRole + 4) if parent_index.isValid() else None
                     signal_bus.curve_visibility_changed.emit(graph_name, name, new_val)
                 return True
@@ -154,10 +156,19 @@ class GraphCurvePanel(QtWidgets.QWidget):
             logger.debug(f"➕ Ajout du graphique : {graph.name}, visible = {graph.visible}")
             graph_item = self.create_item(graph.name, "graph", visible=graph.visible, active=True)
 
+            curve_items: dict[str, QStandardItem] = {}
             for curve in graph.curves:
                 logger.debug(f"    ➕ Ajout de la courbe : {curve.name}, visible = {curve.visible}")
-                curve_item = self.create_item(curve.name, "curve", visible=curve.visible, active=False)
-                graph_item.appendRow(curve_item)
+                item = self.create_item(curve.name, "curve", visible=curve.visible, active=False)
+                curve_items[curve.name] = item
+                if getattr(curve, "parent_curve", None):
+                    parent_item = curve_items.get(curve.parent_curve)
+                    if parent_item is not None:
+                        parent_item.appendRow(item)
+                    else:
+                        graph_item.appendRow(item)
+                else:
+                    graph_item.appendRow(item)
 
             logger.debug(f"    ➕ Ajout du bouton 'Ajouter une courbe' pour : {graph.name}")
             add_curve_item = QStandardItem("➕ Ajouter une courbe")
@@ -232,6 +243,8 @@ class GraphCurvePanel(QtWidgets.QWidget):
             signal_bus.graph_selected.emit(name)
         elif kind == "curve":
             parent_index = current.parent()
+            if parent_index.data(Qt.UserRole + 3) == "curve":
+                parent_index = parent_index.parent()
             graph_name = parent_index.data(Qt.UserRole + 4) if parent_index.isValid() else None
             logger.debug(f"📌 [GraphCurvePanel] Courbe sélectionnée: {name} dans {graph_name}")
             signal_bus.curve_selected.emit(graph_name, name)
