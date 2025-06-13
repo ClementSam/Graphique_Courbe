@@ -2,6 +2,9 @@
 import pandas as pd
 from typing import List
 from core.models import CurveData
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def import_curves_from_csv(path: str, sep: str = ",") -> List[CurveData]:
@@ -18,7 +21,10 @@ def import_curves_from_csv(path: str, sep: str = ",") -> List[CurveData]:
     interpreted as Y values for individual curves. Each curve name is taken
     from the corresponding column header.
     """
+    logger.debug(f"📂 [import_curves_from_csv] Lecture du fichier: {path} (sep='{sep}')")
     df = pd.read_csv(path, sep=sep)
+    logger.debug(f"📝 [import_curves_from_csv] Colonnes détectées: {list(df.columns)}")
+    logger.debug(f"🔢 [import_curves_from_csv] Nombre de lignes: {len(df)}")
 
     # Ensure numeric types for all columns, converting invalid entries to NaN
     for column in df.columns:
@@ -34,11 +40,16 @@ def import_curves_from_csv(path: str, sep: str = ",") -> List[CurveData]:
 
     curves = []
     for col in y_cols:
+        x_data = df[x_col].to_numpy()
+        y_data = df[col].to_numpy()
+        logger.debug(
+            f"📈 [import_curves_from_csv] Courbe '{col}' avec {len(x_data)} points"
+        )
         curves.append(
             CurveData(
                 name=col,
-                x=df[x_col].to_numpy(),
-                y=df[col].to_numpy(),
+                x=x_data,
+                y=y_data,
             )
         )
     return curves
@@ -54,6 +65,7 @@ def load_curves_from_file(path: str, sep: str = ",") -> List[CurveData]:
     sep:
         Column separator when reading CSV files.
     """
+    logger.debug(f"📂 [load_curves_from_file] Lecture du fichier: {path}")
     ext = path.lower().split('.')[-1]
     if ext == "csv":
         return import_curves_from_csv(path, sep=sep)
@@ -72,11 +84,16 @@ def load_curves_from_file(path: str, sep: str = ",") -> List[CurveData]:
 
     curves = []
     for col in y_cols:
+        x_data = df[x_col].to_numpy()
+        y_data = df[col].to_numpy()
+        logger.debug(
+            f"📈 [load_curves_from_file] Courbe '{col}' avec {len(x_data)} points"
+        )
         curves.append(
             CurveData(
                 name=col,
-                x=df[x_col].to_numpy(),
-                y=df[col].to_numpy(),
+                x=x_data,
+                y=y_data,
             )
         )
     return curves
