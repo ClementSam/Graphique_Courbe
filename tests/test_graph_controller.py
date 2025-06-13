@@ -179,3 +179,21 @@ def test_set_time_offset_updates_curve(controller):
 
     c.set_time_offset(3.0)
     assert state.current_curve.time_offset == 3.0
+
+
+def test_bring_curve_to_front_invokes_service_and_refresh(controller):
+    c, state, _ = controller
+    c.add_graph()
+    graph_name = list(state.graphs.keys())[0]
+
+    c.add_curve(graph_name)
+    c.add_curve(graph_name)
+
+    c.select_curve("Courbe 1")
+    c.ui.plot_calls = 0
+
+    c.bring_curve_to_front()
+
+    curves = [curve.name for curve in state.current_graph.curves]
+    assert curves[-1] == "Courbe 1"
+    assert c.ui.plot_calls == 1

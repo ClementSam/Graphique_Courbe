@@ -120,3 +120,18 @@ def test_set_time_offset(service):
 
     svc.set_time_offset(2.5)
     assert state.current_curve.time_offset == 2.5
+
+
+def test_bring_curve_to_front_moves_curve(service):
+    svc, state, _ = service
+    svc.add_graph()
+    graph = list(state.graphs.keys())[0]
+
+    svc.add_curve(graph, curve=CurveData(name="a", x=[0], y=[0]))
+    svc.add_curve(graph, curve=CurveData(name="b", x=[0], y=[0]))
+
+    svc.select_curve("Courbe 1")
+    svc.bring_curve_to_front()
+
+    curves = [c.name for c in state.current_graph.curves]
+    assert curves[-1] == "Courbe 1"
