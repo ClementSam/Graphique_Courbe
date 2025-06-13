@@ -189,7 +189,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         dlg = ImportCurveDialog(self)
         if dlg.exec_() == QtWidgets.QDialog.Accepted:
-            path, fmt = dlg.get_selected_path_and_format()
+            path, fmt, sep = dlg.get_selected_path_and_format()
             try:
                 if fmt == "random_curve":
                     existing_names = [c.name for c in graph.curves]
@@ -199,7 +199,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     curve = generate_random_curve(index)
                     curves = [curve]
                 else:
-                    curves = load_curve_by_format(path, fmt)
+                    curves = load_curve_by_format(path, fmt, sep=sep)
 
                 for curve in curves:
                     self.app.controller.service.add_curve(graph.name, curve)

@@ -90,7 +90,7 @@ class ApplicationCoordinator:
 
         dialog = ImportCurveDialog()
         if dialog.exec_():
-            path, fmt = dialog.get_selected_path_and_format()
+            path, fmt, sep = dialog.get_selected_path_and_format()
             if not fmt:
                 return
 
@@ -105,7 +105,7 @@ class ApplicationCoordinator:
                         index += 1
                     curves = [generate_random_curve(index)]
                 else:
-                    curves = load_curve_by_format(path, fmt)
+                    curves = load_curve_by_format(path, fmt, sep=sep)
 
                 last_name = None
                 for curve in curves:

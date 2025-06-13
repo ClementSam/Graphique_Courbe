@@ -32,3 +32,17 @@ def test_import_curves_from_csv_with_non_numeric(tmp_path):
     assert np.isnan(curves[0].x[1])
     assert curves[0].y[1] == 3
 
+
+def test_import_curves_from_csv_custom_separator(tmp_path):
+    csv_content = "x;a;b\n0;1;2\n1;3;4\n"
+    path = tmp_path / "data.csv"
+    path.write_text(csv_content)
+
+    curves = import_curves_from_csv(str(path), sep=";")
+
+    assert len(curves) == 2
+    assert curves[0].name == "a"
+    assert np.array_equal(curves[0].x, np.array([0, 1]))
+    assert np.array_equal(curves[0].y, np.array([1, 3]))
+
+
