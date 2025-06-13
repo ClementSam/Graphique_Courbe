@@ -280,3 +280,36 @@ class GraphService:
             if curve.name == curve_name:
                 curve.visible = visible
                 break
+
+    # ----- Nouvelles options d'axe -----
+
+    def set_x_unit(self, unit: str):
+        logger.debug(f"📏 [GraphService.set_x_unit] unité X = {unit}")
+        if self.state.current_graph:
+            self.state.current_graph.x_unit = unit
+
+    def set_y_unit(self, unit: str):
+        logger.debug(f"📏 [GraphService.set_y_unit] unité Y = {unit}")
+        if self.state.current_graph:
+            self.state.current_graph.y_unit = unit
+
+    def set_x_format(self, fmt: str):
+        logger.debug(f"🔢 [GraphService.set_x_format] format X = {fmt}")
+        if self.state.current_graph:
+            self.state.current_graph.x_format = fmt
+
+    def set_y_format(self, fmt: str):
+        logger.debug(f"🔢 [GraphService.set_y_format] format Y = {fmt}")
+        if self.state.current_graph:
+            self.state.current_graph.y_format = fmt
+
+    def set_fix_y_range(self, fix: bool):
+        logger.debug(f"📊 [GraphService.set_fix_y_range] {fix}")
+        if self.state.current_graph:
+            self.state.current_graph.fix_y_range = fix
+
+    def set_y_limits(self, y_min: float, y_max: float):
+        logger.debug(f"📉 [GraphService.set_y_limits] {y_min} → {y_max}")
+        if self.state.current_graph:
+            self.state.current_graph.y_min = y_min
+            self.state.current_graph.y_max = y_max
