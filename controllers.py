@@ -147,6 +147,20 @@ class GraphController:
         signal_bus.curve_updated.emit()
         self.ui.refresh_plot()
 
+    # 🆕 Satellites -----------------------------------------------------------
+
+    def set_satellite_visibility(self, zone: str, visible: bool):
+        logger.debug(f"🛰️ [GraphController.set_satellite_visibility] {zone} → {visible}")
+        self.service.set_satellite_visibility(zone, visible)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_satellite_content(self, zone: str, content: str | None):
+        logger.debug(f"🛰️ [GraphController.set_satellite_content] {zone} → {content}")
+        self.service.set_satellite_content(zone, content)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
     def set_opacity(self, value: float):
         logger.debug(f"🎨 [GraphController.set_opacity] Opacité = {value}")
         self.service.set_opacity(value)

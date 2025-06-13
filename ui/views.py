@@ -48,13 +48,23 @@ class MyPlotView:
     def refresh_curves(self):
         logger.debug("[views.py > refresh_curves()] ▶️ Entrée dans refresh_curves()")
 
-    
+
         start = time.perf_counter()
-    
+
+        # Remove existing satellite widgets
+        for item in self.satellites:
+            try:
+                if isinstance(item, QtWidgets.QGraphicsProxyWidget):
+                    self.plot_widget.scene().removeItem(item)
+                else:
+                    self.plot_widget.removeItem(item)
+            except Exception:
+                pass
+        self.satellites.clear()
+
         self.plot_widget.clear()
         self.curves.clear()
         self.labels.clear()
-        self.satellites.clear()
     
         # Supprimer les anciens éléments personnalisés (TextItem, ArrowItem, etc.)
         for item in self.plot_widget.items():
@@ -133,9 +143,43 @@ class MyPlotView:
                     item.setDownsampling(auto=False)
                 elif curve.downsampling_mode == "auto":
                     item.setDownsampling(auto=True)
-    
+
         end = time.perf_counter()
         logger.debug(f"[PROFILER] refresh_curves took {end - start:.4f} seconds")
+
+        # Satellites
+        self._refresh_satellites()
+
+
+    def _refresh_satellites(self):
+        """Add or remove auxiliary widgets around the plot."""
+        # Clear previous satellites
+        for item in self.satellites:
+            try:
+                if isinstance(item, QtWidgets.QGraphicsProxyWidget):
+                    self.plot_widget.scene().removeItem(item)
+                else:
+                    self.plot_widget.removeItem(item)
+            except Exception:
+                pass
+        self.satellites.clear()
+
+        g = self.graph_data
+        if not g:
+            return
+
+        for zone, visible in g.satellite_visibility.items():
+            if not visible:
+                continue
+            content = g.satellite_content.get(zone)
+            if content == "label":
+                label = pg.TextItem(text=f"{zone}")
+                self.plot_widget.addItem(label)
+                self.satellites.append(label)
+            elif content == "button":
+                btn = QtWidgets.QPushButton(zone)
+                proxy = self.plot_widget.scene().addWidget(btn)
+                self.satellites.append(proxy)
 
 
 

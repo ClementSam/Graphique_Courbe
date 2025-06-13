@@ -87,3 +87,16 @@ def test_graph_options(service):
     assert state.current_graph.grid_visible is True
     assert state.current_graph.log_x is True
     assert state.current_graph.log_y is True
+
+
+def test_satellite_updates(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    svc.set_satellite_visibility("left", True)
+    assert state.current_graph.satellite_visibility["left"] is True
+
+    svc.set_satellite_content("left", "label")
+    assert state.current_graph.satellite_content["left"] == "label"

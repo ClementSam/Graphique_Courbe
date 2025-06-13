@@ -275,3 +275,19 @@ class GraphService:
             if curve.name == curve_name:
                 curve.visible = visible
                 break
+
+    # 🆕 Satellites -----------------------------------------------------------
+
+    def set_satellite_visibility(self, zone: str, visible: bool):
+        """Update visibility flag for a satellite zone on the current graph."""
+        logger.debug(f"🛰️ [GraphService.set_satellite_visibility] {zone} → {visible}")
+        graph = self.state.current_graph
+        if graph and zone in graph.satellite_visibility:
+            graph.satellite_visibility[zone] = visible
+
+    def set_satellite_content(self, zone: str, content: str | None):
+        """Update content type for a satellite zone on the current graph."""
+        logger.debug(f"🛰️ [GraphService.set_satellite_content] {zone} → {content}")
+        graph = self.state.current_graph
+        if graph and zone in graph.satellite_content:
+            graph.satellite_content[zone] = content

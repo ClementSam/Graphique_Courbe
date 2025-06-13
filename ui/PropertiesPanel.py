@@ -73,6 +73,57 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             lambda val: self._call_graph_controller(self.controller.set_log_y, val)
         )
 
+        # 🚀 Satellites
+        self.satellite_left_checkbox.toggled.connect(
+            lambda v: self._call_graph_controller(
+                self.controller.set_satellite_visibility, "left", v
+            )
+        )
+        self.satellite_right_checkbox.toggled.connect(
+            lambda v: self._call_graph_controller(
+                self.controller.set_satellite_visibility, "right", v
+            )
+        )
+        self.satellite_top_checkbox.toggled.connect(
+            lambda v: self._call_graph_controller(
+                self.controller.set_satellite_visibility, "top", v
+            )
+        )
+        self.satellite_bottom_checkbox.toggled.connect(
+            lambda v: self._call_graph_controller(
+                self.controller.set_satellite_visibility, "bottom", v
+            )
+        )
+
+        self.satellite_left_combo.currentIndexChanged.connect(
+            lambda i: self._call_graph_controller(
+                self.controller.set_satellite_content,
+                "left",
+                self.satellite_left_combo.itemData(i),
+            )
+        )
+        self.satellite_right_combo.currentIndexChanged.connect(
+            lambda i: self._call_graph_controller(
+                self.controller.set_satellite_content,
+                "right",
+                self.satellite_right_combo.itemData(i),
+            )
+        )
+        self.satellite_top_combo.currentIndexChanged.connect(
+            lambda i: self._call_graph_controller(
+                self.controller.set_satellite_content,
+                "top",
+                self.satellite_top_combo.itemData(i),
+            )
+        )
+        self.satellite_bottom_combo.currentIndexChanged.connect(
+            lambda i: self._call_graph_controller(
+                self.controller.set_satellite_content,
+                "bottom",
+                self.satellite_bottom_combo.itemData(i),
+            )
+        )
+
     def setup_ui(self):
         logger.debug("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")
 

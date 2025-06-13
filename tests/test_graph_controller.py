@@ -159,3 +159,20 @@ def test_selection_flow_updates_state_and_ui(controller):
 
     assert state.current_curve.name == "Courbe 1"
     assert c.ui.curve_calls == 1
+
+
+def test_controller_satellite_methods(controller):
+    c, state, bus = controller
+    c.add_graph()
+    graph = list(state.graphs.keys())[0]
+    c.select_graph(graph)
+
+    bus.graph_updated.emitted.clear()
+    c.set_satellite_visibility("left", True)
+    assert state.current_graph.satellite_visibility["left"] is True
+    assert len(bus.graph_updated.emitted) == 1
+
+    bus.graph_updated.emitted.clear()
+    c.set_satellite_content("left", "label")
+    assert state.current_graph.satellite_content["left"] == "label"
+    assert len(bus.graph_updated.emitted) == 1
