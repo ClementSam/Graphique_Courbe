@@ -159,3 +159,13 @@ def test_selection_flow_updates_state_and_ui(controller):
 
     assert state.current_curve.name == "Courbe 1"
     assert c.ui.curve_calls == 1
+
+
+def test_set_width_updates_curve(controller):
+    c, state, _ = controller
+    c.add_graph()
+    graph_name = list(state.graphs.keys())[0]
+    c.add_curve(graph_name)
+
+    c.set_width(5)
+    assert state.current_curve.width == 5

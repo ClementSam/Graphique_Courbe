@@ -28,6 +28,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             return
 
         self.color_button.clicked.connect(self._choose_color)
+        self.width_spin.valueChanged.connect(
+            lambda v: self._call_controller(self.controller.set_width, int(v))
+        )
         self.gain_slider.valueChanged.connect(
             lambda v: self._call_controller(self.controller.set_gain, v / 100)
         )
