@@ -9,13 +9,13 @@ import numpy as np
 from ui.dialogs.curve_selection_dialog import CurveSelectionDialog
 
 
-def load_curve_by_format(path: str, fmt: str) -> List[CurveData]:
+def load_curve_by_format(path: str, fmt: str, *, sep: str = ",") -> List[CurveData]:
     if fmt == "internal_json":
         return [load_internal_json(path)]
     elif fmt == "keysight_bin":
         return load_keysight_bin(path)
     elif fmt == "csv_standard":
-        return load_curves_from_file(path)
+        return load_curves_from_file(path, sep=sep)
     elif fmt == "keysight_json_v5":
         return load_keysight_json_v5(path)
     elif fmt == "tektro_json_v1_2":

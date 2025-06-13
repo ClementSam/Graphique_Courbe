@@ -1,5 +1,14 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton, QFileDialog, QLineEdit
+from PyQt5.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QComboBox,
+    QPushButton,
+    QFileDialog,
+    QLineEdit,
+)
 
 class ImportCurveDialog(QDialog):
     def __init__(self, parent=None):
@@ -9,8 +18,10 @@ class ImportCurveDialog(QDialog):
 
         self.selected_path = None
         self.selected_format = None
+        self.selected_sep = ","
 
         self._init_ui()
+        self._on_format_changed()
 
     def _init_ui(self):
         layout = QVBoxLayout()
@@ -36,6 +47,14 @@ class ImportCurveDialog(QDialog):
         file_layout.addWidget(self.browse_btn)
         layout.addLayout(file_layout)
 
+        # Champ séparateur CSV
+        sep_layout = QHBoxLayout()
+        self.sep_label = QLabel("Séparateur CSV :")
+        self.sep_edit = QLineEdit(",")
+        sep_layout.addWidget(self.sep_label)
+        sep_layout.addWidget(self.sep_edit)
+        layout.addLayout(sep_layout)
+
         # Boutons bas
         btn_layout = QHBoxLayout()
         import_btn = QPushButton("Importer")
@@ -54,6 +73,9 @@ class ImportCurveDialog(QDialog):
         disabled = fmt == "random_curve"
         self.path_edit.setDisabled(disabled)
         self.browse_btn.setDisabled(disabled)
+        csv = fmt == "csv_standard"
+        self.sep_label.setVisible(csv)
+        self.sep_edit.setVisible(csv)
 
     def _on_browse(self):
         path, _ = QFileDialog.getOpenFileName(self, "Sélectionner un fichier", "", "Tous les fichiers (*)")
@@ -68,7 +90,8 @@ class ImportCurveDialog(QDialog):
             return
         self.selected_path = path if fmt != "random_curve" else None
         self.selected_format = fmt
+        self.selected_sep = self.sep_edit.text() or ","
         self.accept()
 
     def get_selected_path_and_format(self):
-        return self.selected_path, self.selected_format
+        return self.selected_path, self.selected_format, self.selected_sep

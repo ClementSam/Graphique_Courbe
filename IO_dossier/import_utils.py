@@ -4,14 +4,21 @@ from typing import List
 from core.models import CurveData
 
 
-def import_curves_from_csv(path: str) -> List[CurveData]:
+def import_curves_from_csv(path: str, sep: str = ",") -> List[CurveData]:
     """Import curves from a CSV file.
+
+    Parameters
+    ----------
+    path:
+        Path to the CSV file.
+    sep:
+        Column separator used in the file (default is comma).
 
     The first column is used as the X axis and all subsequent columns are
     interpreted as Y values for individual curves. Each curve name is taken
     from the corresponding column header.
     """
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, sep=sep)
 
     # Ensure numeric types for all columns, converting invalid entries to NaN
     for column in df.columns:
@@ -37,11 +44,19 @@ def import_curves_from_csv(path: str) -> List[CurveData]:
     return curves
 
 
-def load_curves_from_file(path: str) -> List[CurveData]:
-    """Charge des courbes à partir d'un fichier CSV, Excel ou JSON."""
+def load_curves_from_file(path: str, sep: str = ",") -> List[CurveData]:
+    """Charge des courbes à partir d'un fichier CSV, Excel ou JSON.
+
+    Parameters
+    ----------
+    path:
+        Path to the file to load.
+    sep:
+        Column separator when reading CSV files.
+    """
     ext = path.lower().split('.')[-1]
     if ext == "csv":
-        return import_curves_from_csv(path)
+        return import_curves_from_csv(path, sep=sep)
     elif ext in ["xls", "xlsx"]:
         df = pd.read_excel(path)
     elif ext == "json":
