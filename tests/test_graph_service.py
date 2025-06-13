@@ -175,3 +175,14 @@ def test_create_bit_curves_invalid_data_raises(service):
 
     with pytest.raises(ValueError):
         svc.create_bit_curves("bad")
+
+
+def test_create_bit_curves_negative_values_raises(service):
+    svc, state, _ = service
+    svc.add_graph()
+    graph = list(state.graphs.keys())[0]
+    curve = CurveData(name="neg", x=[0, 1], y=[-1, 0])
+    svc.add_curve(graph, curve=curve)
+
+    with pytest.raises(ValueError):
+        svc.create_bit_curves("neg")

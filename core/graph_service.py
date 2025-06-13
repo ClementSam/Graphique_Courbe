@@ -231,10 +231,13 @@ class GraphService:
         values = curve.y.astype(np.int64)
         min_bits = max(int(values.max()).bit_length(), 1)
 
+        if values.min() < 0:
+            raise ValueError("Les valeurs négatives ne sont pas prises en charge")
+
         if bit_count is None:
             bit_count = min_bits
         else:
-            if values.min() < 0 or values.max() >= 2 ** bit_count:
+            if values.max() >= 2 ** bit_count:
                 raise ValueError("La plage de valeurs dépasse le nombre de bits spécifié")
 
         bits = ((values[:, None] >> np.arange(bit_count)) & 1).astype(float)
