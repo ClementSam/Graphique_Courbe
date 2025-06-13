@@ -4,7 +4,7 @@ from PyQt5.QtCore import QTimer
 import time
 import pyqtgraph as pg
 from signal_bus import signal_bus
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QFont
 import logging
 
 logger = logging.getLogger(__name__)
@@ -43,6 +43,14 @@ class MyPlotView:
 
         self._format_axis(self.plot_widget.getAxis("bottom"), g.x_unit, g.x_format)
         self._format_axis(self.plot_widget.getAxis("left"), g.y_unit, g.y_format)
+
+        font = QFont(g.font)
+        try:
+            self.plot_widget.getAxis("bottom").setTickFont(font)
+            self.plot_widget.getAxis("left").setTickFont(font)
+        except AttributeError:
+            self.plot_widget.getAxis("bottom").setStyle(tickFont=font)
+            self.plot_widget.getAxis("left").setStyle(tickFont=font)
 
 
     def refresh_curves(self):

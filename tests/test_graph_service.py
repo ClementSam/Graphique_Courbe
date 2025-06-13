@@ -87,3 +87,13 @@ def test_graph_options(service):
     assert state.current_graph.grid_visible is True
     assert state.current_graph.log_x is True
     assert state.current_graph.log_y is True
+
+
+def test_set_font(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    svc.set_font("Courier")
+    assert state.current_graph.font == "Courier"

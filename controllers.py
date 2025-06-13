@@ -132,6 +132,12 @@ class GraphController:
         self.service.set_log_y(enabled)
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
+
+    def set_font(self, font_name: str):
+        logger.debug(f"🔤 [GraphController.set_font] {font_name}")
+        self.service.set_font(font_name)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
     
     def set_graph_visible(self, graph_name: str, visible: bool):
         logger.debug(f"👁 [GraphController.set_graph_visible] {graph_name} → {visible}")

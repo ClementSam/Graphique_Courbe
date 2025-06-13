@@ -72,6 +72,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.logy_checkbox.toggled.connect(
             lambda val: self._call_graph_controller(self.controller.set_log_y, val)
         )
+        self.font_combo.currentFontChanged.connect(
+            lambda font: self._call_graph_controller(self.controller.set_font, font.family())
+        )
 
     def setup_ui(self):
         logger.debug("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")

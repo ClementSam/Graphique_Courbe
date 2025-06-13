@@ -142,6 +142,18 @@ def test_controller_graph_options(controller):
     assert len(bus.graph_updated.emitted) == 1
 
 
+def test_controller_set_font(controller):
+    c, state, bus = controller
+    c.add_graph()
+    graph = list(state.graphs.keys())[0]
+    c.select_graph(graph)
+
+    bus.graph_updated.emitted.clear()
+    c.set_font("Courier")
+    assert state.graphs[graph].font == "Courier"
+    assert len(bus.graph_updated.emitted) == 1
+
+
 def test_selection_flow_updates_state_and_ui(controller):
     c, state, bus = controller
     c.add_graph()

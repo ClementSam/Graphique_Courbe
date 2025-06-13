@@ -205,6 +205,11 @@ class GraphService:
         if self.state.current_graph:
             self.state.current_graph.log_y = enabled
 
+    def set_font(self, font_name: str):
+        logger.debug(f"🔤 [GraphService.set_font] Font = {font_name}")
+        if self.state.current_graph:
+            self.state.current_graph.font = font_name
+
     def set_opacity(self, value: float):
         logger.debug(f"🎨 [GraphService.set_opacity] Opacité = {value}")
         if self.state.current_curve:
