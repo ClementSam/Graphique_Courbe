@@ -206,6 +206,11 @@ class GraphController:
         self.service.set_offset(value)
         self.ui.refresh_curve_ui()
 
+    def set_time_offset(self, value: float):
+        logger.debug(f"⏱ [GraphController.set_time_offset] Time offset = {value}")
+        self.service.set_time_offset(value)
+        self.ui.refresh_curve_ui()
+
     def set_width(self, value: int):
         logger.debug(f"📏 [GraphController.set_width] Width = {value}")
         self.service.set_width(value)

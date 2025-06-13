@@ -15,7 +15,7 @@ from IO_dossier import serializers
 
 
 def create_sample_curve(name="c1"):
-    c = CurveData(name=name, x=[0,1,2], y=[1,2,3])
+    c = CurveData(name=name, x=[0,1,2], y=[1,2,3], time_offset=1.5)
     # attributes expected by serializers but missing in dataclass
     c.show_zero_line = False
     c.show_label = False
@@ -40,6 +40,7 @@ def patch_serializers(monkeypatch):
             display_mode=data.get("display_mode", "line"),
             gain=data.get("gain", 1.0),
             offset=data.get("offset", 0.0),
+            time_offset=data.get("time_offset", 0.0),
             label_mode=data.get("label_mode", "none"),
             zero_indicator=data.get("zero_indicator", "none"),
         )
@@ -60,6 +61,7 @@ def test_curve_serialization(tmp_path):
     assert loaded.name == curve.name
     assert np.array_equal(loaded.x, curve.x)
     assert np.array_equal(loaded.y, curve.y)
+    assert loaded.time_offset == curve.time_offset
 
 
 def test_graph_serialization(tmp_path):
@@ -71,6 +73,7 @@ def test_graph_serialization(tmp_path):
     assert loaded.name == graph.name
     assert len(loaded.curves) == 1
     assert loaded.curves[0].name == graph.curves[0].name
+    assert loaded.curves[0].time_offset == graph.curves[0].time_offset
 
 
 def test_project_serialization(tmp_path):
@@ -85,3 +88,4 @@ def test_project_serialization(tmp_path):
     assert set(loaded.keys()) == {"g1", "g2"}
     assert len(loaded["g1"].curves) == 1
     assert loaded["g1"].curves[0].name == "c1"
+    assert loaded["g1"].curves[0].time_offset == g1.curves[0].time_offset

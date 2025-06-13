@@ -37,6 +37,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.offset_slider.valueChanged.connect(
             lambda v: self._call_controller(self.controller.set_offset, float(v))
         )
+        self.time_offset_apply_btn.clicked.connect(
+            lambda: self._call_controller(
+                self.controller.set_time_offset,
+                float(self.time_offset_input.value()),
+            )
+        )
         self.style_combo.currentIndexChanged.connect(
             lambda i: self._call_controller(self.controller.set_style, self.style_combo.itemData(i))
         )
@@ -339,6 +345,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.offset_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.offset_slider.setRange(-500, 500)
         self.offset_slider.setValue(0)
+
+        self.time_offset_input = QtWidgets.QDoubleSpinBox()
+        self.time_offset_input.setRange(-1000.0, 1000.0)
+        self.time_offset_input.setDecimals(3)
+        self.time_offset_input.setSingleStep(0.1)
+        self.time_offset_apply_btn = QtWidgets.QPushButton("Appliquer")
         
         self.zero_indicator_combo = QtWidgets.QComboBox()
         self.zero_indicator_combo.addItem("Aucun", "none")
@@ -350,6 +362,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.gain_slider)
         layout.addWidget(QtWidgets.QLabel("Offset vertical :"))
         layout.addWidget(self.offset_slider)
+        h_time = QtWidgets.QHBoxLayout()
+        h_time.addWidget(QtWidgets.QLabel("Décalage temporel :"))
+        h_time.addWidget(self.time_offset_input)
+        h_time.addWidget(self.time_offset_apply_btn)
+        layout.addLayout(h_time)
         
         self.bring_to_front_button = QtWidgets.QPushButton("🔝 Mettre au premier plan")
         layout.addWidget(self.bring_to_front_button)
@@ -463,6 +480,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.fill_checkbox.setChecked(False)
             self.gain_slider.setValue(100)
             self.offset_slider.setValue(0)
+            self.time_offset_input.setValue(0.0)
             self.zero_indicator_combo.setCurrentIndex(0)
             self.downsampling_combo.setCurrentIndex(0)
             self.downsampling_ratio_input.setValue(10)
@@ -494,6 +512,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
     
         self.gain_slider.setValue(int(curve.gain * 100))  # gain 1.0 → slider 100
         self.offset_slider.setValue(int(curve.offset))    # offset en pixels/valeur
+        self.time_offset_input.setValue(curve.time_offset)
     
         index_zero = self.zero_indicator_combo.findData(curve.zero_indicator)
         self.zero_indicator_combo.setCurrentIndex(index_zero if index_zero != -1 else 0)
