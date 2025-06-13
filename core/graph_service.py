@@ -3,6 +3,7 @@
 from core.app_state import AppState
 from core.models import GraphData, CurveData
 from core.utils.naming import get_next_graph_name
+from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -313,3 +314,15 @@ class GraphService:
         if self.state.current_graph:
             self.state.current_graph.y_min = y_min
             self.state.current_graph.y_max = y_max
+
+    def set_satellite_content(self, zone: str, content: Optional[str]):
+        """Define which widget content should appear in the given satellite zone."""
+        logger.debug(
+            f"🛰 [GraphService.set_satellite_content] zone={zone} content={content}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_content:
+            graph.satellite_content[zone] = content
+            graph.satellite_visibility[zone] = bool(content)

@@ -111,6 +111,36 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             )
         )
 
+        # Satellite zones
+        self.satellite_left_combo.currentIndexChanged.connect(
+            lambda i: self._call_graph_controller(
+                self.controller.set_satellite_content,
+                "left",
+                self.satellite_left_combo.itemData(i),
+            )
+        )
+        self.satellite_right_combo.currentIndexChanged.connect(
+            lambda i: self._call_graph_controller(
+                self.controller.set_satellite_content,
+                "right",
+                self.satellite_right_combo.itemData(i),
+            )
+        )
+        self.satellite_top_combo.currentIndexChanged.connect(
+            lambda i: self._call_graph_controller(
+                self.controller.set_satellite_content,
+                "top",
+                self.satellite_top_combo.itemData(i),
+            )
+        )
+        self.satellite_bottom_combo.currentIndexChanged.connect(
+            lambda i: self._call_graph_controller(
+                self.controller.set_satellite_content,
+                "bottom",
+                self.satellite_bottom_combo.itemData(i),
+            )
+        )
+
     def setup_ui(self):
         logger.debug("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")
 
@@ -186,6 +216,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addLayout(ylayout)
         
         self.satellite_left_checkbox = QtWidgets.QCheckBox("Zone gauche")
+        self.satellite_left_checkbox.setEnabled(False)
         self.satellite_left_combo = QtWidgets.QComboBox()
         self.satellite_left_combo.addItem("Aucun", None)
         self.satellite_left_combo.addItem("Exemple: Texte", "label")
@@ -195,6 +226,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.satellite_left_combo)
         
         self.satellite_right_checkbox = QtWidgets.QCheckBox("Zone droite")
+        self.satellite_right_checkbox.setEnabled(False)
         self.satellite_right_combo = QtWidgets.QComboBox()
         self.satellite_right_combo.addItem("Aucun", None)
         self.satellite_right_combo.addItem("Exemple: Texte", "label")
@@ -204,6 +236,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.satellite_right_combo)
         
         self.satellite_top_checkbox = QtWidgets.QCheckBox("Zone haut")
+        self.satellite_top_checkbox.setEnabled(False)
         self.satellite_top_combo = QtWidgets.QComboBox()
         self.satellite_top_combo.addItem("Aucun", None)
         self.satellite_top_combo.addItem("Exemple: Texte", "label")
@@ -213,6 +246,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.satellite_top_combo)
         
         self.satellite_bottom_checkbox = QtWidgets.QCheckBox("Zone bas")
+        self.satellite_bottom_checkbox.setEnabled(False)
         self.satellite_bottom_combo = QtWidgets.QComboBox()
         self.satellite_bottom_combo.addItem("Aucun", None)
         self.satellite_bottom_combo.addItem("Exemple: Texte", "label")
