@@ -13,6 +13,10 @@ def import_curves_from_csv(path: str) -> List[CurveData]:
     """
     df = pd.read_csv(path)
 
+    # Ensure numeric types for all columns, converting invalid entries to NaN
+    for column in df.columns:
+        df[column] = pd.to_numeric(df[column], errors="coerce")
+
     if df.shape[1] < 2:
         raise ValueError(
             "Le fichier doit contenir au moins deux colonnes pour x et y."
