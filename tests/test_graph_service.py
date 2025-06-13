@@ -87,3 +87,26 @@ def test_graph_options(service):
     assert state.current_graph.grid_visible is True
     assert state.current_graph.log_x is True
     assert state.current_graph.log_y is True
+
+
+def test_axis_settings(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    svc.set_x_unit("s")
+    svc.set_y_unit("V")
+    svc.set_x_format("scientific")
+    svc.set_y_format("scaled")
+    svc.set_fix_y_range(True)
+    svc.set_y_limits(-1, 1)
+
+    g = state.current_graph
+    assert g.x_unit == "s"
+    assert g.y_unit == "V"
+    assert g.x_format == "scientific"
+    assert g.y_format == "scaled"
+    assert g.fix_y_range is True
+    assert g.y_min == -1
+    assert g.y_max == 1

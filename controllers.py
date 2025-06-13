@@ -132,6 +132,42 @@ class GraphController:
         self.service.set_log_y(enabled)
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
+
+    def set_x_unit(self, unit: str):
+        logger.debug(f"📏 [GraphController.set_x_unit] {unit}")
+        self.service.set_x_unit(unit)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_y_unit(self, unit: str):
+        logger.debug(f"📏 [GraphController.set_y_unit] {unit}")
+        self.service.set_y_unit(unit)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_x_format(self, fmt: str):
+        logger.debug(f"🔢 [GraphController.set_x_format] {fmt}")
+        self.service.set_x_format(fmt)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_y_format(self, fmt: str):
+        logger.debug(f"🔢 [GraphController.set_y_format] {fmt}")
+        self.service.set_y_format(fmt)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_fix_y_range(self, fix: bool):
+        logger.debug(f"📊 [GraphController.set_fix_y_range] {fix}")
+        self.service.set_fix_y_range(fix)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_y_limits(self, y_min: float, y_max: float):
+        logger.debug(f"📉 [GraphController.set_y_limits] {y_min} → {y_max}")
+        self.service.set_y_limits(y_min, y_max)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
     
     def set_graph_visible(self, graph_name: str, visible: bool):
         logger.debug(f"👁 [GraphController.set_graph_visible] {graph_name} → {visible}")

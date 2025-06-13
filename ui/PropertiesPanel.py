@@ -73,6 +73,41 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             lambda val: self._call_graph_controller(self.controller.set_log_y, val)
         )
 
+        # Nouvelles connexions pour les options d'axe
+        self.x_unit_input.editingFinished.connect(
+            lambda: self._call_graph_controller(
+                self.controller.set_x_unit, self.x_unit_input.text()
+            )
+        )
+        self.y_unit_input.editingFinished.connect(
+            lambda: self._call_graph_controller(
+                self.controller.set_y_unit, self.y_unit_input.text()
+            )
+        )
+        self.x_format_combo.currentIndexChanged.connect(
+            lambda i: self._call_graph_controller(
+                self.controller.set_x_format, self.x_format_combo.itemData(i)
+            )
+        )
+        self.y_format_combo.currentIndexChanged.connect(
+            lambda i: self._call_graph_controller(
+                self.controller.set_y_format, self.y_format_combo.itemData(i)
+            )
+        )
+        self.fix_y_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(self.controller.set_fix_y_range, val)
+        )
+        self.ymin_input.valueChanged.connect(
+            lambda v: self._call_graph_controller(
+                self.controller.set_y_limits, float(v), self.ymax_input.value()
+            )
+        )
+        self.ymax_input.valueChanged.connect(
+            lambda v: self._call_graph_controller(
+                self.controller.set_y_limits, self.ymin_input.value(), float(v)
+            )
+        )
+
     def setup_ui(self):
         logger.debug("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")
 
