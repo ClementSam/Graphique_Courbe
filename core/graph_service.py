@@ -2,7 +2,7 @@
 
 from core.app_state import AppState
 from core.models import GraphData, CurveData
-from core.utils.naming import get_next_graph_name
+from core.utils.naming import get_next_graph_name, get_unique_curve_name
 from typing import Optional
 import logging
 
@@ -103,16 +103,28 @@ class GraphService:
         logger.debug(f"📊 [GraphService.add_curve] Courbes existantes : {[c.name for c in graph.curves]}")    
         
         existing_names = [c.name for c in graph.curves]
-        index = 1
-        while f"Courbe {index}" in existing_names:
-            index += 1
-        curve_name = f"Courbe {index}"
-    
+
         if curve is None:
-            logger.debug(f"🔧 [GraphService.add_curve] Génération d'une courbe vide nommée '{curve_name}'")
+            # When no curve data is provided, create a new one with an
+            # automatically generated name "Courbe X" that does not collide
+            # with existing names.
+            index = 1
+            while f"Courbe {index}" in existing_names:
+                index += 1
+            curve_name = f"Courbe {index}"
+            logger.debug(
+                f"🔧 [GraphService.add_curve] Génération d'une courbe vide nommée '{curve_name}'"
+            )
             curve = CurveData(name=curve_name)
         else:
-            logger.debug(f"📥 [GraphService.add_curve] Courbe fournie nommée '{curve.name}', renommée '{curve_name}'")
+            # Keep the provided curve name when importing. If it already exists
+            # in the target graph, append " (x)" where x is the smallest index
+            # making the name unique.
+            base_name = curve.name or "Courbe"
+            curve_name = get_unique_curve_name(base_name, set(existing_names))
+            logger.debug(
+                f"📥 [GraphService.add_curve] Courbe fournie nommée '{curve.name}', renommée '{curve_name}'"
+            )
             curve.name = curve_name
     
         graph.curves.append(curve)
