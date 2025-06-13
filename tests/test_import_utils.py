@@ -4,7 +4,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from IO_dossier.import_utils import import_curves_from_csv
+from IO_dossier.import_utils import import_curves_from_csv, TimeMode
 
 
 def test_import_curves_from_csv(tmp_path):
@@ -56,5 +56,36 @@ def test_import_curves_from_csv_decimal_comma(tmp_path):
     assert len(curves) == 2
     assert np.allclose(curves[0].x, np.array([0.5, 1.5]))
     assert np.allclose(curves[0].y, np.array([1.2, 3.3]))
+
+
+def test_import_curves_with_index_mode(tmp_path):
+    csv_content = "a,b\n1,2\n3,4\n"
+    path = tmp_path / "data.csv"
+    path.write_text(csv_content)
+
+    curves = import_curves_from_csv(str(path), mode=TimeMode.INDEX)
+
+    assert len(curves) == 2
+    assert np.array_equal(curves[0].x, np.array([0, 1]))
+
+
+def test_import_curves_timestamp_relative(tmp_path):
+    csv_content = "t,a\n2025-06-07 T08:38:59,1\n2025-06-07 T08:39:00,2\n"
+    path = tmp_path / "data.csv"
+    path.write_text(csv_content)
+
+    curves = import_curves_from_csv(str(path), mode=TimeMode.TIMESTAMP_RELATIVE)
+
+    assert np.array_equal(curves[0].x, np.array([0.0, 1.0]))
+
+
+def test_import_curves_timestamp_absolute(tmp_path):
+    csv_content = "t,a\n2025-06-07 T08:38:59,1\n2025-06-07 T08:39:00,2\n"
+    path = tmp_path / "data.csv"
+    path.write_text(csv_content)
+
+    curves = import_curves_from_csv(str(path), mode=TimeMode.TIMESTAMP_ABSOLUTE)
+
+    assert curves[0].x[1] - curves[0].x[0] == 1.0
 
 

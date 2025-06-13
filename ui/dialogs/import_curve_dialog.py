@@ -19,6 +19,7 @@ class ImportCurveDialog(QDialog):
         self.selected_path = None
         self.selected_format = None
         self.selected_sep = ","
+        self.selected_mode = "numeric"
 
         self._init_ui()
         self._on_format_changed()
@@ -56,6 +57,19 @@ class ImportCurveDialog(QDialog):
         sep_layout.addWidget(self.sep_edit)
         layout.addLayout(sep_layout)
 
+        # Time handling options
+        mode_layout = QHBoxLayout()
+        self.mode_label = QLabel("Gestion du temps :")
+        self.mode_combo = QComboBox()
+        self.mode_combo.addItem("Pas de colonne (index)", "index")
+        self.mode_combo.addItem("Première colonne numérique", "numeric")
+        self.mode_combo.addItem("Ignorer la première colonne", "ignore")
+        self.mode_combo.addItem("Horodatage relatif", "timestamp_relative")
+        self.mode_combo.addItem("Horodatage absolu", "timestamp_absolute")
+        mode_layout.addWidget(self.mode_label)
+        mode_layout.addWidget(self.mode_combo)
+        layout.addLayout(mode_layout)
+
         # Boutons bas
         btn_layout = QHBoxLayout()
         import_btn = QPushButton("Importer")
@@ -77,6 +91,9 @@ class ImportCurveDialog(QDialog):
         csv = fmt == "csv_standard"
         self.sep_label.setVisible(csv)
         self.sep_edit.setVisible(csv)
+        time_visible = fmt in ("csv_standard", "excel", "csv_or_excel")
+        self.mode_label.setVisible(time_visible)
+        self.mode_combo.setVisible(time_visible)
 
     def _on_browse(self):
         path, _ = QFileDialog.getOpenFileName(self, "Sélectionner un fichier", "", "Tous les fichiers (*)")
@@ -92,7 +109,8 @@ class ImportCurveDialog(QDialog):
         self.selected_path = path if fmt != "random_curve" else None
         self.selected_format = fmt
         self.selected_sep = self.sep_edit.text() or ","
+        self.selected_mode = self.mode_combo.currentData()
         self.accept()
 
     def get_selected_path_and_format(self):
-        return self.selected_path, self.selected_format, self.selected_sep
+        return self.selected_path, self.selected_format, self.selected_sep, self.selected_mode
