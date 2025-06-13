@@ -182,7 +182,7 @@ class GraphService:
             return
         if curve in graph.curves:
             graph.curves.remove(curve)
-            graph.curves.insert(0, curve)
+            graph.curves.append(curve)
             logger.debug(f"✅ [GraphService.bring_curve_to_front] Courbe '{curve.name}' déplacée en tête")
 
     # ----- Méthodes métier pour les propriétés du graphique -----
