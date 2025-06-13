@@ -82,7 +82,8 @@ class MyPlotView:
             if not curve.visible:
                 continue
     
-            x = curve.x[::curve.downsampling_ratio] if curve.downsampling_mode == "manual" else curve.x
+            base_x = curve.x[::curve.downsampling_ratio] if curve.downsampling_mode == "manual" else curve.x
+            x = base_x + curve.time_offset
             y = curve.gain * curve.y + curve.offset
     
             qcolor = QColor(curve.color)

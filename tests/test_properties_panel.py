@@ -37,3 +37,4 @@ def test_update_curve_ui_resets_when_no_selection():
     assert panel.display_mode_combo.currentIndex() == 0
     assert not panel.downsampling_ratio_input.isEnabled()
     assert not panel.downsampling_apply_btn.isEnabled()
+    assert panel.time_offset_input.value() == 0.0

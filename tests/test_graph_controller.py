@@ -169,3 +169,13 @@ def test_set_width_updates_curve(controller):
 
     c.set_width(5)
     assert state.current_curve.width == 5
+
+
+def test_set_time_offset_updates_curve(controller):
+    c, state, _ = controller
+    c.add_graph()
+    graph_name = list(state.graphs.keys())[0]
+    c.add_curve(graph_name)
+
+    c.set_time_offset(3.0)
+    assert state.current_curve.time_offset == 3.0

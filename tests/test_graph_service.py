@@ -110,3 +110,13 @@ def test_axis_settings(service):
     assert g.fix_y_range is True
     assert g.y_min == -1
     assert g.y_max == 1
+
+
+def test_set_time_offset(service):
+    svc, state, _ = service
+    svc.add_graph()
+    graph = list(state.graphs.keys())[0]
+    svc.add_curve(graph, curve=CurveData(name="tmp", x=[0], y=[0]))
+
+    svc.set_time_offset(2.5)
+    assert state.current_curve.time_offset == 2.5

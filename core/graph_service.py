@@ -221,6 +221,11 @@ class GraphService:
         if self.state.current_curve:
             self.state.current_curve.offset = value
 
+    def set_time_offset(self, value: float):
+        logger.debug(f"⏱ [GraphService.set_time_offset] Time offset = {value}")
+        if self.state.current_curve:
+            self.state.current_curve.time_offset = value
+
     def set_width(self, value: int):
         logger.debug(f"📏 [GraphService.set_width] Width = {value}")
         if self.state.current_curve:

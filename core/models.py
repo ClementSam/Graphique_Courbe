@@ -21,6 +21,7 @@ class CurveData:
     display_mode: str = "line"  # 'line', 'scatter', 'bar'
     gain: float = 1.0
     offset: float = 0.0
+    time_offset: float = 0.0
     zero_indicator: str = "none"  # "none", "line"
     label_mode: str = "none"  # valeurs possibles : "none", "inline", "legend"
 
