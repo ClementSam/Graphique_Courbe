@@ -25,6 +25,7 @@ def make_signal_bus():
         graph_updated=DummySignal(),
         graph_visibility_changed=DummySignal(),
         curve_visibility_changed=DummySignal(),
+        bit_curve_requested=DummySignal(),
     )
 
 class DummyCoordinator:

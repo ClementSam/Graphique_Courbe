@@ -18,5 +18,6 @@ class SignalBus(QtCore.QObject):
     # 🚨 Deux signaux séparés !
     add_graph_requested = pyqtSignal(str)  # "graph"
     add_curve_requested = pyqtSignal(str)  # "NomGraphique"
+    bit_curve_requested = pyqtSignal(str, object)  # curve_name, bit_count
 
 signal_bus = SignalBus()

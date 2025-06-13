@@ -48,6 +48,7 @@ class ApplicationCoordinator:
         # ➕ Ajout de graphes ou courbes
         signal_bus.add_graph_requested.connect(lambda _: self._handle_add_requested("graph"))
         signal_bus.add_curve_requested.connect(self._handle_add_requested)
+        signal_bus.bit_curve_requested.connect(self._handle_bit_curve_requested)
 
         # 🎯 Sélections
         signal_bus.graph_selected.connect(self.controller.select_graph)
@@ -164,4 +165,11 @@ class ApplicationCoordinator:
             self.controller.remove_curve(name)
             self.graph_ui_coordinator.refresh_plot()
 
+    def _handle_bit_curve_requested(self, curve_name, bit_count):
+        """Create bit curves for *curve_name* using the controller."""
+        try:
+            self.controller.create_bit_curves(curve_name, bit_count)
+        except Exception as e:
+            from PyQt5.QtWidgets import QMessageBox
 
+            QMessageBox.critical(None, "Erreur", str(e))

@@ -1,7 +1,13 @@
 #GraphCurvePanel.py
 
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QTreeView, QStyledItemDelegate, QMessageBox
+from PyQt5.QtWidgets import (
+    QTreeView,
+    QStyledItemDelegate,
+    QMessageBox,
+    QMenu,
+    QInputDialog,
+)
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QPainter, QFont
 from PyQt5.QtCore import Qt, QRect, QSize
 from core.app_state import AppState
@@ -128,6 +134,8 @@ class GraphCurvePanel(QtWidgets.QWidget):
         self.model = QStandardItemModel()
         self.model.itemChanged.connect(self.on_item_renamed)
         self.tree.setModel(self.model)
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self.on_context_menu)
         layout.addWidget(self.tree)
         layout.addStretch()
 
@@ -230,6 +238,46 @@ class GraphCurvePanel(QtWidgets.QWidget):
         item.setData(kind, Qt.UserRole + 3)
         item.setData(name, Qt.UserRole + 4)
         return item
+
+    def on_context_menu(self, pos):
+        index = self.tree.indexAt(pos)
+        if not index.isValid():
+            return
+        kind = index.data(Qt.UserRole + 3)
+        if kind != "curve":
+            return
+        name = index.data(Qt.UserRole + 4)
+
+        parent_index = index.parent()
+        if parent_index.data(Qt.UserRole + 3) == "curve":
+            parent_index = parent_index.parent()
+        graph_name = parent_index.data(Qt.UserRole + 4) if parent_index.isValid() else None
+        if not graph_name:
+            return
+
+        state = AppState.get_instance()
+        graph = state.graphs.get(graph_name)
+        curve = next((c for c in graph.curves if c.name == name), None) if graph else None
+        if not curve or getattr(curve, "bit_index", None) is not None:
+            return
+
+        menu = QMenu(self)
+        action_bits = menu.addAction("Décomposer en bits...")
+        chosen = menu.exec_(self.tree.viewport().mapToGlobal(pos))
+        if chosen == action_bits:
+            bit_count, ok = QInputDialog.getInt(
+                self,
+                "Décomposer en bits",
+                "Nombre de bits (0 pour auto):",
+                0,
+                0,
+                64,
+                1,
+            )
+            if ok:
+                bit_count = None if bit_count == 0 else bit_count
+                signal_bus.bit_curve_requested.emit(name, bit_count)
+                self.tree.setExpanded(index, True)
 
 
     def on_selection_changed(self, current, previous):

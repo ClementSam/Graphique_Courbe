@@ -26,6 +26,7 @@ def service(monkeypatch):
         curve_list_updated=DummySignal(),
         curve_updated=DummySignal(),
         graph_updated=DummySignal(),
+        bit_curve_requested=DummySignal(),
     )
     monkeypatch.setitem(sys.modules, "signal_bus", bus_module)
 
