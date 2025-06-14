@@ -5,15 +5,19 @@ from PyQt5.QtWidgets import (
     QLabel,
     QListWidget,
     QListWidgetItem,
+    QTableWidget,
+    QTableWidgetItem,
+    QAbstractItemView,
     QDialogButtonBox,
     QPushButton,
     QLineEdit,
+    QComboBox,
 )
 from PyQt5.QtCore import Qt
 import fnmatch
 
 from typing import List
-from core.models import CurveData
+from core.models import CurveData, DataType
 
 class CurveSelectionDialog(QDialog):
     """
@@ -45,8 +49,11 @@ class CurveSelectionDialog(QDialog):
             item.setData(Qt.UserRole, curve)
             self.available_list.addItem(item)
 
-        self.selected_list = QListWidget()
-        self.selected_list.setSelectionMode(QListWidget.MultiSelection)
+        self.selected_table = QTableWidget()
+        self.selected_table.setColumnCount(2)
+        self.selected_table.setHorizontalHeaderLabels(["Nom", "Type"])
+        self.selected_table.horizontalHeader().setStretchLastSection(True)
+        self.selected_table.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         btn_layout = QVBoxLayout()
         add_btn = QPushButton("→")
@@ -60,7 +67,7 @@ class CurveSelectionDialog(QDialog):
 
         lists_layout.addWidget(self.available_list)
         lists_layout.addLayout(btn_layout)
-        lists_layout.addWidget(self.selected_list)
+        lists_layout.addWidget(self.selected_table)
         main_layout.addLayout(lists_layout)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -70,16 +77,20 @@ class CurveSelectionDialog(QDialog):
 
         # double click pour déplacer
         self.available_list.itemDoubleClicked.connect(self._add_item)
-        self.selected_list.itemDoubleClicked.connect(self._remove_item)
+        self.selected_table.itemDoubleClicked.connect(self._remove_item)
 
     def get_selected_curves(self) -> List[CurveData]:
-        """Retourne les courbes sélectionnées dans la liste de droite."""
+        """Retourne les courbes sélectionnées dans la table de droite."""
         selected = []
-        for i in range(self.selected_list.count()):
-            item = self.selected_list.item(i)
-            curve = item.data(Qt.UserRole)
-            new_name = item.text().strip()
-            curve.name = new_name
+        for row in range(self.selected_table.rowCount()):
+            name_item = self.selected_table.item(row, 0)
+            curve = name_item.data(Qt.UserRole)
+            curve.name = name_item.text().strip()
+            combo = self.selected_table.cellWidget(row, 1)
+            dtype = combo.currentData()
+            curve.dtype = dtype
+            if dtype != DataType.FLOAT64:
+                curve.y = curve.y.astype(dtype.value)
             selected.append(curve)
         return selected
 
@@ -95,23 +106,44 @@ class CurveSelectionDialog(QDialog):
             item.setHidden(not visible)
 
     def _add_item(self, item: QListWidgetItem):
-        self._move_items([item], self.available_list, self.selected_list)
+        self._move_to_selected([item])
 
-    def _remove_item(self, item: QListWidgetItem):
-        self._move_items([item], self.selected_list, self.available_list)
+    def _remove_item(self, item):
+        row = item.row()
+        self._move_row_to_available(row)
         self._apply_filter()
 
     def _add_selected(self):
         items = self.available_list.selectedItems()
-        self._move_items(items, self.available_list, self.selected_list)
+        self._move_to_selected(items)
 
     def _remove_selected(self):
-        items = self.selected_list.selectedItems()
-        self._move_items(items, self.selected_list, self.available_list)
+        rows = sorted({item.row() for item in self.selected_table.selectedItems()}, reverse=True)
+        for row in rows:
+            self._move_row_to_available(row)
         self._apply_filter()
-
-    def _move_items(self, items, src: QListWidget, dst: QListWidget):
+    def _move_to_selected(self, items):
         for item in list(items):
-            src.takeItem(src.row(item))
-            item.setFlags(item.flags() | Qt.ItemIsEditable)
-            dst.addItem(item)
+            self.available_list.takeItem(self.available_list.row(item))
+            row = self.selected_table.rowCount()
+            self.selected_table.insertRow(row)
+            name_item = QTableWidgetItem(item.text())
+            name_item.setFlags(name_item.flags() | Qt.ItemIsEditable)
+            curve = item.data(Qt.UserRole)
+            name_item.setData(Qt.UserRole, curve)
+            self.selected_table.setItem(row, 0, name_item)
+            combo = QComboBox()
+            for dt in DataType:
+                combo.addItem(dt.value, dt)
+            combo.setCurrentIndex(list(DataType).index(curve.dtype))
+            self.selected_table.setCellWidget(row, 1, combo)
+
+    def _move_row_to_available(self, row: int):
+        name_item = self.selected_table.item(row, 0)
+        curve = name_item.data(Qt.UserRole)
+        new_name = name_item.text().strip()
+        curve.name = new_name
+        item = QListWidgetItem(new_name)
+        item.setData(Qt.UserRole, curve)
+        self.available_list.addItem(item)
+        self.selected_table.removeRow(row)
