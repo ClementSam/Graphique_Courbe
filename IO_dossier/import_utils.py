@@ -13,11 +13,27 @@ class TimeMode(Enum):
     TIMESTAMP_RELATIVE = "timestamp_relative"  # Parse timestamps, first value at 0s.
     TIMESTAMP_ABSOLUTE = "timestamp_absolute"  # Parse timestamps as seconds since epoch.
 
-from core.models import CurveData
+from core.models import CurveData, DataType
 from core.utils import generate_random_color
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def suggest_dtype(array: pd.Series | pd.Index | pd.DataFrame | list) -> DataType:
+    """Return a suggested DataType for the given numeric values."""
+    import numpy as np
+
+    arr = np.asarray(array)
+    if np.all(np.isfinite(arr)) and np.allclose(arr, np.round(arr)) and np.all(arr >= 0):
+        max_val = int(arr.max()) if arr.size else 0
+        if max_val <= 0xFF:
+            return DataType.UINT8
+        if max_val <= 0xFFFF:
+            return DataType.UINT16
+        if max_val <= 0xFFFFFFFF:
+            return DataType.UINT32
+    return DataType.FLOAT64
 
 
 def _curves_from_dataframe(df: pd.DataFrame, mode: TimeMode) -> List[CurveData]:
@@ -59,7 +75,13 @@ def _curves_from_dataframe(df: pd.DataFrame, mode: TimeMode) -> List[CurveData]:
             f"📈 [_curves_from_dataframe] Courbe '{col}' avec {len(x)} points"
         )
         curves.append(
-            CurveData(name=col, x=x, y=y_data, color=generate_random_color())
+            CurveData(
+                name=col,
+                x=x,
+                y=y_data,
+                dtype=suggest_dtype(y_data),
+                color=generate_random_color(),
+            )
         )
 
     return curves

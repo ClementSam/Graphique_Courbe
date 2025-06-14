@@ -3,12 +3,23 @@
 import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional
+from enum import Enum
+
+
+class DataType(str, Enum):
+    """Supported data storage types for curves."""
+
+    FLOAT64 = "float64"
+    UINT8 = "uint8"
+    UINT16 = "uint16"
+    UINT32 = "uint32"
 
 @dataclass
 class CurveData:
     name: str
     x: np.ndarray
     y: np.ndarray
+    dtype: DataType = DataType.FLOAT64
     color: str = 'b'
     width: int = 2
     style: Optional[int] = None
@@ -32,8 +43,10 @@ class CurveData:
 
 
     def __post_init__(self):
-        self.x = np.array(self.x)
+        self.x = np.array(self.x, dtype=np.float64)
         self.y = np.array(self.y)
+        if self.dtype != DataType.FLOAT64:
+            self.y = self.y.astype(self.dtype.value)
         if not self.name:
             raise ValueError("Le nom de la courbe ne peut pas être vide.")
         if len(self.x) != len(self.y):

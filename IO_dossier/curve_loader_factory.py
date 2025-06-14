@@ -12,6 +12,7 @@ import struct
 from collections import namedtuple
 import numpy as np
 from ui.dialogs.curve_selection_dialog import CurveSelectionDialog
+from ui.dialogs.data_type_dialog import DataTypeDialog
 
 
 def _select_curves(curves: List[CurveData]) -> List[CurveData]:
@@ -20,7 +21,11 @@ def _select_curves(curves: List[CurveData]) -> List[CurveData]:
         return []
     dlg = CurveSelectionDialog(curves)
     if dlg.exec_() == dlg.Accepted:
-        return dlg.get_selected_curves()
+        selected = dlg.get_selected_curves()
+        type_dlg = DataTypeDialog(selected)
+        if type_dlg.exec_() == type_dlg.Accepted:
+            return selected
+        return []
     return []
 
 

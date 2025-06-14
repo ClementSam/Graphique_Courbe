@@ -4,7 +4,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from IO_dossier.import_utils import import_curves_from_csv, TimeMode
+from IO_dossier.import_utils import import_curves_from_csv, TimeMode, suggest_dtype
+from core.models import DataType
 
 
 def test_import_curves_from_csv(tmp_path):
@@ -89,3 +90,13 @@ def test_import_curves_timestamp_absolute(tmp_path):
     assert curves[0].x[1] - curves[0].x[0] == 1.0
 
 
+
+def test_suggest_dtype_integer_range():
+    arr = [0, 10, 255]
+    assert suggest_dtype(arr) == DataType.UINT8
+    arr = [0, 50000]
+    assert suggest_dtype(arr) == DataType.UINT16
+    arr = [0, 70000, 4294967295]
+    assert suggest_dtype(arr) == DataType.UINT32
+    arr = [-1, 0]
+    assert suggest_dtype(arr) == DataType.FLOAT64
