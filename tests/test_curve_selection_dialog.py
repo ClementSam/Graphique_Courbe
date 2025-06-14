@@ -27,3 +27,16 @@ def test_filter_and_selection():
     assert len(selected) == 1
     assert selected[0].name == "temp1"
     assert selected[0].dtype == DataType.FLOAT64
+
+
+def test_warning_label_updates():
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    curves = [CurveData(name="c", x=[0, 1], y=[0, 2.5])]
+    dlg = CurveSelectionDialog(curves)
+    dlg.available_list.setCurrentRow(0)
+    dlg._add_selected()
+    combo = dlg.selected_table.cellWidget(0, 1)
+    warn = dlg.selected_table.cellWidget(0, 2)
+    assert warn.text() == ""
+    combo.setCurrentIndex(list(DataType).index(DataType.UINT8))
+    assert warn.text() == "1/2"

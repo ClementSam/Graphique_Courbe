@@ -30,6 +30,7 @@ class CurveSelectionDialog(QDialog):
         self.resize(500, 350)
 
         self.curves = curves
+        self._warn_labels = {}
 
         main_layout = QVBoxLayout(self)
 
@@ -50,8 +51,8 @@ class CurveSelectionDialog(QDialog):
             self.available_list.addItem(item)
 
         self.selected_table = QTableWidget()
-        self.selected_table.setColumnCount(2)
-        self.selected_table.setHorizontalHeaderLabels(["Nom", "Type"])
+        self.selected_table.setColumnCount(3)
+        self.selected_table.setHorizontalHeaderLabels(["Nom", "Type", "Warning"])
         self.selected_table.horizontalHeader().setStretchLastSection(True)
         self.selected_table.setSelectionBehavior(QAbstractItemView.SelectRows)
 
@@ -89,8 +90,12 @@ class CurveSelectionDialog(QDialog):
             combo = self.selected_table.cellWidget(row, 1)
             dtype = combo.currentData()
             curve.dtype = dtype
+            import numpy as np
+            data = np.asarray(curve.y, dtype=float)
             if dtype != DataType.FLOAT64:
-                curve.y = curve.y.astype(dtype.value)
+                mask = self._get_invalid_mask(data, dtype)
+                data[mask] = np.nan
+            curve.y = data
             selected.append(curve)
         return selected
 
@@ -122,6 +127,29 @@ class CurveSelectionDialog(QDialog):
         for row in rows:
             self._move_row_to_available(row)
         self._apply_filter()
+
+    def _get_invalid_mask(self, data, dtype: DataType):
+        import numpy as np
+
+        mask = ~np.isfinite(data) | ~np.isclose(data, np.round(data)) | (data < 0)
+        if dtype == DataType.UINT8:
+            mask |= data > 0xFF
+        elif dtype == DataType.UINT16:
+            mask |= data > 0xFFFF
+        elif dtype == DataType.UINT32:
+            mask |= data > 0xFFFFFFFF
+        return mask
+
+    def _update_warning(self, curve: CurveData, combo: QComboBox, label: QLabel):
+        import numpy as np
+
+        dtype = combo.currentData()
+        data = np.asarray(curve.y, dtype=float)
+        count = int(self._get_invalid_mask(data, dtype).sum()) if dtype != DataType.FLOAT64 else 0
+        if count:
+            label.setText(f"{count}/{len(data)}")
+        else:
+            label.setText("")
     def _move_to_selected(self, items):
         for item in list(items):
             self.available_list.takeItem(self.available_list.row(item))
@@ -137,6 +165,14 @@ class CurveSelectionDialog(QDialog):
                 combo.addItem(dt.value, dt)
             combo.setCurrentIndex(list(DataType).index(curve.dtype))
             self.selected_table.setCellWidget(row, 1, combo)
+            warn = QLabel("")
+            warn.setStyleSheet("color: orange")
+            self.selected_table.setCellWidget(row, 2, warn)
+            combo.currentIndexChanged.connect(
+                lambda _=None, c=curve, cb=combo, lbl=warn: self._update_warning(c, cb, lbl)
+            )
+            self._warn_labels[combo] = warn
+            self._update_warning(curve, combo, warn)
 
     def _move_row_to_available(self, row: int):
         name_item = self.selected_table.item(row, 0)
@@ -146,4 +182,7 @@ class CurveSelectionDialog(QDialog):
         item = QListWidgetItem(new_name)
         item.setData(Qt.UserRole, curve)
         self.available_list.addItem(item)
+        combo = self.selected_table.cellWidget(row, 1)
+        if combo in self._warn_labels:
+            del self._warn_labels[combo]
         self.selected_table.removeRow(row)
