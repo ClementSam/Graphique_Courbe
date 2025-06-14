@@ -14,6 +14,7 @@ class DataTypeDialog(QDialog):
         self.setWindowTitle("Type de données")
         self.curves = curves
         self._combos = {}
+        self._warn_labels = {}
         layout = QVBoxLayout(self)
 
         for curve in curves:
@@ -23,9 +24,18 @@ class DataTypeDialog(QDialog):
             for dt in DataType:
                 combo.addItem(dt.value, dt)
             combo.setCurrentIndex(list(DataType).index(curve.dtype))
-            self._combos[curve] = combo
+            combo.currentIndexChanged.connect(
+                lambda _=None, c=curve: self._update_warning(c)
+            )
+            key = id(curve)
+            self._combos[key] = combo
             row.addWidget(combo)
+            warn = QLabel("")
+            warn.setStyleSheet("color: orange")
+            self._warn_labels[key] = warn
+            row.addWidget(warn)
             layout.addLayout(row)
+            self._update_warning(curve)
 
         check_btn = QPushButton("Vérifier")
         check_btn.clicked.connect(self._check)
@@ -36,6 +46,34 @@ class DataTypeDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
 
+    # --- internal helpers ---
+
+    def _get_invalid_mask(self, data, dtype: DataType):
+        import numpy as np
+
+        mask = ~np.isfinite(data) | ~np.isclose(data, np.round(data)) | (data < 0)
+        if dtype == DataType.UINT8:
+            mask |= data > 0xFF
+        elif dtype == DataType.UINT16:
+            mask |= data > 0xFFFF
+        elif dtype == DataType.UINT32:
+            mask |= data > 0xFFFFFFFF
+        return mask
+
+    def _update_warning(self, curve: CurveData):
+        import numpy as np
+
+        key = id(curve)
+        combo = self._combos[key]
+        dtype: DataType = combo.currentData()
+        data = np.asarray(curve.y, dtype=float)
+        count = int(self._get_invalid_mask(data, dtype).sum()) if dtype != DataType.FLOAT64 else 0
+        lbl = self._warn_labels[key]
+        if count:
+            lbl.setText(f"{count}/{len(data)} invalid")
+        else:
+            lbl.setText("")
+
     def _check(self):
         if self._validate():
             QMessageBox.information(self, "OK", "Conversion possible")
@@ -43,27 +81,21 @@ class DataTypeDialog(QDialog):
     def _validate(self) -> bool:
         import numpy as np
 
-        for curve, combo in self._combos.items():
+        warnings = []
+        for curve in self.curves:
+            combo = self._combos[id(curve)]
             dtype: DataType = combo.currentData()
             if dtype == DataType.FLOAT64:
                 continue
-            data = curve.y
-            if not np.all(np.isfinite(data)) or not np.allclose(data, np.round(data)):
-                QMessageBox.warning(self, "Erreur", f"{curve.name}: valeurs non entières")
-                return False
-            max_val = int(np.max(data)) if data.size else 0
-            if np.any(data < 0):
-                QMessageBox.warning(self, "Erreur", f"{curve.name}: valeurs négatives")
-                return False
-            if dtype == DataType.UINT8 and max_val > 0xFF:
-                QMessageBox.warning(self, "Erreur", f"{curve.name}: dépasse UINT8")
-                return False
-            if dtype == DataType.UINT16 and max_val > 0xFFFF:
-                QMessageBox.warning(self, "Erreur", f"{curve.name}: dépasse UINT16")
-                return False
-            if dtype == DataType.UINT32 and max_val > 0xFFFFFFFF:
-                QMessageBox.warning(self, "Erreur", f"{curve.name}: dépasse UINT32")
-                return False
+            data = np.asarray(curve.y, dtype=float)
+            mask = self._get_invalid_mask(data, dtype)
+            count = int(mask.sum())
+            if count:
+                warnings.append(f"{curve.name}: {count}/{len(data)}")
+        if warnings:
+            msg = "\n".join(warnings) + "\nLes valeurs incompatibles seront remplac\xc3\xa9es par NaN. Continuer ?"
+            resp = QMessageBox.question(self, "Conversion", msg, QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            return resp == QMessageBox.Yes
         return True
 
     def accept(self):
@@ -71,9 +103,13 @@ class DataTypeDialog(QDialog):
 
         if not self._validate():
             return
-        for curve, combo in self._combos.items():
+        for curve in self.curves:
+            combo = self._combos[id(curve)]
             dtype: DataType = combo.currentData()
             curve.dtype = dtype
+            data = np.asarray(curve.y, dtype=float)
             if dtype != DataType.FLOAT64:
-                curve.y = curve.y.astype(dtype.value)
+                mask = self._get_invalid_mask(data, dtype)
+                data[mask] = np.nan
+            curve.y = data
         super().accept()
