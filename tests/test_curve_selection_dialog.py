@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from core.models import CurveData
+from core.models import CurveData, DataType
 from ui.dialogs.curve_selection_dialog import CurveSelectionDialog
 import numpy as np
 
@@ -26,3 +26,4 @@ def test_filter_and_selection():
     selected = dlg.get_selected_curves()
     assert len(selected) == 1
     assert selected[0].name == "temp1"
+    assert selected[0].dtype == DataType.FLOAT64
