@@ -201,3 +201,18 @@ def test_create_bit_curves_with_nan_values(service):
     assert created == ["nan[0]", "nan[1]"]
     assert np.isnan(state.current_graph.curves[1].y[1])
     assert np.isnan(state.current_graph.curves[2].y[1])
+
+
+def test_create_bit_group_curve(service):
+    svc, state, _ = service
+    svc.add_graph()
+    graph = list(state.graphs.keys())[0]
+    curve = CurveData(name="base", x=[0, 1, 2, 3], y=[0, 1, 2, 3])
+    svc.add_curve(graph, curve=curve)
+
+    created = svc.create_bit_group_curve("base", [1, 0], "grp")
+
+    assert created == "grp"
+    assert len(state.current_graph.curves) == 2
+    new_curve = state.current_graph.curves[1]
+    assert np.array_equal(new_curve.y, [0, 2, 1, 3])

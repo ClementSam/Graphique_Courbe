@@ -2,6 +2,7 @@
 
 from core.app_state import AppState
 from PyQt5 import QtWidgets, QtCore, QtGui
+from ui.widgets import BitGroupWidget
 from signal_bus import signal_bus
 import logging
 
@@ -20,6 +21,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
     def set_controller(self, controller):
         """Expose le contrôleur au panneau après initialisation."""
         self.controller = controller
+        self.bit_group_box.set_controller(controller)
         self._connect_signals()
 
     def _connect_signals(self):
@@ -66,6 +68,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             lambda: self._call_controller(self.controller.bring_curve_to_front)
         )
         self.bits_checkbox.toggled.connect(self._on_bits_toggled)
+        self.bits_checkbox.toggled.connect(self.bit_group_box.setEnabled)
 
         # Connexions pour l'onglet graphique
         self.grid_checkbox.toggled.connect(
@@ -378,6 +381,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         # Bits display option
         self.bits_checkbox = QtWidgets.QCheckBox("Afficher les bits")
         layout.addWidget(self.bits_checkbox)
+        self.bit_group_box = BitGroupWidget(self.controller)
+        self.bit_group_box.setEnabled(False)
+        layout.addWidget(self.bit_group_box)
         
         layout.addWidget(QtWidgets.QLabel("Gain (x0.01 à x5.00) :"))
         gain_layout = QtWidgets.QHBoxLayout()
@@ -468,16 +474,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self._call_controller(self.controller.set_offset, val)
 
     def _on_bits_toggled(self, checked: bool):
-        if not checked or not self.controller:
+        if not checked:
             return
 
         state = AppState.get_instance()
-        graph = state.current_graph
         curve = state.current_curve
-        if not graph or not curve:
-            return
-
-        if any(c.parent_curve == curve.name for c in graph.curves):
+        if not curve:
             return
 
         import numpy as np
@@ -491,26 +493,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.bits_checkbox.setChecked(False)
             return
 
-        max_val = int(finite_values.max()) if finite_values.size else 0
-        min_bits = max(max_val.bit_length(), 1)
-        bit_count, ok = QtWidgets.QInputDialog.getInt(
-            self,
-            "Décomposer la courbe",
-            f"Nombre de bits à générer (minimum {min_bits})",
-            min_bits,
-            min_bits,
-            64,
-            1,
-        )
-        if not ok:
+        if finite_values.size and int(finite_values.min()) < 0:
+            QtWidgets.QMessageBox.warning(self, "Erreur", "Les valeurs négatives ne sont pas prises en charge")
             self.bits_checkbox.setChecked(False)
             return
-
-        try:
-            self.controller.create_bit_curves(curve.name, bit_count)
-        except Exception as e:
-            QtWidgets.QMessageBox.warning(self, "Erreur", str(e))
-            self.bits_checkbox.setChecked(False)
         
     def refresh_curve_tab(self):
         logger.debug("[PropertiesPanel] 🔁 Rafraîchissement de l’onglet courbe")
@@ -648,4 +634,5 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.bits_checkbox.setChecked(has_bits)
         self.bits_checkbox.setEnabled(True)
         self.bits_checkbox.blockSignals(False)
+        self.bit_group_box.setEnabled(self.bits_checkbox.isChecked())
     

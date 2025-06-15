@@ -279,6 +279,87 @@ class GraphService:
 
         return created
 
+    def create_bit_group_curve(
+        self, curve_name: str, bit_indices: list[int], group_name: Optional[str] = None
+    ) -> str:
+        """Generate a grouped bit curve using *bit_indices*.
+
+        The resulting curve represents the integer value composed of the
+        specified bits, ordered from LSB to MSB according to ``bit_indices``.
+
+        Parameters
+        ----------
+        curve_name: str
+            Name of the source curve.
+        bit_indices: list[int]
+            Indices of the bits to combine (e.g. ``[0, 1, 2]``).
+        group_name: str | None
+            If provided, use this as base name for the new curve.
+        Returns
+        -------
+        str
+            Name of the created curve.
+        """
+        graph = self.state.current_graph
+        if not graph:
+            raise ValueError("Aucun graphique sélectionné")
+
+        curve = next((c for c in graph.curves if c.name == curve_name), None)
+        if not curve:
+            raise ValueError(f"Courbe '{curve_name}' introuvable")
+
+        import numpy as np
+
+        values = curve.y
+        mask = np.isnan(values)
+        finite_values = values[~mask]
+
+        if not np.allclose(finite_values, np.round(finite_values)):
+            raise ValueError("Les données ne sont pas entières")
+
+        if finite_values.size:
+            max_val = int(finite_values.max())
+            min_val = int(finite_values.min())
+        else:
+            max_val = 0
+            min_val = 0
+
+        if min_val < 0:
+            raise ValueError("Les valeurs négatives ne sont pas prises en charge")
+
+        values_int = np.nan_to_num(values, nan=0).astype(np.int64)
+        needed_bits = max(max_val.bit_length(), max(bit_indices) + 1)
+
+        bits = ((values_int[:, None] >> np.arange(needed_bits)) & 1).astype(int)
+
+        group = np.zeros(len(values_int), dtype=float)
+        for pos, idx in enumerate(bit_indices):
+            group += (bits[:, idx] << pos)
+        group = group.astype(float)
+        group[mask] = np.nan
+
+        from core.utils.naming import get_unique_curve_name
+        existing = {c.name for c in graph.curves}
+        insert_index = graph.curves.index(curve) + 1
+
+        if group_name:
+            base_name = group_name
+        else:
+            base_name = f"{curve.name}[{'-'.join(map(str, bit_indices))}]"
+        name = get_unique_curve_name(base_name, existing)
+
+        bit_curve = CurveData(
+            name=name,
+            x=curve.x.copy(),
+            y=group,
+            color=curve.color,
+            width=curve.width,
+            style=curve.style,
+        )
+        bit_curve.parent_curve = curve.name
+        graph.curves.insert(insert_index, bit_curve)
+        return name
+
     # ----- Méthodes métier pour les propriétés du graphique -----
     def set_grid_visible(self, visible: bool):
         logger.debug(f"📐 [GraphService.set_grid_visible] {visible}")
