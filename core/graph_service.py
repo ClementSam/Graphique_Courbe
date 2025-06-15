@@ -225,22 +225,34 @@ class GraphService:
 
         import numpy as np
 
-        if not np.allclose(curve.y, np.round(curve.y)):
+        values = curve.y
+        mask = np.isnan(values)
+        finite_values = values[~mask]
+
+        if not np.allclose(finite_values, np.round(finite_values)):
             raise ValueError("Les données ne sont pas entières")
 
-        values = curve.y.astype(np.int64)
-        min_bits = max(int(values.max()).bit_length(), 1)
+        if finite_values.size:
+            max_val = int(finite_values.max())
+            min_val = int(finite_values.min())
+        else:
+            max_val = 0
+            min_val = 0
 
-        if values.min() < 0:
+        if min_val < 0:
             raise ValueError("Les valeurs négatives ne sont pas prises en charge")
+
+        values_int = np.nan_to_num(values, nan=0).astype(np.int64)
+        min_bits = max(max_val.bit_length(), 1)
 
         if bit_count is None:
             bit_count = min_bits
         else:
-            if values.max() >= 2 ** bit_count:
+            if max_val >= 2 ** bit_count:
                 raise ValueError("La plage de valeurs dépasse le nombre de bits spécifié")
 
-        bits = ((values[:, None] >> np.arange(bit_count)) & 1).astype(float)
+        bits = ((values_int[:, None] >> np.arange(bit_count)) & 1).astype(float)
+        bits[mask, :] = np.nan
 
         from core.utils.naming import get_unique_curve_name
         existing = {c.name for c in graph.curves}
