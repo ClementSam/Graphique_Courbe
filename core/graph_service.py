@@ -425,3 +425,30 @@ class GraphService:
         if zone in graph.satellite_content:
             graph.satellite_content[zone] = content
             graph.satellite_visibility[zone] = bool(content)
+
+    def apply_mode(self, mode: str):
+        """Apply a predefined configuration to the current graph and curve."""
+        logger.debug(f"🎛 [GraphService.apply_mode] mode={mode}")
+        graph = self.state.current_graph
+        curve = self.state.current_curve
+        if not graph or not curve:
+            return
+
+        if mode == "standard":
+            graph.dark_mode = False
+            graph.grid_visible = True
+            curve.display_mode = "line"
+            curve.width = 2
+            curve.label_mode = "none"
+        elif mode == "analysis":
+            graph.dark_mode = False
+            graph.grid_visible = True
+            graph.log_x = False
+            graph.log_y = False
+            curve.display_mode = "line"
+            curve.label_mode = "legend"
+        elif mode == "dark":
+            graph.dark_mode = True
+            graph.grid_visible = True
+            curve.display_mode = "line"
+        logger.debug("🎛 [GraphService.apply_mode] configuration appliquée")

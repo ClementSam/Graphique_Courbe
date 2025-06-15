@@ -145,13 +145,21 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             )
         )
 
+        self.mode_combo.currentIndexChanged.connect(
+            lambda i: self._call_controller(
+                self.controller.apply_mode, self.mode_combo.itemData(i)
+            )
+        )
+
     def setup_ui(self):
         logger.debug("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")
 
         self.setup_graph_tab()
         self.setup_curve_tab()
+        self.setup_mode_tab()
         self.setTabEnabled(0, False)
         self.setTabEnabled(1, False)
+        self.setTabEnabled(2, False)
 
     def setup_graph_tab(self):
         logger.debug("[PropertiesPanel.py > setup_graph_tab()] ▶️ Entrée dans setup_graph_tab()")
@@ -398,8 +406,25 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.label_mode_combo)
 
         layout.addStretch()
-        
+
         self.addTab(tab_curve, "Propriétés de la courbe")
+
+    def setup_mode_tab(self):
+        logger.debug("[PropertiesPanel.py > setup_mode_tab()] ▶️ Entrée dans setup_mode_tab()")
+
+        tab_mode = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(tab_mode)
+
+        self.mode_combo = QtWidgets.QComboBox()
+        self.mode_combo.addItem("Standard", "standard")
+        self.mode_combo.addItem("Analyse", "analysis")
+        self.mode_combo.addItem("Sombre", "dark")
+
+        layout.addWidget(QtWidgets.QLabel("Mode prédéfini :"))
+        layout.addWidget(self.mode_combo)
+        layout.addStretch()
+
+        self.addTab(tab_mode, "Mode")
 
     def _call_controller(self, func, *args):
         if not self.controller:

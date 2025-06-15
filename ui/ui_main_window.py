@@ -276,6 +276,11 @@ class MainWindow(QtWidgets.QMainWindow):
         logger.debug(f"[MainWindow] Activation de l'onglet Courbe : {graph_name} > {curve_name}")
         self.right_panel.setTabEnabled(1, True)
         self.right_panel.setCurrentIndex(1)
+
+    def show_mode_tab(self):
+        logger.debug("[MainWindow] Activation de l'onglet Mode")
+        self.right_panel.setTabEnabled(2, True)
+        self.right_panel.setCurrentIndex(2)
     
 
     def _show_about(self):

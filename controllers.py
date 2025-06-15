@@ -265,6 +265,12 @@ class GraphController:
         self.service.set_show_label(visible)
         self.ui.refresh_curve_ui()
 
+    def apply_mode(self, mode: str):
+        logger.debug(f"🎛 [GraphController.apply_mode] mode={mode}")
+        self.service.apply_mode(mode)
+        self.ui.refresh_graph_tab()
+        self.ui.refresh_curve_ui()
+
     def reset_zoom(self):
         logger.debug("🔍 [GraphController.reset_zoom] Réinitialisation du zoom")
         self.ui.reset_zoom()
