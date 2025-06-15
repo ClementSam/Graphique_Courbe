@@ -277,10 +277,10 @@ class GraphController:
         self.service.set_show_label(visible)
         self.ui.refresh_curve_ui()
 
-    def apply_mode(self, mode: str):
-        logger.debug(f"🎛 [GraphController.apply_mode] mode={mode}")
-        self.service.apply_mode(mode)
-        self.ui.refresh_graph_tab()
+    def apply_mode(self, graph_name: str, mode: str):
+        logger.debug(f"🎛 [GraphController.apply_mode] graph={graph_name} mode={mode}")
+        self.service.apply_mode(graph_name, mode)
+        self.ui.refresh_plot()
         self.ui.refresh_curve_ui()
 
     def reset_zoom(self):

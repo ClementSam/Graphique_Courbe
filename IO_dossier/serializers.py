@@ -73,7 +73,8 @@ def graph_to_dict(graph: GraphData) -> dict:
             "x_unit": graph.x_unit,
             "y_unit": graph.y_unit,
             "x_format": graph.x_format,
-            "y_format": graph.y_format
+            "y_format": graph.y_format,
+            "mode": graph.mode
         },
         "curves": [curve_to_dict(c) for c in graph.curves]
     }
@@ -94,6 +95,7 @@ def dict_to_graph(data: dict) -> GraphData:
     g.y_unit = props.get("y_unit", "")
     g.x_format = props.get("x_format", "normal")
     g.y_format = props.get("y_format", "normal")
+    g.mode = props.get("mode", "standard")
 
 
     for cdict in data.get("curves", []):
