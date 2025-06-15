@@ -665,11 +665,26 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             combo.addItem("Standard", "standard")
             combo.addItem("Analyse", "analysis")
             combo.addItem("Sombre", "dark")
-            combo.currentIndexChanged.connect(
-                lambda i, g=graph.name, c=combo: self._call_graph_controller(
-                    self.controller.apply_mode, g, c.itemData(i)
+
+            # Position the combo box on the current mode of the graph
+            index = combo.findData(graph.mode)
+            combo.setCurrentIndex(index if index != -1 else 0)
+
+            # Apply button to trigger the mode change explicitly
+            apply_btn = QtWidgets.QPushButton("Appliquer")
+            apply_btn.clicked.connect(
+                lambda _, g=graph.name, c=combo: self._call_graph_controller(
+                    self.controller.apply_mode, g, c.currentData()
                 )
             )
-            self.mode_layout.addRow(graph.name, combo)
+
+            h_layout = QtWidgets.QHBoxLayout()
+            h_layout.addWidget(combo)
+            h_layout.addWidget(apply_btn)
+
+            container = QtWidgets.QWidget()
+            container.setLayout(h_layout)
+
+            self.mode_layout.addRow(graph.name, container)
             self.mode_combos[graph.name] = combo
     
