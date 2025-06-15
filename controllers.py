@@ -112,6 +112,18 @@ class GraphController:
         self.ui.refresh_plot()
         return names
 
+    def create_bit_group_curve(
+        self, curve_name: str, bit_indices: list[int], group_name: Optional[str] = None
+    ):
+        logger.debug(
+            f"🔬 [GraphController.create_bit_group_curve] Groupe {bit_indices} pour {curve_name}"
+        )
+        name = self.service.create_bit_group_curve(curve_name, bit_indices, group_name)
+        signal_bus.curve_list_updated.emit()
+        signal_bus.curve_updated.emit()
+        self.ui.refresh_plot()
+        return name
+
     def bring_curve_to_front(self):
         logger.debug("🔝 [GraphController.bring_curve_to_front] Priorisation de la courbe")
         self.service.bring_curve_to_front()
