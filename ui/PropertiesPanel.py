@@ -15,6 +15,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
         super().__init__(parent)
         self.controller = controller
+        # Limit the overall height so the dock doesn't occupy too much space
+        self.setMaximumHeight(400)
         self.setup_ui()
         self._connect_signals()
 
@@ -267,11 +269,15 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.satellite_bottom_combo.addItem("Aucun", None)
         self.satellite_bottom_combo.addItem("Exemple: Texte", "label")
         self.satellite_bottom_combo.addItem("Exemple: Bouton", "button")
-        
+
         layout.addWidget(self.satellite_bottom_checkbox)
         layout.addWidget(self.satellite_bottom_combo)
-    
-        self.addTab(tab_graph, "Propriétés du graphique")
+
+        scroll_graph = QtWidgets.QScrollArea()
+        scroll_graph.setWidgetResizable(True)
+        scroll_graph.setWidget(tab_graph)
+
+        self.addTab(scroll_graph, "Propriétés du graphique")
 
     def setup_curve_tab(self):
         logger.debug("[PropertiesPanel.py > setup_curve_tab()] ▶️ Entrée dans setup_curve_tab()")
@@ -418,7 +424,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
         layout.addStretch()
 
-        self.addTab(tab_curve, "Propriétés de la courbe")
+        scroll_curve = QtWidgets.QScrollArea()
+        scroll_curve.setWidgetResizable(True)
+        scroll_curve.setWidget(tab_curve)
+
+        self.addTab(scroll_curve, "Propriétés de la courbe")
 
     def setup_mode_tab(self):
         logger.debug("[PropertiesPanel.py > setup_mode_tab()] ▶️ Entrée dans setup_mode_tab()")
@@ -435,7 +445,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.mode_combo)
         layout.addStretch()
 
-        self.addTab(tab_mode, "Mode")
+        scroll_mode = QtWidgets.QScrollArea()
+        scroll_mode.setWidgetResizable(True)
+        scroll_mode.setWidget(tab_mode)
+
+        self.addTab(scroll_mode, "Mode")
 
     def _call_controller(self, func, *args):
         if not self.controller:
