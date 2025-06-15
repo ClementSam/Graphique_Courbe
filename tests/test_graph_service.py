@@ -216,3 +216,24 @@ def test_create_bit_group_curve(service):
     assert len(state.current_graph.curves) == 2
     new_curve = state.current_graph.curves[1]
     assert np.array_equal(new_curve.y, [0, 2, 1, 3])
+
+
+def test_logic_analyzer_mode_applies_offsets(service):
+    svc, state, _ = service
+    svc.add_graph()
+    gname = list(state.graphs.keys())[0]
+    c1 = CurveData(name="c1", x=[0], y=[0])
+    c2 = CurveData(name="c2", x=[0], y=[0])
+    c3 = CurveData(name="c3", x=[0], y=[0])
+    state.graphs[gname].curves = [c1, c2, c3]
+
+    svc.apply_mode(gname, "logic_analyzer")
+
+    assert c3.offset == 0
+    assert c2.offset == 1
+    assert c1.offset == 2
+
+    c2.visible = False
+    svc.apply_mode(gname, "logic_analyzer")
+    assert c3.offset == 0
+    assert c1.offset == 1

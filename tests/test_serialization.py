@@ -66,6 +66,7 @@ def test_curve_serialization(tmp_path):
 
 def test_graph_serialization(tmp_path):
     graph = GraphData(name="g")
+    graph.mode = "logic_analyzer"
     graph.add_curve(create_sample_curve())
     path = tmp_path / "graph.json"
     export_graph_to_json(graph, str(path))
@@ -74,10 +75,12 @@ def test_graph_serialization(tmp_path):
     assert len(loaded.curves) == 1
     assert loaded.curves[0].name == graph.curves[0].name
     assert loaded.curves[0].time_offset == graph.curves[0].time_offset
+    assert loaded.mode == "logic_analyzer"
 
 
 def test_project_serialization(tmp_path):
     g1 = GraphData(name="g1")
+    g1.mode = "logic_analyzer"
     g1.add_curve(create_sample_curve("c1"))
     g2 = GraphData(name="g2")
     g2.add_curve(create_sample_curve("c2"))
@@ -89,3 +92,4 @@ def test_project_serialization(tmp_path):
     assert len(loaded["g1"].curves) == 1
     assert loaded["g1"].curves[0].name == "c1"
     assert loaded["g1"].curves[0].time_offset == g1.curves[0].time_offset
+    assert loaded["g1"].mode == "logic_analyzer"

@@ -10,6 +10,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def apply_logic_analyzer_layout(graph: GraphData) -> None:
+    """Position curves like a logic analyzer view."""
+    offset = 0
+    for curve in reversed(graph.curves):
+        if not curve.visible:
+            continue
+        curve.gain = 0.9
+        curve.offset = offset
+        offset += 1
+
+
 class GraphService:
     """
     Fournit les opérations métier sur les graphes et courbes,
@@ -507,29 +518,14 @@ class GraphService:
             graph.satellite_content[zone] = content
             graph.satellite_visibility[zone] = bool(content)
 
-    def apply_mode(self, mode: str):
-        """Apply a predefined configuration to the current graph and curve."""
-        logger.debug(f"🎛 [GraphService.apply_mode] mode={mode}")
-        graph = self.state.current_graph
-        curve = self.state.current_curve
-        if not graph or not curve:
+    def apply_mode(self, graph_name: str, mode: str):
+        """Apply a predefined configuration to the given graph."""
+        logger.debug(f"🎛 [GraphService.apply_mode] graph={graph_name} mode={mode}")
+        graph = self.state.graphs.get(graph_name)
+        if not graph:
             return
 
-        if mode == "standard":
-            graph.dark_mode = False
-            graph.grid_visible = True
-            curve.display_mode = "line"
-            curve.width = 2
-            curve.label_mode = "none"
-        elif mode == "analysis":
-            graph.dark_mode = False
-            graph.grid_visible = True
-            graph.log_x = False
-            graph.log_y = False
-            curve.display_mode = "line"
-            curve.label_mode = "legend"
-        elif mode == "dark":
-            graph.dark_mode = True
-            graph.grid_visible = True
-            curve.display_mode = "line"
-        logger.debug("🎛 [GraphService.apply_mode] configuration appliquée")
+        graph.mode = mode
+
+        if mode == "logic_analyzer":
+            apply_logic_analyzer_layout(graph)
