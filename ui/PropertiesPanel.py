@@ -151,11 +151,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             )
         )
 
-        self.mode_combo.currentIndexChanged.connect(
-            lambda i: self._call_controller(
-                self.controller.apply_mode, self.mode_combo.itemData(i)
-            )
-        )
+        signal_bus.graph_updated.connect(self.update_mode_tab)
+        self.update_mode_tab()
 
     def setup_ui(self):
         logger.debug("[PropertiesPanel.py > setup_ui()] ▶️ Entrée dans setup_ui()")
@@ -436,14 +433,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         tab_mode = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(tab_mode)
 
-        self.mode_combo = QtWidgets.QComboBox()
-        self.mode_combo.addItem("Standard", "standard")
-        self.mode_combo.addItem("Analyse", "analysis")
-        self.mode_combo.addItem("Sombre", "dark")
-
-        layout.addWidget(QtWidgets.QLabel("Mode prédéfini :"))
-        layout.addWidget(self.mode_combo)
+        self.mode_layout = QtWidgets.QFormLayout()
+        layout.addLayout(self.mode_layout)
         layout.addStretch()
+
+        self.mode_combos = {}
+        self.update_mode_tab()
 
         scroll_mode = QtWidgets.QScrollArea()
         scroll_mode.setWidgetResizable(True)
@@ -649,4 +644,45 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.bits_checkbox.setEnabled(True)
         self.bits_checkbox.blockSignals(False)
         self.bit_group_box.setEnabled(self.bits_checkbox.isChecked())
+
+    def update_mode_tab(self):
+        """Refresh the list of graphs available in the mode tab."""
+        if not hasattr(self, "mode_layout"):
+            return
+
+        while self.mode_layout.count():
+            item = self.mode_layout.takeAt(0)
+            if item:
+                if item.widget():
+                    item.widget().deleteLater()
+
+        self.mode_combos.clear()
+        state = AppState.get_instance()
+
+        for graph in state.graphs.values():
+            combo = QtWidgets.QComboBox()
+            combo.addItem("Analyseur logique", "logic_analyzer")
+            combo.addItem("Standard", "standard")
+            combo.addItem("Analyse", "analysis")
+            combo.addItem("Sombre", "dark")
+
+            index = combo.findData(graph.mode)
+            if index != -1:
+                combo.setCurrentIndex(index)
+
+            apply_btn = QtWidgets.QPushButton("Appliquer")
+            apply_btn.clicked.connect(
+                lambda _, g=graph.name, c=combo: self._call_graph_controller(
+                    self.controller.apply_mode, g, c.currentData()
+                )
+            )
+
+            row_widget = QtWidgets.QWidget()
+            row_layout = QtWidgets.QHBoxLayout(row_widget)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.addWidget(combo)
+            row_layout.addWidget(apply_btn)
+
+            self.mode_layout.addRow(graph.name, row_widget)
+            self.mode_combos[graph.name] = combo
     

@@ -75,6 +75,7 @@ class GraphData:
     y_unit: str = ""
     x_format: str = "normal"  # valeurs possibles : "normal", "scientific", "scaled"
     y_format: str = "normal"
+    mode: str = "standard"  # mode d'affichage spécifique au graphique
     satellite_zones_visible: dict[str, bool] = field(
         default_factory=lambda: {
             "left": True,
