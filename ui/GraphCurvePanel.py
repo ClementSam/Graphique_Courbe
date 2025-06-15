@@ -282,12 +282,21 @@ class GraphCurvePanel(QtWidgets.QWidget):
             return
 
         import numpy as np
-        if not np.allclose(curve.y, np.round(curve.y)):
+
+        values = curve.y
+        mask = np.isnan(values)
+        finite_values = values[~mask]
+
+        if not np.allclose(finite_values, np.round(finite_values)):
             QtWidgets.QMessageBox.warning(self, "Erreur", "Les données ne sont pas entières")
             return
 
-        values = curve.y.astype(np.int64)
-        min_bits = max(int(values.max()).bit_length(), 1)
+        if finite_values.size:
+            max_val = int(finite_values.max())
+        else:
+            max_val = 0
+
+        min_bits = max(max_val.bit_length(), 1)
         bit_count, ok = QtWidgets.QInputDialog.getInt(
             self,
             "Décomposer la courbe",
