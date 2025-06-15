@@ -2,6 +2,7 @@ import os
 import sys
 import types
 import importlib
+import numpy as np
 import pytest
 from core.models import CurveData
 
@@ -186,3 +187,17 @@ def test_create_bit_curves_negative_values_raises(service):
 
     with pytest.raises(ValueError):
         svc.create_bit_curves("neg")
+
+
+def test_create_bit_curves_with_nan_values(service):
+    svc, state, _ = service
+    svc.add_graph()
+    graph = list(state.graphs.keys())[0]
+    curve = CurveData(name="nan", x=[0, 1, 2], y=[0, float('nan'), 3])
+    svc.add_curve(graph, curve=curve)
+
+    created = svc.create_bit_curves("nan")
+
+    assert created == ["nan[0]", "nan[1]"]
+    assert np.isnan(state.current_graph.curves[1].y[1])
+    assert np.isnan(state.current_graph.curves[2].y[1])
