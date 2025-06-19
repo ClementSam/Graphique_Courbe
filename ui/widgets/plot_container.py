@@ -2,7 +2,7 @@
 
 from PyQt5 import QtWidgets
 from signal_bus import signal_bus
-from AdvancedPlotContainer import AdvancedPlotContainer
+from .AdvancedPlotContainer import AdvancedPlotContainer
 import logging
 
 logger = logging.getLogger(__name__)
