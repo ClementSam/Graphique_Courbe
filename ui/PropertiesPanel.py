@@ -122,34 +122,48 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         )
 
         # Satellite zones
-        self.satellite_left_combo.currentIndexChanged.connect(
-            lambda i: self._call_graph_controller(
-                self.controller.set_satellite_content,
-                "left",
-                self.satellite_left_combo.itemData(i),
+        self.satellite_left_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(
+                self.controller.set_satellite_visible, "left", val
             )
         )
-        self.satellite_right_combo.currentIndexChanged.connect(
-            lambda i: self._call_graph_controller(
-                self.controller.set_satellite_content,
-                "right",
-                self.satellite_right_combo.itemData(i),
+        self.satellite_right_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(
+                self.controller.set_satellite_visible, "right", val
             )
         )
-        self.satellite_top_combo.currentIndexChanged.connect(
-            lambda i: self._call_graph_controller(
-                self.controller.set_satellite_content,
-                "top",
-                self.satellite_top_combo.itemData(i),
+        self.satellite_top_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(
+                self.controller.set_satellite_visible, "top", val
             )
         )
-        self.satellite_bottom_combo.currentIndexChanged.connect(
-            lambda i: self._call_graph_controller(
-                self.controller.set_satellite_content,
-                "bottom",
-                self.satellite_bottom_combo.itemData(i),
+        self.satellite_bottom_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(
+                self.controller.set_satellite_visible, "bottom", val
             )
         )
+
+        for zone, btn in {
+            "left": self.satellite_left_color,
+            "right": self.satellite_right_color,
+            "top": self.satellite_top_color,
+            "bottom": self.satellite_bottom_color,
+        }.items():
+            btn.clicked.connect(
+                lambda _, z=zone, b=btn: self._choose_satellite_color(z, b)
+            )
+
+        for zone, spin in {
+            "left": self.satellite_left_size,
+            "right": self.satellite_right_size,
+            "top": self.satellite_top_size,
+            "bottom": self.satellite_bottom_size,
+        }.items():
+            spin.valueChanged.connect(
+                lambda val, z=zone: self._call_graph_controller(
+                    self.controller.set_satellite_size, z, int(val)
+                )
+            )
 
         signal_bus.graph_updated.connect(self.update_mode_tab)
         self.update_mode_tab()
@@ -230,45 +244,64 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.fix_y_checkbox)
         layout.addLayout(ylayout)
         
-        self.satellite_left_checkbox = QtWidgets.QCheckBox("Zone gauche")
-        self.satellite_left_checkbox.setEnabled(False)
-        self.satellite_left_combo = QtWidgets.QComboBox()
-        self.satellite_left_combo.addItem("Aucun", None)
-        self.satellite_left_combo.addItem("Exemple: Texte", "label")
-        self.satellite_left_combo.addItem("Exemple: Bouton", "button")
-        
-        layout.addWidget(self.satellite_left_checkbox)
-        layout.addWidget(self.satellite_left_combo)
-        
-        self.satellite_right_checkbox = QtWidgets.QCheckBox("Zone droite")
-        self.satellite_right_checkbox.setEnabled(False)
-        self.satellite_right_combo = QtWidgets.QComboBox()
-        self.satellite_right_combo.addItem("Aucun", None)
-        self.satellite_right_combo.addItem("Exemple: Texte", "label")
-        self.satellite_right_combo.addItem("Exemple: Bouton", "button")
-        
-        layout.addWidget(self.satellite_right_checkbox)
-        layout.addWidget(self.satellite_right_combo)
-        
-        self.satellite_top_checkbox = QtWidgets.QCheckBox("Zone haut")
-        self.satellite_top_checkbox.setEnabled(False)
-        self.satellite_top_combo = QtWidgets.QComboBox()
-        self.satellite_top_combo.addItem("Aucun", None)
-        self.satellite_top_combo.addItem("Exemple: Texte", "label")
-        self.satellite_top_combo.addItem("Exemple: Bouton", "button")
-        
-        layout.addWidget(self.satellite_top_checkbox)
-        layout.addWidget(self.satellite_top_combo)
-        
-        self.satellite_bottom_checkbox = QtWidgets.QCheckBox("Zone bas")
-        self.satellite_bottom_checkbox.setEnabled(False)
-        self.satellite_bottom_combo = QtWidgets.QComboBox()
-        self.satellite_bottom_combo.addItem("Aucun", None)
-        self.satellite_bottom_combo.addItem("Exemple: Texte", "label")
-        self.satellite_bottom_combo.addItem("Exemple: Bouton", "button")
+        # Satellite zones
+        def create_satellite_group(title):
+            group = QtWidgets.QGroupBox(title)
+            v = QtWidgets.QVBoxLayout(group)
+            checkbox = QtWidgets.QCheckBox("Afficher")
+            color_btn = QtWidgets.QPushButton("Couleur")
+            size_spin = QtWidgets.QSpinBox()
+            size_spin.setRange(20, 500)
+            table = QtWidgets.QTableWidget(0, 2)
+            table.setHorizontalHeaderLabels(["Type", "Texte"])
+            add_btn = QtWidgets.QPushButton("Ajouter")
+            def toggle(enabled):
+                color_btn.setEnabled(enabled)
+                size_spin.setEnabled(enabled)
+                table.setEnabled(enabled)
+                add_btn.setEnabled(enabled)
+            checkbox.toggled.connect(toggle)
+            v.addWidget(checkbox)
+            h = QtWidgets.QHBoxLayout()
+            h.addWidget(color_btn)
+            h.addWidget(size_spin)
+            v.addLayout(h)
+            v.addWidget(table)
+            v.addWidget(add_btn)
+            toggle(False)
+            return group, checkbox, color_btn, size_spin, table, add_btn
 
-        layout.addWidget(self.satellite_bottom_checkbox)
-        layout.addWidget(self.satellite_bottom_combo)
+        (self.sat_left_group,
+         self.satellite_left_checkbox,
+         self.satellite_left_color,
+         self.satellite_left_size,
+         self.satellite_left_table,
+         self.satellite_left_add) = create_satellite_group("Zone gauche")
+        layout.addWidget(self.sat_left_group)
+
+        (self.sat_right_group,
+         self.satellite_right_checkbox,
+         self.satellite_right_color,
+         self.satellite_right_size,
+         self.satellite_right_table,
+         self.satellite_right_add) = create_satellite_group("Zone droite")
+        layout.addWidget(self.sat_right_group)
+
+        (self.sat_top_group,
+         self.satellite_top_checkbox,
+         self.satellite_top_color,
+         self.satellite_top_size,
+         self.satellite_top_table,
+         self.satellite_top_add) = create_satellite_group("Zone haut")
+        layout.addWidget(self.sat_top_group)
+
+        (self.sat_bottom_group,
+         self.satellite_bottom_checkbox,
+         self.satellite_bottom_color,
+         self.satellite_bottom_size,
+         self.satellite_bottom_table,
+         self.satellite_bottom_add) = create_satellite_group("Zone bas")
+        layout.addWidget(self.sat_bottom_group)
 
         scroll_graph = QtWidgets.QScrollArea()
         scroll_graph.setWidgetResizable(True)
@@ -464,6 +497,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.color_button.setStyleSheet(f"background-color: {color.name()}")
             self._call_controller(self.controller.set_color, color.name())
 
+    def _choose_satellite_color(self, zone: str, button: QtWidgets.QPushButton):
+        color = QtWidgets.QColorDialog.getColor(parent=self)
+        if color.isValid():
+            button.setStyleSheet(f"background-color: {color.name()}")
+            self._call_graph_controller(
+                self.controller.set_satellite_color, zone, color.name()
+            )
+
     def _on_gain_slider(self, value: int):
         self.gain_input.setValue(value / 100)
         self._call_controller(self.controller.set_gain, value / 100)
@@ -553,21 +594,44 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.ymax_input.setValue(graph.y_max if graph.fix_y_range else 5.0)
     
         # Satellites
-        self.satellite_left_checkbox.setChecked(graph.satellite_visibility["left"])
-        index_left = self.satellite_left_combo.findData(graph.satellite_content["left"])
-        self.satellite_left_combo.setCurrentIndex(index_left if index_left != -1 else 0)
-    
-        self.satellite_right_checkbox.setChecked(graph.satellite_visibility["right"])
-        index_right = self.satellite_right_combo.findData(graph.satellite_content["right"])
-        self.satellite_right_combo.setCurrentIndex(index_right if index_right != -1 else 0)
-    
-        self.satellite_top_checkbox.setChecked(graph.satellite_visibility["top"])
-        index_top = self.satellite_top_combo.findData(graph.satellite_content["top"])
-        self.satellite_top_combo.setCurrentIndex(index_top if index_top != -1 else 0)
-    
-        self.satellite_bottom_checkbox.setChecked(graph.satellite_visibility["bottom"])
-        index_bottom = self.satellite_bottom_combo.findData(graph.satellite_content["bottom"])
-        self.satellite_bottom_combo.setCurrentIndex(index_bottom if index_bottom != -1 else 0)
+        for zone, checkbox in {
+            "left": self.satellite_left_checkbox,
+            "right": self.satellite_right_checkbox,
+            "top": self.satellite_top_checkbox,
+            "bottom": self.satellite_bottom_checkbox,
+        }.items():
+            checkbox.blockSignals(True)
+            checkbox.setChecked(graph.satellite_visibility[zone])
+            checkbox.blockSignals(False)
+
+        for zone, btn in {
+            "left": self.satellite_left_color,
+            "right": self.satellite_right_color,
+            "top": self.satellite_top_color,
+            "bottom": self.satellite_bottom_color,
+        }.items():
+            color = graph.satellite_settings[zone]["color"]
+            btn.setStyleSheet(f"background-color: {color}")
+
+        for zone, widgets in {
+            "left": (self.satellite_left_color, self.satellite_left_size, self.satellite_left_table, self.satellite_left_add),
+            "right": (self.satellite_right_color, self.satellite_right_size, self.satellite_right_table, self.satellite_right_add),
+            "top": (self.satellite_top_color, self.satellite_top_size, self.satellite_top_table, self.satellite_top_add),
+            "bottom": (self.satellite_bottom_color, self.satellite_bottom_size, self.satellite_bottom_table, self.satellite_bottom_add),
+        }.items():
+            enabled = graph.satellite_visibility[zone]
+            for w in widgets:
+                w.setEnabled(enabled)
+
+        for zone, spin in {
+            "left": self.satellite_left_size,
+            "right": self.satellite_right_size,
+            "top": self.satellite_top_size,
+            "bottom": self.satellite_bottom_size,
+        }.items():
+            spin.blockSignals(True)
+            spin.setValue(graph.satellite_settings[zone]["size"])
+            spin.blockSignals(False)
 
     def update_curve_ui(self):
         """Met à jour les champs de l'onglet courbe en fonction de la courbe sélectionnée."""

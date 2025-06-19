@@ -518,6 +518,36 @@ class GraphService:
             graph.satellite_content[zone] = content
             graph.satellite_visibility[zone] = bool(content)
 
+    def set_satellite_visible(self, zone: str, visible: bool):
+        logger.debug(
+            f"🛰 [GraphService.set_satellite_visible] zone={zone} visible={visible}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_visibility:
+            graph.satellite_visibility[zone] = visible
+
+    def set_satellite_color(self, zone: str, color: str):
+        logger.debug(
+            f"🛰 [GraphService.set_satellite_color] zone={zone} color={color}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_settings:
+            graph.satellite_settings[zone]["color"] = color
+
+    def set_satellite_size(self, zone: str, size: int):
+        logger.debug(
+            f"🛰 [GraphService.set_satellite_size] zone={zone} size={size}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_settings:
+            graph.satellite_settings[zone]["size"] = size
+
     def apply_mode(self, graph_name: str, mode: str):
         """Apply a predefined configuration to the given graph."""
         logger.debug(f"🎛 [GraphService.apply_mode] graph={graph_name} mode={mode}")
