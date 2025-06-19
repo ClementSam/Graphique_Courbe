@@ -165,6 +165,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 )
             )
 
+        for zone, btn in self.satellite_add_buttons.items():
+            btn.clicked.connect(lambda _, z=zone: self._add_satellite_item(z))
+
         signal_bus.graph_updated.connect(self.update_mode_tab)
         self.update_mode_tab()
 
@@ -302,6 +305,19 @@ class PropertiesPanel(QtWidgets.QTabWidget):
          self.satellite_bottom_table,
          self.satellite_bottom_add) = create_satellite_group("Zone bas")
         layout.addWidget(self.sat_bottom_group)
+
+        self.satellite_tables = {
+            "left": self.satellite_left_table,
+            "right": self.satellite_right_table,
+            "top": self.satellite_top_table,
+            "bottom": self.satellite_bottom_table,
+        }
+        self.satellite_add_buttons = {
+            "left": self.satellite_left_add,
+            "right": self.satellite_right_add,
+            "top": self.satellite_top_add,
+            "bottom": self.satellite_bottom_add,
+        }
 
         scroll_graph = QtWidgets.QScrollArea()
         scroll_graph.setWidgetResizable(True)
@@ -505,6 +521,43 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 self.controller.set_satellite_color, zone, color.name()
             )
 
+    def _add_satellite_item(self, zone: str):
+        options = ["Texte", "Bouton", "Image"]
+        choice, ok = QtWidgets.QInputDialog.getItem(
+            self,
+            "Ajouter un objet",
+            "Type d'objet :",
+            options,
+            0,
+            False,
+        )
+        if not ok:
+            return
+
+        table = self.satellite_tables[zone]
+        row = table.rowCount()
+        table.insertRow(row)
+        table.setItem(row, 0, QtWidgets.QTableWidgetItem(choice))
+
+        if choice == "Texte":
+            widget = QtWidgets.QLineEdit()
+            table.setCellWidget(row, 1, widget)
+            content = ""
+        elif choice == "Bouton":
+            widget = QtWidgets.QPushButton("Bouton")
+            table.setCellWidget(row, 1, widget)
+            content = "Bouton"
+        else:
+            widget = QtWidgets.QLabel("Image")
+            table.setCellWidget(row, 1, widget)
+            content = ""
+
+        if self.controller:
+            item = {"type": choice.lower(), "text": content}
+            self._call_graph_controller(
+                self.controller.add_satellite_item, zone, item
+            )
+
     def _on_gain_slider(self, value: int):
         self.gain_input.setValue(value / 100)
         self._call_controller(self.controller.set_gain, value / 100)
@@ -632,6 +685,23 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             spin.blockSignals(True)
             spin.setValue(graph.satellite_settings[zone]["size"])
             spin.blockSignals(False)
+
+        for zone, table in self.satellite_tables.items():
+            table.blockSignals(True)
+            table.setRowCount(0)
+            for item in graph.satellite_settings[zone]["items"]:
+                row = table.rowCount()
+                table.insertRow(row)
+                typ = item.get("type", "")
+                table.setItem(row, 0, QtWidgets.QTableWidgetItem(typ.capitalize()))
+                if typ == "text":
+                    widget = QtWidgets.QLineEdit(item.get("text", ""))
+                elif typ in {"button", "bouton"}:
+                    widget = QtWidgets.QPushButton(item.get("text", "Bouton"))
+                else:
+                    widget = QtWidgets.QLabel(item.get("text", ""))
+                table.setCellWidget(row, 1, widget)
+            table.blockSignals(False)
 
     def update_curve_ui(self):
         """Met à jour les champs de l'onglet courbe en fonction de la courbe sélectionnée."""

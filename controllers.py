@@ -221,6 +221,14 @@ class GraphController:
         self.service.set_satellite_size(zone, size)
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
+
+    def add_satellite_item(self, zone: str, item: dict):
+        logger.debug(
+            f"🛰 [GraphController.add_satellite_item] zone={zone} item={item}"
+        )
+        self.service.add_satellite_item(zone, item)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
     
     def set_graph_visible(self, graph_name: str, visible: bool):
         logger.debug(f"👁 [GraphController.set_graph_visible] {graph_name} → {visible}")
