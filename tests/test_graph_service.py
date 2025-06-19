@@ -124,6 +124,19 @@ def test_set_time_offset(service):
     assert state.current_curve.time_offset == 2.5
 
 
+def test_add_satellite_item(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    svc.add_satellite_item("left", {"type": "text", "text": ""})
+
+    items = state.current_graph.satellite_settings["left"]["items"]
+    assert len(items) == 1
+    assert items[0]["type"] == "text"
+
+
 def test_bring_curve_to_front_moves_curve(service):
     svc, state, _ = service
     svc.add_graph()
