@@ -42,7 +42,7 @@ class GraphUICoordinator:
                 self.views[name] = view
                 if self.central_area:
                     logger.debug(f"📤 [refresh_plot] Tentative d’ajout du widget à la zone centrale")
-                    self.central_area.add_plot_widget(view.plot_widget)
+                    self.central_area.add_plot_widget(view.container)
                     logger.debug(f"✅ Widget ajouté à la zone centrale pour : {name}")
             else:
                 logger.debug(f"♻️ [refresh_plot] Mise à jour de la vue existante : {name}")
@@ -54,7 +54,7 @@ class GraphUICoordinator:
             logger.debug(f"🗑️ [refresh_plot] Suppression de la vue orpheline : {name}")
             view = self.views[name]
             if self.central_area:
-                self.central_area.remove_plot_widget(view.plot_widget)
+                self.central_area.remove_plot_widget(view.container)
                 logger.debug(f"🗑️ Widget retiré de la zone centrale : {name}")
             del self.views[name]
 
@@ -66,12 +66,14 @@ class GraphUICoordinator:
                 logger.debug(f"⚠️ [refresh_plot] Graphique '{name}' absent de l'état malgré la vue.")
                 continue
             view.graph_data = graph
+            view.container.set_graph_name(graph.name)
             if graph.mode == "logic_analyzer":
                 apply_logic_analyzer_layout(graph)
             logger.debug(f"🔧 [refresh_plot] Appel de update_graph_properties() pour : {name}")
             view.update_graph_properties()
             logger.debug(f"🔄 [refresh_plot] Appel de refresh_curves() pour : {name}")
             view.refresh_curves()
+            view.refresh_satellites()
             logger.debug(f"✅ [refresh_plot] Vue mise à jour : {name}")
             
     def reset_zoom(self):

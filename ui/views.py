@@ -5,6 +5,7 @@ import time
 import pyqtgraph as pg
 from signal_bus import signal_bus
 from PyQt5.QtGui import QColor
+from ui.widgets.plot_container import PlotContainerWidget
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,8 @@ class MyPlotView:
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground('w')
         self.plot_widget.useOpenGL(True)
+        # Container widget that will host the plot and the satellite zones
+        self.container = PlotContainerWidget(graph_data.name, self.plot_widget)
         self.curves = {}
         self.labels = {}
         self.legend = None
@@ -193,3 +196,49 @@ class MyPlotView:
         logger.debug("[views.py > auto_range()] ▶️ Entrée dans auto_range()")
 
         self.plot_widget.enableAutoRange()
+
+    def reset_zoom(self):
+        """Convenience wrapper used by GraphUICoordinator."""
+        self.plot_widget.enableAutoRange()
+
+    def refresh_satellites(self):
+        """Update visibility and content of satellite zones around the plot."""
+        zones = {
+            "left": self.container.advanced_container.left_box,
+            "right": self.container.advanced_container.right_box,
+            "top": self.container.advanced_container.top_box,
+            "bottom": self.container.advanced_container.bottom_box,
+        }
+
+        for zone, box in zones.items():
+            visible = self.graph_data.satellite_visibility.get(zone, False)
+            box.setVisible(visible)
+            if not visible:
+                continue
+
+            settings = self.graph_data.satellite_settings.get(zone, {})
+            color = settings.get("color", "#ffffff")
+            size = settings.get("size", 100)
+
+            if zone in {"left", "right"}:
+                box.setFixedWidth(size)
+            else:
+                box.setFixedHeight(size)
+
+            box.setStyleSheet(f"background-color: {color};")
+
+            layout = box.layout()
+            while layout.count():
+                item = layout.takeAt(0)
+                if item and item.widget():
+                    item.widget().deleteLater()
+
+            for item_desc in settings.get("items", []):
+                typ = item_desc.get("type")
+                if typ == "text":
+                    w = QtWidgets.QLabel(item_desc.get("text", ""))
+                elif typ in {"button", "bouton"}:
+                    w = QtWidgets.QPushButton(item_desc.get("text", "Bouton"))
+                else:
+                    w = QtWidgets.QLabel(item_desc.get("text", ""))
+                layout.addWidget(w)
