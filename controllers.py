@@ -197,6 +197,30 @@ class GraphController:
         self.service.set_satellite_content(zone, content)
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
+
+    def set_satellite_visible(self, zone: str, visible: bool):
+        logger.debug(
+            f"🛰 [GraphController.set_satellite_visible] zone={zone} visible={visible}"
+        )
+        self.service.set_satellite_visible(zone, visible)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_satellite_color(self, zone: str, color: str):
+        logger.debug(
+            f"🛰 [GraphController.set_satellite_color] zone={zone} color={color}"
+        )
+        self.service.set_satellite_color(zone, color)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_satellite_size(self, zone: str, size: int):
+        logger.debug(
+            f"🛰 [GraphController.set_satellite_size] zone={zone} size={size}"
+        )
+        self.service.set_satellite_size(zone, size)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
     
     def set_graph_visible(self, graph_name: str, visible: bool):
         logger.debug(f"👁 [GraphController.set_graph_visible] {graph_name} → {visible}")

@@ -103,6 +103,15 @@ class GraphData:
         }
     )
 
+    satellite_settings: dict[str, dict] = field(
+        default_factory=lambda: {
+            "left": {"color": "#ffffff", "size": 100, "items": []},
+            "right": {"color": "#ffffff", "size": 100, "items": []},
+            "top": {"color": "#ffffff", "size": 100, "items": []},
+            "bottom": {"color": "#ffffff", "size": 100, "items": []},
+        }
+    )
+
 
     def add_curve(self, curve: CurveData):
         self.curves.append(curve)
