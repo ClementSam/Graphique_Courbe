@@ -31,6 +31,8 @@ class CurveData:
     fill: bool = False
     display_mode: str = "line"  # 'line', 'scatter', 'bar'
     gain: float = 1.0
+    units_per_grid: float = 1.0
+    gain_mode: str = "multiplier"  # "multiplier" or "unit"
     offset: float = 0.0
     time_offset: float = 0.0
     zero_indicator: str = "none"  # "none", "line"
@@ -53,6 +55,14 @@ class CurveData:
             raise ValueError("x et y doivent avoir la même longueur.")
         if self.width < 1:
             raise ValueError("L'épaisseur de la ligne doit être >= 1.")
+
+        # Keep gain and units_per_grid consistent depending on gain_mode
+        if self.gain_mode == "unit":
+            if self.units_per_grid:
+                self.gain = 1.0 / self.units_per_grid
+        else:
+            if self.gain:
+                self.units_per_grid = 1.0 / self.gain
 
     @property
     def is_bit_curve(self) -> bool:

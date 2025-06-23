@@ -15,7 +15,8 @@ from IO_dossier import serializers
 
 
 def create_sample_curve(name="c1"):
-    c = CurveData(name=name, x=[0,1,2], y=[1,2,3], time_offset=1.5)
+    c = CurveData(name=name, x=[0,1,2], y=[1,2,3], time_offset=1.5,
+                  units_per_grid=1.0, gain_mode="multiplier")
     # attributes expected by serializers but missing in dataclass
     c.show_zero_line = False
     c.show_label = False
@@ -39,6 +40,8 @@ def patch_serializers(monkeypatch):
             fill=data.get("fill", False),
             display_mode=data.get("display_mode", "line"),
             gain=data.get("gain", 1.0),
+            units_per_grid=data.get("units_per_grid", 1.0),
+            gain_mode=data.get("gain_mode", "multiplier"),
             offset=data.get("offset", 0.0),
             time_offset=data.get("time_offset", 0.0),
             label_mode=data.get("label_mode", "none"),

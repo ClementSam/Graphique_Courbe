@@ -37,6 +37,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         )
         self.gain_slider.valueChanged.connect(self._on_gain_slider)
         self.gain_apply_btn.clicked.connect(self._apply_gain)
+        self.gain_mode_combo.currentIndexChanged.connect(self._on_gain_mode_changed)
+        self.unit_gain_apply_btn.clicked.connect(self._apply_units_per_grid)
         self.offset_slider.valueChanged.connect(self._on_offset_slider)
         self.offset_apply_btn.clicked.connect(self._apply_offset)
         self.time_offset_apply_btn.clicked.connect(
@@ -400,6 +402,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(QtWidgets.QLabel("Type d'affichage :"))
         layout.addWidget(self.display_mode_combo)
         
+        self.gain_mode_combo = QtWidgets.QComboBox()
+        self.gain_mode_combo.addItem("Multiplicateur", "multiplier")
+        self.gain_mode_combo.addItem("Unité par carreau", "unit")
+
         self.gain_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.gain_slider.setRange(1, 500)  # de 0.01 à 5.00
         self.gain_slider.setValue(100)
@@ -408,6 +414,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.gain_input.setDecimals(2)
         self.gain_input.setSingleStep(0.01)
         self.gain_apply_btn = QtWidgets.QPushButton("Appliquer")
+
+        self.units_per_grid_input = QtWidgets.QDoubleSpinBox()
+        self.units_per_grid_input.setRange(0.01, 1000.0)
+        self.units_per_grid_input.setDecimals(2)
+        self.units_per_grid_input.setSingleStep(0.1)
+        self.unit_gain_apply_btn = QtWidgets.QPushButton("Appliquer")
 
         self.offset_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.offset_slider.setRange(-500, 500)
@@ -436,13 +448,29 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.bit_group_box = BitGroupWidget(self.controller)
         self.bit_group_box.setEnabled(False)
         layout.addWidget(self.bit_group_box)
-        
-        layout.addWidget(QtWidgets.QLabel("Gain (x0.01 à x5.00) :"))
+
+        layout.addWidget(QtWidgets.QLabel("Mode de gain :"))
+        layout.addWidget(self.gain_mode_combo)
+
+        self.gain_label = QtWidgets.QLabel("Gain (x0.01 à x5.00) :")
+        layout.addWidget(self.gain_label)
         gain_layout = QtWidgets.QHBoxLayout()
         gain_layout.addWidget(self.gain_slider)
         gain_layout.addWidget(self.gain_input)
         gain_layout.addWidget(self.gain_apply_btn)
-        layout.addLayout(gain_layout)
+        self.gain_widget = QtWidgets.QWidget()
+        self.gain_widget.setLayout(gain_layout)
+        layout.addWidget(self.gain_widget)
+
+        self.unit_gain_label = QtWidgets.QLabel("Unité par carreau :")
+        layout.addWidget(self.unit_gain_label)
+        unit_layout = QtWidgets.QHBoxLayout()
+        unit_layout.addWidget(self.units_per_grid_input)
+        unit_layout.addWidget(self.unit_gain_apply_btn)
+        self.unit_gain_widget = QtWidgets.QWidget()
+        self.unit_gain_widget.setLayout(unit_layout)
+        layout.addWidget(self.unit_gain_widget)
+        self._update_gain_mode_ui("multiplier")
 
         layout.addWidget(QtWidgets.QLabel("Offset vertical :"))
         off_layout = QtWidgets.QHBoxLayout()
@@ -566,6 +594,22 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         val = float(self.gain_input.value())
         self.gain_slider.setValue(int(val * 100))
         self._call_controller(self.controller.set_gain, val)
+
+    def _on_gain_mode_changed(self, index: int):
+        mode = self.gain_mode_combo.itemData(index)
+        self._call_controller(self.controller.set_gain_mode, mode)
+        self._update_gain_mode_ui(mode)
+
+    def _apply_units_per_grid(self):
+        val = float(self.units_per_grid_input.value())
+        self._call_controller(self.controller.set_units_per_grid, val)
+
+    def _update_gain_mode_ui(self, mode: str):
+        show_multiplier = mode == "multiplier"
+        self.gain_label.setVisible(show_multiplier)
+        self.gain_widget.setVisible(show_multiplier)
+        self.unit_gain_label.setVisible(not show_multiplier)
+        self.unit_gain_widget.setVisible(not show_multiplier)
 
     def _on_offset_slider(self, value: int):
         self.offset_input.setValue(float(value))
@@ -720,6 +764,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.fill_checkbox.setChecked(False)
             self.gain_slider.setValue(100)
             self.gain_input.setValue(1.0)
+            self.gain_mode_combo.setCurrentIndex(0)
+            self.units_per_grid_input.setValue(1.0)
             self.offset_slider.setValue(0)
             self.offset_input.setValue(0.0)
             self.time_offset_input.setValue(0.0)
@@ -730,6 +776,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.downsampling_apply_btn.setEnabled(False)
             self.bits_checkbox.setChecked(False)
             self.bits_checkbox.setEnabled(False)
+            self._update_gain_mode_ui("multiplier")
             return
     
         logger.debug(f"[PropertiesPanel] 🔄 Mise à jour des champs pour la courbe '{curve.name}'")
@@ -754,8 +801,15 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.opacity_slider.setValue(int(curve.opacity))
         self.fill_checkbox.setChecked(curve.fill)
 
+        mode_index = self.gain_mode_combo.findData(getattr(curve, "gain_mode", "multiplier"))
+        self.gain_mode_combo.blockSignals(True)
+        self.gain_mode_combo.setCurrentIndex(mode_index if mode_index != -1 else 0)
+        self.gain_mode_combo.blockSignals(False)
+        self._update_gain_mode_ui(self.gain_mode_combo.currentData())
+
         self.gain_slider.setValue(int(curve.gain * 100))  # gain 1.0 → slider 100
         self.gain_input.setValue(curve.gain)
+        self.units_per_grid_input.setValue(getattr(curve, "units_per_grid", 1.0))
         self.offset_slider.setValue(int(curve.offset))    # offset en pixels/valeur
         self.offset_input.setValue(curve.offset)
         self.time_offset_input.setValue(curve.time_offset)
