@@ -254,6 +254,16 @@ class GraphController:
         self.service.set_gain(value)
         self.ui.refresh_curve_ui()
 
+    def set_units_per_grid(self, value: float):
+        logger.debug(f"📐 [GraphController.set_units_per_grid] {value}")
+        self.service.set_units_per_grid(value)
+        self.ui.refresh_curve_ui()
+
+    def set_gain_mode(self, mode: str):
+        logger.debug(f"🏳️ [GraphController.set_gain_mode] {mode}")
+        self.service.set_gain_mode(mode)
+        self.ui.refresh_curve_ui()
+
     def set_offset(self, value: float):
         logger.debug(f"📏 [GraphController.set_offset] Offset = {value}")
         self.service.set_offset(value)

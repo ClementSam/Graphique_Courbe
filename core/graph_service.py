@@ -16,7 +16,9 @@ def apply_logic_analyzer_layout(graph: GraphData) -> None:
     for curve in reversed(graph.curves):
         if not curve.visible:
             continue
+        curve.gain_mode = "multiplier"
         curve.gain = 0.9
+        curve.units_per_grid = 1.0 / 0.9
         curve.offset = offset
         offset += 1
 
@@ -399,8 +401,25 @@ class GraphService:
 
     def set_gain(self, value: float):
         logger.debug(f"🔊 [GraphService.set_gain] Gain = {value}")
-        if self.state.current_curve:
-            self.state.current_curve.gain = value
+        c = self.state.current_curve
+        if c:
+            c.gain = value
+            if getattr(c, "gain_mode", "multiplier") == "unit" and value != 0:
+                c.units_per_grid = 1.0 / value
+
+    def set_units_per_grid(self, value: float):
+        logger.debug(f"📐 [GraphService.set_units_per_grid] units = {value}")
+        c = self.state.current_curve
+        if c:
+            c.units_per_grid = value
+            if value != 0:
+                c.gain = 1.0 / value
+
+    def set_gain_mode(self, mode: str):
+        logger.debug(f"🏳️ [GraphService.set_gain_mode] mode = {mode}")
+        c = self.state.current_curve
+        if c:
+            c.gain_mode = mode
 
     def set_offset(self, value: float):
         logger.debug(f"📏 [GraphService.set_offset] Offset = {value}")
