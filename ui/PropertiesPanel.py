@@ -170,6 +170,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         for zone, btn in self.satellite_add_buttons.items():
             btn.clicked.connect(lambda _, z=zone: self._add_satellite_item(z))
 
+        self.add_zone_btn.clicked.connect(self._add_zone_item)
+
         signal_bus.graph_updated.connect(self.update_mode_tab)
         self.update_mode_tab()
 
@@ -320,6 +322,16 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             "top": self.satellite_top_add,
             "bottom": self.satellite_bottom_add,
         }
+
+        # Zone objects in the plot
+        zone_group = QtWidgets.QGroupBox("Zones personnalisées")
+        v_z = QtWidgets.QVBoxLayout(zone_group)
+        self.zone_table = QtWidgets.QTableWidget(0, 2)
+        self.zone_table.setHorizontalHeaderLabels(["Type", "Paramètres"])
+        self.add_zone_btn = QtWidgets.QPushButton("Ajouter une zone")
+        v_z.addWidget(self.zone_table)
+        v_z.addWidget(self.add_zone_btn)
+        layout.addWidget(zone_group)
 
         scroll_graph = QtWidgets.QScrollArea()
         scroll_graph.setWidgetResizable(True)
@@ -586,6 +598,48 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 self.controller.add_satellite_item, zone, item
             )
 
+    def _add_zone_item(self):
+        options = ["LinearRegion", "Rectangle", "Path"]
+        choice, ok = QtWidgets.QInputDialog.getItem(
+            self,
+            "Ajouter une zone",
+            "Type de zone :",
+            options,
+            0,
+            False,
+        )
+        if not ok:
+            return
+
+        params, ok = QtWidgets.QInputDialog.getText(
+            self,
+            "Paramètres",
+            "Entrez les paramètres (séparés par des virgules)",
+        )
+        if not ok:
+            return
+
+        values = [float(v.strip()) for v in params.split(',') if v.strip()]
+
+        if choice == "LinearRegion" and len(values) >= 2:
+            zone = {"type": "linear", "bounds": values[:2]}
+        elif choice == "Rectangle" and len(values) >= 4:
+            zone = {"type": "rect", "rect": values[:4]}
+        elif choice == "Path" and len(values) >= 4 and len(values) % 2 == 0:
+            pts = list(zip(values[::2], values[1::2]))
+            zone = {"type": "path", "points": pts}
+        else:
+            QtWidgets.QMessageBox.warning(self, "Erreur", "Paramètres invalides")
+            return
+
+        row = self.zone_table.rowCount()
+        self.zone_table.insertRow(row)
+        self.zone_table.setItem(row, 0, QtWidgets.QTableWidgetItem(choice))
+        self.zone_table.setItem(row, 1, QtWidgets.QTableWidgetItem(params))
+
+        if self.controller:
+            self._call_graph_controller(self.controller.add_zone, zone)
+
     def _on_gain_slider(self, value: int):
         self.gain_input.setValue(value / 100)
         self._call_controller(self.controller.set_gain, value / 100)
@@ -746,6 +800,23 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                     widget = QtWidgets.QLabel(item.get("text", ""))
                 table.setCellWidget(row, 1, widget)
             table.blockSignals(False)
+
+        # Zones table
+        self.zone_table.blockSignals(True)
+        self.zone_table.setRowCount(0)
+        for zone in getattr(graph, "zones", []):
+            row = self.zone_table.rowCount()
+            self.zone_table.insertRow(row)
+            ztype = zone.get("type", "")
+            self.zone_table.setItem(row, 0, QtWidgets.QTableWidgetItem(ztype))
+            if ztype == "linear":
+                desc = str(zone.get("bounds", []))
+            elif ztype == "rect":
+                desc = str(zone.get("rect", []))
+            else:
+                desc = str(zone.get("points", []))
+            self.zone_table.setItem(row, 1, QtWidgets.QTableWidgetItem(desc))
+        self.zone_table.blockSignals(False)
 
     def update_curve_ui(self):
         """Met à jour les champs de l'onglet courbe en fonction de la courbe sélectionnée."""

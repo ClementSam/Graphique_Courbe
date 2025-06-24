@@ -4,7 +4,7 @@ from PyQt5.QtCore import QTimer
 import time
 import pyqtgraph as pg
 from signal_bus import signal_bus
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QPainterPath
 from ui.widgets.plot_container import PlotContainerWidget
 import logging
 
@@ -78,7 +78,7 @@ class MyPlotView:
     
         legend_items_added = set()
         self.zero_arrows = []
-    
+
         for curve in self.graph_data.curves:
             logger.debug(f"[DEBUG] Courbe '{curve.name}' → id={id(curve)} zero_indicator = {curve.zero_indicator}")
     
@@ -137,7 +137,34 @@ class MyPlotView:
                     item.setDownsampling(auto=False)
                 elif curve.downsampling_mode == "auto":
                     item.setDownsampling(auto=True)
-    
+
+        # Add custom zones
+        for zone in getattr(self.graph_data, "zones", []):
+            ztype = zone.get("type")
+            if ztype == "linear":
+                bounds = zone.get("bounds", [0, 1])
+                orientation = zone.get("orientation", "vertical")
+                item = pg.LinearRegionItem(values=bounds, orientation=orientation)
+            elif ztype == "rect":
+                x, y, w, h = zone.get("rect", [0, 0, 1, 1])
+                item = QtWidgets.QGraphicsRectItem(x, y, w, h)
+                pen = pg.mkPen(zone.get("pen", "r"))
+                brush = pg.mkBrush(zone.get("brush", (0, 0, 0, 50)))
+                item.setPen(pen)
+                item.setBrush(brush)
+            elif ztype == "path":
+                pts = zone.get("points", [])
+                path = QPainterPath()
+                if pts:
+                    path.moveTo(*pts[0])
+                    for pt in pts[1:]:
+                        path.lineTo(*pt)
+                item = QtWidgets.QGraphicsPathItem(path)
+                item.setPen(pg.mkPen(zone.get("pen", "g")))
+            else:
+                continue
+            self.plot_widget.addItem(item)
+
         end = time.perf_counter()
         logger.debug(f"[PROFILER] refresh_curves took {end - start:.4f} seconds")
 
