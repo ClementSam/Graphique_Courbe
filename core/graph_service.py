@@ -578,6 +578,14 @@ class GraphService:
         if zone in graph.satellite_settings:
             graph.satellite_settings[zone]["items"].append(item)
 
+    def add_zone(self, zone: dict):
+        """Add a graphic zone description to the current graph."""
+        logger.debug(f"🗒 [GraphService.add_zone] zone={zone}")
+        graph = self.state.current_graph
+        if not graph:
+            return
+        graph.zones.append(zone)
+
     def apply_mode(self, graph_name: str, mode: str):
         """Apply a predefined configuration to the given graph."""
         logger.debug(f"🎛 [GraphService.apply_mode] graph={graph_name} mode={mode}")

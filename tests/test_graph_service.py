@@ -137,6 +137,19 @@ def test_add_satellite_item(service):
     assert items[0]["type"] == "text"
 
 
+def test_add_zone(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    svc.add_zone({"type": "linear", "bounds": [0, 1]})
+
+    zones = state.current_graph.zones
+    assert len(zones) == 1
+    assert zones[0]["type"] == "linear"
+
+
 def test_bring_curve_to_front_moves_curve(service):
     svc, state, _ = service
     svc.add_graph()

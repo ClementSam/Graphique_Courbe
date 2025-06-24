@@ -122,6 +122,8 @@ class GraphData:
         }
     )
 
+    zones: List[dict] = field(default_factory=list)
+
 
     def add_curve(self, curve: CurveData):
         self.curves.append(curve)
