@@ -235,6 +235,18 @@ class GraphController:
         self.service.add_zone(zone)
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
+
+    def update_zone(self, index: int, zone: dict):
+        logger.debug(f"🗒 [GraphController.update_zone] index={index} zone={zone}")
+        self.service.update_zone(index, zone)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def remove_zone(self, index: int):
+        logger.debug(f"🗒 [GraphController.remove_zone] index={index}")
+        self.service.remove_zone(index)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
     
     def set_graph_visible(self, graph_name: str, visible: bool):
         logger.debug(f"👁 [GraphController.set_graph_visible] {graph_name} → {visible}")

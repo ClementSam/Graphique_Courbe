@@ -326,8 +326,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         # Zone objects in the plot
         zone_group = QtWidgets.QGroupBox("Zones personnalisées")
         v_z = QtWidgets.QVBoxLayout(zone_group)
-        self.zone_table = QtWidgets.QTableWidget(0, 2)
-        self.zone_table.setHorizontalHeaderLabels(["Type", "Paramètres"])
+        self.zone_table = QtWidgets.QTableWidget(0, 3)
+        self.zone_table.setHorizontalHeaderLabels(["Type", "Paramètres", ""])
         self.add_zone_btn = QtWidgets.QPushButton("Ajouter une zone")
         v_z.addWidget(self.zone_table)
         v_z.addWidget(self.add_zone_btn)
@@ -611,34 +611,32 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         if not ok:
             return
 
-        params, ok = QtWidgets.QInputDialog.getText(
-            self,
-            "Paramètres",
-            "Entrez les paramètres (séparés par des virgules)",
-        )
-        if not ok:
-            return
-
-        values = [float(v.strip()) for v in params.split(',') if v.strip()]
-
-        if choice == "LinearRegion" and len(values) >= 2:
-            zone = {"type": "linear", "bounds": values[:2]}
-        elif choice == "Rectangle" and len(values) >= 4:
-            zone = {"type": "rect", "rect": values[:4]}
-        elif choice == "Path" and len(values) >= 4 and len(values) % 2 == 0:
-            pts = list(zip(values[::2], values[1::2]))
-            zone = {"type": "path", "points": pts}
+        if choice == "LinearRegion":
+            zone = {"type": "linear", "bounds": [0.0, 1.0]}
+            placeholder = "début, fin"
+        elif choice == "Rectangle":
+            zone = {"type": "rect", "rect": [0.0, 0.0, 1.0, 1.0]}
+            placeholder = "x, y, largeur, hauteur"
         else:
-            QtWidgets.QMessageBox.warning(self, "Erreur", "Paramètres invalides")
-            return
+            zone = {"type": "path", "points": [(0.0, 0.0), (1.0, 1.0)]}
+            placeholder = "x1, y1, x2, y2, ..."
 
         row = self.zone_table.rowCount()
         self.zone_table.insertRow(row)
-        self.zone_table.setItem(row, 0, QtWidgets.QTableWidgetItem(choice))
-        self.zone_table.setItem(row, 1, QtWidgets.QTableWidgetItem(params))
+        self.zone_table.setItem(row, 0, QtWidgets.QTableWidgetItem(zone["type"]))
+
+        edit = QtWidgets.QLineEdit()
+        edit.setPlaceholderText(placeholder)
+        edit.editingFinished.connect(lambda r=row: self._update_zone_from_row(r))
+        self.zone_table.setCellWidget(row, 1, edit)
+
+        btn = QtWidgets.QPushButton("Supprimer")
+        btn.clicked.connect(lambda _, r=row: self._remove_zone_row(r))
+        self.zone_table.setCellWidget(row, 2, btn)
 
         if self.controller:
             self._call_graph_controller(self.controller.add_zone, zone)
+        self.update_graph_ui()
 
     def _on_gain_slider(self, value: int):
         self.gain_input.setValue(value / 100)
@@ -673,6 +671,34 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         val = float(self.offset_input.value())
         self.offset_slider.setValue(int(val))
         self._call_controller(self.controller.set_offset, val)
+
+    def _update_zone_from_row(self, row: int):
+        edit = self.zone_table.cellWidget(row, 1)
+        if not isinstance(edit, QtWidgets.QLineEdit):
+            return
+        text = edit.text()
+        ztype_item = self.zone_table.item(row, 0)
+        if ztype_item is None:
+            return
+        ztype = ztype_item.text()
+        values = [float(v.strip()) for v in text.split(',') if v.strip()]
+        if ztype == "linear" and len(values) >= 2:
+            zone = {"type": "linear", "bounds": values[:2]}
+        elif ztype == "rect" and len(values) >= 4:
+            zone = {"type": "rect", "rect": values[:4]}
+        elif ztype == "path" and len(values) >= 4 and len(values) % 2 == 0:
+            pts = list(zip(values[::2], values[1::2]))
+            zone = {"type": "path", "points": pts}
+        else:
+            return
+
+        if self.controller:
+            self._call_graph_controller(self.controller.update_zone, row, zone)
+
+    def _remove_zone_row(self, row: int):
+        if self.controller:
+            self._call_graph_controller(self.controller.remove_zone, row)
+        self.update_graph_ui()
 
     def _on_bits_toggled(self, checked: bool):
         if not checked:
@@ -804,18 +830,34 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         # Zones table
         self.zone_table.blockSignals(True)
         self.zone_table.setRowCount(0)
-        for zone in getattr(graph, "zones", []):
+        for idx, zone in enumerate(getattr(graph, "zones", [])):
             row = self.zone_table.rowCount()
             self.zone_table.insertRow(row)
             ztype = zone.get("type", "")
             self.zone_table.setItem(row, 0, QtWidgets.QTableWidgetItem(ztype))
+
             if ztype == "linear":
-                desc = str(zone.get("bounds", []))
+                desc = ", ".join(str(v) for v in zone.get("bounds", []))
+                placeholder = "début, fin"
             elif ztype == "rect":
-                desc = str(zone.get("rect", []))
+                desc = ", ".join(str(v) for v in zone.get("rect", []))
+                placeholder = "x, y, largeur, hauteur"
             else:
-                desc = str(zone.get("points", []))
-            self.zone_table.setItem(row, 1, QtWidgets.QTableWidgetItem(desc))
+                pts = zone.get("points", [])
+                flat = []
+                for x, y in pts:
+                    flat.extend([x, y])
+                desc = ", ".join(str(v) for v in flat)
+                placeholder = "x1, y1, x2, y2, ..."
+
+            edit = QtWidgets.QLineEdit(desc)
+            edit.setPlaceholderText(placeholder)
+            edit.editingFinished.connect(lambda r=idx: self._update_zone_from_row(r))
+            self.zone_table.setCellWidget(row, 1, edit)
+
+            btn = QtWidgets.QPushButton("Supprimer")
+            btn.clicked.connect(lambda _, r=idx: self._remove_zone_row(r))
+            self.zone_table.setCellWidget(row, 2, btn)
         self.zone_table.blockSignals(False)
 
     def update_curve_ui(self):
