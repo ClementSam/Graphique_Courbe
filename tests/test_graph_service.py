@@ -150,6 +150,22 @@ def test_add_zone(service):
     assert zones[0]["type"] == "linear"
 
 
+def test_remove_zone(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    svc.add_zone({"type": "linear", "bounds": [0, 1]})
+    svc.add_zone({"type": "rect", "rect": [0, 0, 1, 1]})
+
+    svc.remove_zone(0)
+
+    zones = state.current_graph.zones
+    assert len(zones) == 1
+    assert zones[0]["type"] == "rect"
+
+
 def test_bring_curve_to_front_moves_curve(service):
     svc, state, _ = service
     svc.add_graph()

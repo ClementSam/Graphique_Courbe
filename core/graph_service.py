@@ -586,6 +586,24 @@ class GraphService:
             return
         graph.zones.append(zone)
 
+    def update_zone(self, index: int, zone: dict):
+        """Update a zone at the given index."""
+        logger.debug(f"🗒 [GraphService.update_zone] index={index} zone={zone}")
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if 0 <= index < len(graph.zones):
+            graph.zones[index] = zone
+
+    def remove_zone(self, index: int):
+        """Remove the zone at the given index."""
+        logger.debug(f"🗒 [GraphService.remove_zone] index={index}")
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if 0 <= index < len(graph.zones):
+            graph.zones.pop(index)
+
     def apply_mode(self, graph_name: str, mode: str):
         """Apply a predefined configuration to the given graph."""
         logger.debug(f"🎛 [GraphService.apply_mode] graph={graph_name} mode={mode}")
