@@ -6,6 +6,7 @@ import pyqtgraph as pg
 from signal_bus import signal_bus
 from PyQt5.QtGui import QColor, QPainterPath
 from ui.widgets.plot_container import PlotContainerWidget
+from ui.satellite_zone_view import SatelliteZoneView
 import logging
 
 logger = logging.getLogger(__name__)
@@ -288,12 +289,7 @@ class MyPlotView:
                 if item and item.widget():
                     item.widget().deleteLater()
 
-            for item_desc in settings.get("items", []):
-                typ = item_desc.get("type")
-                if typ == "text":
-                    w = QtWidgets.QLabel(item_desc.get("text", ""))
-                elif typ in {"button", "bouton"}:
-                    w = QtWidgets.QPushButton(item_desc.get("text", "Bouton"))
-                else:
-                    w = QtWidgets.QLabel(item_desc.get("text", ""))
-                layout.addWidget(w)
+            view = SatelliteZoneView()
+            layout.addWidget(view)
+            view.setSceneRect(0, 0, box.width(), box.height())
+            view.load_items(settings.get("items", []))
