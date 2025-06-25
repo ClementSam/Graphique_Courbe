@@ -137,6 +137,21 @@ def test_add_satellite_item(service):
     assert items[0]["type"] == "text"
 
 
+def test_set_satellite_items(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    new_items = [
+        {"type": "text", "text": "hello"},
+        {"type": "button", "text": "ok"},
+    ]
+    svc.set_satellite_items("right", new_items)
+
+    assert state.current_graph.satellite_settings["right"]["items"] == new_items
+
+
 def test_add_zone(service):
     svc, state, _ = service
     svc.add_graph()
