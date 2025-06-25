@@ -1,9 +1,10 @@
-#PropertiesPanel.py
+# PropertiesPanel.py
 
 from core.app_state import AppState
 from PyQt5 import QtWidgets, QtCore, QtGui
 from ui.widgets import BitGroupWidget
 from signal_bus import signal_bus
+from core.utils import generate_random_color
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,133 @@ ZONE_TYPES = {
     "rect": "x, y, largeur, hauteur",
     "path": "x1, y1, x2, y2, ...",
 }
+
+
+class ZoneParamsWidget(QtWidgets.QWidget):
+    """Widget to edit parameters of a custom zone."""
+
+    changed = QtCore.pyqtSignal()
+
+    def __init__(self, ztype: str = "linear", zone: dict | None = None, parent=None):
+        super().__init__(parent)
+        self._layout = QtWidgets.QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._type = None
+        self._fields: list[QtWidgets.QDoubleSpinBox] = []
+        self._points: list[
+            tuple[QtWidgets.QWidget, QtWidgets.QDoubleSpinBox, QtWidgets.QDoubleSpinBox]
+        ] = []
+        self._add_btn: QtWidgets.QPushButton | None = None
+        self.set_type(ztype)
+        if zone:
+            self.set_zone(zone)
+
+    def _clear_layout(self):
+        while self._layout.count():
+            item = self._layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+    def _create_spin(self, placeholder: str = ""):
+        spin = QtWidgets.QDoubleSpinBox()
+        spin.setRange(-1e9, 1e9)
+        spin.setDecimals(6)
+        spin.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+        if placeholder:
+            spin.setPrefix(placeholder + " ")
+        spin.valueChanged.connect(self.changed.emit)
+        return spin
+
+    def set_type(self, ztype: str):
+        if ztype == self._type:
+            return
+        self._type = ztype
+        self._fields.clear()
+        self._points.clear()
+        self._clear_layout()
+
+        if ztype == "linear":
+            for name in ["x départ", "x de fin"]:
+                spin = self._create_spin(name)
+                self._fields.append(spin)
+                self._layout.addWidget(spin)
+        elif ztype == "rect":
+            for name in ["x", "y", "largeur", "hauteur"]:
+                spin = self._create_spin(name)
+                self._fields.append(spin)
+                self._layout.addWidget(spin)
+        else:  # path
+            self._add_btn = QtWidgets.QPushButton("+")
+            self._add_btn.clicked.connect(self._add_point)
+            self._layout.addWidget(self._add_btn)
+            # start with two points
+            self._add_point()
+            self._add_point()
+
+    def _add_point(self, x: float = 0.0, y: float = 0.0):
+        cont = QtWidgets.QWidget()
+        lay = QtWidgets.QHBoxLayout(cont)
+        lay.setContentsMargins(0, 0, 0, 0)
+        sx = self._create_spin("x")
+        sy = self._create_spin("y")
+        sx.setValue(x)
+        sy.setValue(y)
+        rm = QtWidgets.QPushButton("-")
+        rm.setFixedWidth(20)
+        rm.clicked.connect(lambda *_: self._remove_point(cont))
+        for w in (sx, sy, rm):
+            lay.addWidget(w)
+        if self._add_btn:
+            self._layout.insertWidget(self._layout.count() - 1, cont)
+        else:
+            self._layout.addWidget(cont)
+        self._points.append((cont, sx, sy))
+        self.changed.emit()
+
+    def _remove_point(self, widget: QtWidgets.QWidget):
+        if len(self._points) <= 2:
+            return
+        for i, (w, sx, sy) in enumerate(self._points):
+            if w is widget:
+                self._points.pop(i)
+                w.deleteLater()
+                break
+        self.changed.emit()
+
+    def set_zone(self, zone: dict):
+        self.blockSignals(True)
+        self.set_type(zone.get("type", "linear"))
+        if self._type == "linear":
+            vals = zone.get("bounds", [0.0, 1.0])
+            for spin, val in zip(self._fields, vals):
+                spin.setValue(val)
+        elif self._type == "rect":
+            vals = zone.get("rect", [0.0, 0.0, 1.0, 1.0])
+            for spin, val in zip(self._fields, vals):
+                spin.setValue(val)
+        else:
+            pts = zone.get("points", [])
+            # clear existing points except add button
+            for w, _, _ in list(self._points):
+                w.deleteLater()
+            self._points.clear()
+            for x, y in pts:
+                self._add_point(x, y)
+            if not pts:
+                self._add_point()
+                self._add_point()
+        self.blockSignals(False)
+
+    def get_zone(self) -> dict:
+        if self._type == "linear":
+            vals = [f.value() for f in self._fields]
+            return {"type": "linear", "bounds": vals}
+        if self._type == "rect":
+            vals = [f.value() for f in self._fields]
+            return {"type": "rect", "rect": vals}
+        pts = [(sx.value(), sy.value()) for _, sx, sy in self._points]
+        return {"type": "path", "points": pts}
+
 
 class PropertiesPanel(QtWidgets.QTabWidget):
 
@@ -55,22 +183,33 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             )
         )
         self.style_combo.currentIndexChanged.connect(
-            lambda i: self._call_controller(self.controller.set_style, self.style_combo.itemData(i))
+            lambda i: self._call_controller(
+                self.controller.set_style, self.style_combo.itemData(i)
+            )
         )
         self.symbol_combo.currentIndexChanged.connect(
-            lambda i: self._call_controller(self.controller.set_symbol, self.symbol_combo.itemData(i))
+            lambda i: self._call_controller(
+                self.controller.set_symbol, self.symbol_combo.itemData(i)
+            )
         )
         self.fill_checkbox.toggled.connect(
             lambda val: self._call_controller(self.controller.set_fill, val)
         )
         self.display_mode_combo.currentIndexChanged.connect(
-            lambda i: self._call_controller(self.controller.set_display_mode, self.display_mode_combo.itemData(i))
+            lambda i: self._call_controller(
+                self.controller.set_display_mode, self.display_mode_combo.itemData(i)
+            )
         )
         self.label_mode_combo.currentIndexChanged.connect(
-            lambda i: self._call_controller(self.controller.set_label_mode, self.label_mode_combo.itemData(i))
+            lambda i: self._call_controller(
+                self.controller.set_label_mode, self.label_mode_combo.itemData(i)
+            )
         )
         self.zero_indicator_combo.currentIndexChanged.connect(
-            lambda i: self._call_controller(self.controller.set_zero_indicator, self.zero_indicator_combo.itemData(i))
+            lambda i: self._call_controller(
+                self.controller.set_zero_indicator,
+                self.zero_indicator_combo.itemData(i),
+            )
         )
         self.opacity_slider.valueChanged.connect(
             lambda v: self._call_controller(self.controller.set_opacity, float(v))
@@ -83,7 +222,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
         # Connexions pour l'onglet graphique
         self.grid_checkbox.toggled.connect(
-            lambda val: self._call_graph_controller(self.controller.set_grid_visible, val)
+            lambda val: self._call_graph_controller(
+                self.controller.set_grid_visible, val
+            )
         )
         self.darkmode_checkbox.toggled.connect(
             lambda val: self._call_graph_controller(self.controller.set_dark_mode, val)
@@ -117,7 +258,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             )
         )
         self.fix_y_checkbox.toggled.connect(
-            lambda val: self._call_graph_controller(self.controller.set_fix_y_range, val)
+            lambda val: self._call_graph_controller(
+                self.controller.set_fix_y_range, val
+            )
         )
         self.ymin_input.valueChanged.connect(
             lambda v: self._call_graph_controller(
@@ -193,11 +336,13 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.setTabEnabled(2, False)
 
     def setup_graph_tab(self):
-        logger.debug("[PropertiesPanel.py > setup_graph_tab()] ▶️ Entrée dans setup_graph_tab()")
+        logger.debug(
+            "[PropertiesPanel.py > setup_graph_tab()] ▶️ Entrée dans setup_graph_tab()"
+        )
 
         tab_graph = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(tab_graph)
-    
+
         self.label_graph_name = QtWidgets.QLabel("—")
         self.label_graph_name.setStyleSheet("font-weight:bold")
         self.grid_checkbox = QtWidgets.QCheckBox("Afficher la grille")
@@ -206,7 +351,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.logy_checkbox = QtWidgets.QCheckBox("Échelle Y logarithmique")
         self.font_combo = QtWidgets.QFontComboBox()
         self.button_reset_zoom = QtWidgets.QPushButton("🔍 Réinitialiser le zoom")
-    
+
         layout.addWidget(QtWidgets.QLabel("Graphique sélectionné :"))
         layout.addWidget(self.label_graph_name)
         layout.addSpacing(8)
@@ -217,30 +362,30 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(QtWidgets.QLabel("Police :"))
         layout.addWidget(self.font_combo)
         layout.addWidget(self.button_reset_zoom)
-    
+
         # ✅ Ajout : unités et formats des axes
         unit_layout = QtWidgets.QFormLayout()
-    
+
         self.x_unit_input = QtWidgets.QLineEdit()
         self.y_unit_input = QtWidgets.QLineEdit()
-    
+
         self.x_format_combo = QtWidgets.QComboBox()
         self.y_format_combo = QtWidgets.QComboBox()
         for combo in [self.x_format_combo, self.y_format_combo]:
             combo.addItem("Normal", "normal")
             combo.addItem("Scientifique", "scientific")
             combo.addItem("Multiplicateur (n, µ, m...)", "scaled")
-    
+
         unit_layout.addRow("Unité X :", self.x_unit_input)
         unit_layout.addRow("Format X :", self.x_format_combo)
         unit_layout.addRow("Unité Y :", self.y_unit_input)
         unit_layout.addRow("Format Y :", self.y_format_combo)
-    
+
         layout.addSpacing(10)
         layout.addLayout(unit_layout)
-    
+
         layout.addStretch()
-    
+
         self.fix_y_checkbox = QtWidgets.QCheckBox("Fixer l'échelle Y")
         self.ymin_input = QtWidgets.QDoubleSpinBox()
         self.ymax_input = QtWidgets.QDoubleSpinBox()
@@ -248,16 +393,16 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.ymax_input.setRange(-1000, 1000)
         self.ymin_input.setValue(-5.0)
         self.ymax_input.setValue(5.0)
-    
+
         ylayout = QtWidgets.QHBoxLayout()
         ylayout.addWidget(QtWidgets.QLabel("Y min :"))
         ylayout.addWidget(self.ymin_input)
         ylayout.addWidget(QtWidgets.QLabel("Y max :"))
         ylayout.addWidget(self.ymax_input)
-    
+
         layout.addWidget(self.fix_y_checkbox)
         layout.addLayout(ylayout)
-        
+
         # Satellite zones
         def create_satellite_group(title):
             group = QtWidgets.QGroupBox(title)
@@ -269,11 +414,13 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             table = QtWidgets.QTableWidget(0, 2)
             table.setHorizontalHeaderLabels(["Type", "Texte"])
             add_btn = QtWidgets.QPushButton("Ajouter")
+
             def toggle(enabled):
                 color_btn.setEnabled(enabled)
                 size_spin.setEnabled(enabled)
                 table.setEnabled(enabled)
                 add_btn.setEnabled(enabled)
+
             checkbox.toggled.connect(toggle)
             v.addWidget(checkbox)
             h = QtWidgets.QHBoxLayout()
@@ -285,36 +432,44 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             toggle(False)
             return group, checkbox, color_btn, size_spin, table, add_btn
 
-        (self.sat_left_group,
-         self.satellite_left_checkbox,
-         self.satellite_left_color,
-         self.satellite_left_size,
-         self.satellite_left_table,
-         self.satellite_left_add) = create_satellite_group("Zone gauche")
+        (
+            self.sat_left_group,
+            self.satellite_left_checkbox,
+            self.satellite_left_color,
+            self.satellite_left_size,
+            self.satellite_left_table,
+            self.satellite_left_add,
+        ) = create_satellite_group("Zone gauche")
         layout.addWidget(self.sat_left_group)
 
-        (self.sat_right_group,
-         self.satellite_right_checkbox,
-         self.satellite_right_color,
-         self.satellite_right_size,
-         self.satellite_right_table,
-         self.satellite_right_add) = create_satellite_group("Zone droite")
+        (
+            self.sat_right_group,
+            self.satellite_right_checkbox,
+            self.satellite_right_color,
+            self.satellite_right_size,
+            self.satellite_right_table,
+            self.satellite_right_add,
+        ) = create_satellite_group("Zone droite")
         layout.addWidget(self.sat_right_group)
 
-        (self.sat_top_group,
-         self.satellite_top_checkbox,
-         self.satellite_top_color,
-         self.satellite_top_size,
-         self.satellite_top_table,
-         self.satellite_top_add) = create_satellite_group("Zone haut")
+        (
+            self.sat_top_group,
+            self.satellite_top_checkbox,
+            self.satellite_top_color,
+            self.satellite_top_size,
+            self.satellite_top_table,
+            self.satellite_top_add,
+        ) = create_satellite_group("Zone haut")
         layout.addWidget(self.sat_top_group)
 
-        (self.sat_bottom_group,
-         self.satellite_bottom_checkbox,
-         self.satellite_bottom_color,
-         self.satellite_bottom_size,
-         self.satellite_bottom_table,
-         self.satellite_bottom_add) = create_satellite_group("Zone bas")
+        (
+            self.sat_bottom_group,
+            self.satellite_bottom_checkbox,
+            self.satellite_bottom_color,
+            self.satellite_bottom_size,
+            self.satellite_bottom_table,
+            self.satellite_bottom_add,
+        ) = create_satellite_group("Zone bas")
         layout.addWidget(self.sat_bottom_group)
 
         self.satellite_tables = {
@@ -333,8 +488,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         # Zone objects in the plot
         zone_group = QtWidgets.QGroupBox("Zones personnalisées")
         v_z = QtWidgets.QVBoxLayout(zone_group)
-        self.zone_table = QtWidgets.QTableWidget(0, 3)
-        self.zone_table.setHorizontalHeaderLabels(["Type", "Paramètres", ""])
+        self.zone_table = QtWidgets.QTableWidget(0, 4)
+        self.zone_table.setHorizontalHeaderLabels(["Type", "Paramètres", "Couleur", ""])
         self.add_zone_btn = QtWidgets.QPushButton("Ajouter une zone")
         v_z.addWidget(self.zone_table)
         v_z.addWidget(self.add_zone_btn)
@@ -347,7 +502,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.addTab(scroll_graph, "Propriétés du graphique")
 
     def setup_curve_tab(self):
-        logger.debug("[PropertiesPanel.py > setup_curve_tab()] ▶️ Entrée dans setup_curve_tab()")
+        logger.debug(
+            "[PropertiesPanel.py > setup_curve_tab()] ▶️ Entrée dans setup_curve_tab()"
+        )
 
         tab_curve = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(tab_curve)
@@ -387,7 +544,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         ds_layout.addWidget(QtWidgets.QLabel("Ratio :"))
         ds_layout.addWidget(self.downsampling_ratio_input)
         ds_layout.addWidget(self.downsampling_apply_btn)
-        
+
         layout.addWidget(QtWidgets.QLabel("Downsampling :"))
         layout.addWidget(self.downsampling_combo)
         layout.addLayout(ds_layout)
@@ -398,7 +555,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.opacity_slider.setValue(100)
         layout.addWidget(QtWidgets.QLabel("Opacité (%) :"))
         layout.addWidget(self.opacity_slider)
-        
+
         # Symbole
         self.symbol_combo = QtWidgets.QComboBox()
         self.symbol_combo.addItem("Aucun", None)
@@ -408,11 +565,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.symbol_combo.addItem("Diamant", "d")
         layout.addWidget(QtWidgets.QLabel("Symbole :"))
         layout.addWidget(self.symbol_combo)
-        
+
         # Remplissage
         self.fill_checkbox = QtWidgets.QCheckBox("Remplir sous la courbe")
         layout.addWidget(self.fill_checkbox)
-        
+
         # Mode d'affichage
         self.display_mode_combo = QtWidgets.QComboBox()
         self.display_mode_combo.addItem("Ligne", "line")
@@ -420,7 +577,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.display_mode_combo.addItem("Histogramme (barres)", "bar")
         layout.addWidget(QtWidgets.QLabel("Type d'affichage :"))
         layout.addWidget(self.display_mode_combo)
-        
+
         self.gain_mode_combo = QtWidgets.QComboBox()
         self.gain_mode_combo.addItem("Multiplicateur", "multiplier")
         self.gain_mode_combo.addItem("Unité par carreau", "unit")
@@ -454,7 +611,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.time_offset_input.setDecimals(3)
         self.time_offset_input.setSingleStep(0.1)
         self.time_offset_apply_btn = QtWidgets.QPushButton("Appliquer")
-        
+
         self.zero_indicator_combo = QtWidgets.QComboBox()
         self.zero_indicator_combo.addItem("Aucun", "none")
         self.zero_indicator_combo.addItem("Ligne horizontale", "line")
@@ -503,10 +660,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         h_time.addWidget(self.time_offset_input)
         h_time.addWidget(self.time_offset_apply_btn)
         layout.addLayout(h_time)
-        
+
         self.bring_to_front_button = QtWidgets.QPushButton("🔝 Mettre au premier plan")
         layout.addWidget(self.bring_to_front_button)
-        
+
         layout.addSpacing(10)
         layout.addWidget(QtWidgets.QLabel("Affichage du nom de la courbe :"))
         self.label_mode_combo = QtWidgets.QComboBox()
@@ -524,7 +681,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.addTab(scroll_curve, "Propriétés de la courbe")
 
     def setup_mode_tab(self):
-        logger.debug("[PropertiesPanel.py > setup_mode_tab()] ▶️ Entrée dans setup_mode_tab()")
+        logger.debug(
+            "[PropertiesPanel.py > setup_mode_tab()] ▶️ Entrée dans setup_mode_tab()"
+        )
 
         tab_mode = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(tab_mode)
@@ -553,7 +712,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             return
         func(*args)
         signal_bus.graph_updated.emit()
-        
+
     def _choose_color(self):
         color = QtWidgets.QColorDialog.getColor(parent=self)
         if color.isValid():
@@ -567,6 +726,15 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self._call_graph_controller(
                 self.controller.set_satellite_color, zone, color.name()
             )
+
+    def _choose_zone_color(self, row: int):
+        btn = self.zone_table.cellWidget(row, 2)
+        if not isinstance(btn, QtWidgets.QPushButton):
+            return
+        color = QtWidgets.QColorDialog.getColor(parent=self)
+        if color.isValid():
+            btn.setStyleSheet(f"background-color: {color.name()}")
+            self._update_zone_from_row(row)
 
     def _add_satellite_item(self, zone: str):
         options = ["Texte", "Bouton", "Image"]
@@ -601,16 +769,17 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
         if self.controller:
             item = {"type": choice.lower(), "text": content}
-            self._call_graph_controller(
-                self.controller.add_satellite_item, zone, item
-            )
-
+            self._call_graph_controller(self.controller.add_satellite_item, zone, item)
 
     def _add_zone_item(self):
         """Add a new custom zone with default parameters directly."""
         # Default to a linear region. The user can change the type later
         # using the table's combobox.
-        zone = {"type": "linear", "bounds": [0.0, 1.0]}
+        zone = {
+            "type": "linear",
+            "bounds": [0.0, 1.0],
+            "color": generate_random_color(),
+        }
 
         if self.controller:
             self._call_graph_controller(self.controller.add_zone, zone)
@@ -627,37 +796,34 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         index = combo.findData(zone.get("type", "linear"))
         if index != -1:
             combo.setCurrentIndex(index)
-        combo.currentIndexChanged.connect(lambda _, r=row: self._on_zone_type_changed(r))
+        combo.currentIndexChanged.connect(
+            lambda _, r=row: self._on_zone_type_changed(r)
+        )
         self.zone_table.setCellWidget(row, 0, combo)
 
-        edit = QtWidgets.QLineEdit()
-        combo_placeholder = ZONE_TYPES.get(zone.get("type", "linear"), "")
-        edit.setPlaceholderText(combo_placeholder)
-        if zone.get("type") == "linear":
-            edit.setText(", ".join(str(v) for v in zone.get("bounds", [])))
-        elif zone.get("type") == "rect":
-            edit.setText(", ".join(str(v) for v in zone.get("rect", [])))
-        else:
-            pts = zone.get("points", [])
-            flat = []
-            for x, y in pts:
-                flat.extend([x, y])
-            edit.setText(", ".join(str(v) for v in flat))
-        edit.editingFinished.connect(lambda r=row: self._update_zone_from_row(r))
-        self.zone_table.setCellWidget(row, 1, edit)
+        params = ZoneParamsWidget(zone.get("type", "linear"))
+        params.set_zone(zone)
+        params.changed.connect(lambda r=row: self._update_zone_from_row(r))
+        self.zone_table.setCellWidget(row, 1, params)
+
+        color_btn = QtWidgets.QPushButton()
+        color = zone.get("color", "#FF0000")
+        color_btn.setStyleSheet(f"background-color: {color}")
+        color_btn.clicked.connect(lambda _, r=row: self._choose_zone_color(r))
+        self.zone_table.setCellWidget(row, 2, color_btn)
 
         btn = QtWidgets.QPushButton("Supprimer")
         btn.clicked.connect(lambda _, r=row: self._remove_zone_row(r))
-        self.zone_table.setCellWidget(row, 2, btn)
+        self.zone_table.setCellWidget(row, 3, btn)
 
     def _on_zone_type_changed(self, row: int):
         combo = self.zone_table.cellWidget(row, 0)
-        edit = self.zone_table.cellWidget(row, 1)
-        if not isinstance(combo, QtWidgets.QComboBox) or not isinstance(edit, QtWidgets.QLineEdit):
+        params = self.zone_table.cellWidget(row, 1)
+        if not isinstance(combo, QtWidgets.QComboBox) or not isinstance(
+            params, ZoneParamsWidget
+        ):
             return
-        placeholder = ZONE_TYPES.get(combo.currentData(), "")
-        edit.setPlaceholderText(placeholder)
-        edit.clear()
+        params.set_type(combo.currentData())
 
     def _on_gain_slider(self, value: int):
         self.gain_input.setValue(value / 100)
@@ -694,24 +860,21 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self._call_controller(self.controller.set_offset, val)
 
     def _update_zone_from_row(self, row: int):
-        edit = self.zone_table.cellWidget(row, 1)
-        if not isinstance(edit, QtWidgets.QLineEdit):
-            return
-        text = edit.text()
+        params = self.zone_table.cellWidget(row, 1)
         combo = self.zone_table.cellWidget(row, 0)
-        if not isinstance(combo, QtWidgets.QComboBox):
+        color_btn = self.zone_table.cellWidget(row, 2)
+
+        if not isinstance(params, ZoneParamsWidget) or not isinstance(
+            combo, QtWidgets.QComboBox
+        ):
             return
-        ztype = combo.currentData()
-        values = [float(v.strip()) for v in text.split(',') if v.strip()]
-        if ztype == "linear" and len(values) >= 2:
-            zone = {"type": "linear", "bounds": values[:2]}
-        elif ztype == "rect" and len(values) >= 4:
-            zone = {"type": "rect", "rect": values[:4]}
-        elif ztype == "path" and len(values) >= 4 and len(values) % 2 == 0:
-            pts = list(zip(values[::2], values[1::2]))
-            zone = {"type": "path", "points": pts}
-        else:
-            return
+
+        zone = params.get_zone()
+        if isinstance(color_btn, QtWidgets.QPushButton):
+            style = color_btn.styleSheet()
+            if "background-color" in style:
+                color = style.split(":")[-1].strip()
+                zone["color"] = color
 
         if self.controller:
             self._call_graph_controller(self.controller.update_zone, row, zone)
@@ -737,15 +900,19 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         finite_values = values[~mask]
 
         if not np.allclose(finite_values, np.round(finite_values)):
-            QtWidgets.QMessageBox.warning(self, "Erreur", "Les données ne sont pas entières")
+            QtWidgets.QMessageBox.warning(
+                self, "Erreur", "Les données ne sont pas entières"
+            )
             self.bits_checkbox.setChecked(False)
             return
 
         if finite_values.size and int(finite_values.min()) < 0:
-            QtWidgets.QMessageBox.warning(self, "Erreur", "Les valeurs négatives ne sont pas prises en charge")
+            QtWidgets.QMessageBox.warning(
+                self, "Erreur", "Les valeurs négatives ne sont pas prises en charge"
+            )
             self.bits_checkbox.setChecked(False)
             return
-        
+
     def refresh_curve_tab(self):
         logger.debug("[PropertiesPanel] 🔁 Rafraîchissement de l’onglet courbe")
         self.update_curve_ui()
@@ -761,36 +928,42 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         if not graph:
             logger.debug("[PropertiesPanel] ⚠️ Aucun graphique sélectionné")
             return
-    
-        logger.debug(f"[PropertiesPanel] 🔄 Mise à jour des champs pour le graphique '{graph.name}'")
-    
+
+        logger.debug(
+            f"[PropertiesPanel] 🔄 Mise à jour des champs pour le graphique '{graph.name}'"
+        )
+
         # Nom du graphique
         self.label_graph_name.setText(graph.name)
-    
+
         # Checkboxes
         self.grid_checkbox.setChecked(graph.grid_visible)
         self.darkmode_checkbox.setChecked(graph.dark_mode)
         self.logx_checkbox.setChecked(graph.log_x)
         self.logy_checkbox.setChecked(graph.log_y)
-    
+
         # Police
         self.font_combo.setCurrentFont(QtGui.QFont(graph.font))
-    
+
         # Unités et formats
         self.x_unit_input.setText(graph.x_unit or "")
         self.y_unit_input.setText(graph.y_unit or "")
-    
+
         index_x_format = self.x_format_combo.findData(graph.x_format)
-        self.x_format_combo.setCurrentIndex(index_x_format if index_x_format != -1 else 0)
-    
+        self.x_format_combo.setCurrentIndex(
+            index_x_format if index_x_format != -1 else 0
+        )
+
         index_y_format = self.y_format_combo.findData(graph.y_format)
-        self.y_format_combo.setCurrentIndex(index_y_format if index_y_format != -1 else 0)
-    
+        self.y_format_combo.setCurrentIndex(
+            index_y_format if index_y_format != -1 else 0
+        )
+
         # Échelle Y fixée
         self.fix_y_checkbox.setChecked(graph.fix_y_range)
         self.ymin_input.setValue(graph.y_min if graph.fix_y_range else -5.0)
         self.ymax_input.setValue(graph.y_max if graph.fix_y_range else 5.0)
-    
+
         # Satellites
         for zone, checkbox in {
             "left": self.satellite_left_checkbox,
@@ -812,10 +985,30 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             btn.setStyleSheet(f"background-color: {color}")
 
         for zone, widgets in {
-            "left": (self.satellite_left_color, self.satellite_left_size, self.satellite_left_table, self.satellite_left_add),
-            "right": (self.satellite_right_color, self.satellite_right_size, self.satellite_right_table, self.satellite_right_add),
-            "top": (self.satellite_top_color, self.satellite_top_size, self.satellite_top_table, self.satellite_top_add),
-            "bottom": (self.satellite_bottom_color, self.satellite_bottom_size, self.satellite_bottom_table, self.satellite_bottom_add),
+            "left": (
+                self.satellite_left_color,
+                self.satellite_left_size,
+                self.satellite_left_table,
+                self.satellite_left_add,
+            ),
+            "right": (
+                self.satellite_right_color,
+                self.satellite_right_size,
+                self.satellite_right_table,
+                self.satellite_right_add,
+            ),
+            "top": (
+                self.satellite_top_color,
+                self.satellite_top_size,
+                self.satellite_top_table,
+                self.satellite_top_add,
+            ),
+            "bottom": (
+                self.satellite_bottom_color,
+                self.satellite_bottom_size,
+                self.satellite_bottom_table,
+                self.satellite_bottom_add,
+            ),
         }.items():
             enabled = graph.satellite_visibility[zone]
             for w in widgets:
@@ -886,30 +1079,36 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.bits_checkbox.setEnabled(False)
             self._update_gain_mode_ui("multiplier")
             return
-    
-        logger.debug(f"[PropertiesPanel] 🔄 Mise à jour des champs pour la courbe '{curve.name}'")
-    
+
+        logger.debug(
+            f"[PropertiesPanel] 🔄 Mise à jour des champs pour la courbe '{curve.name}'"
+        )
+
         self.label_curve_name.setText(curve.name)
         self.color_button.setStyleSheet(f"background-color: {curve.color}")
-    
+
         index_style = self.style_combo.findData(curve.style)
         self.style_combo.setCurrentIndex(index_style if index_style != -1 else 0)
-    
+
         self.width_spin.setValue(curve.width)
-    
+
         index_symbol = self.symbol_combo.findData(curve.symbol)
         self.symbol_combo.setCurrentIndex(index_symbol if index_symbol != -1 else 0)
-    
+
         index_display = self.display_mode_combo.findData(curve.display_mode)
-        self.display_mode_combo.setCurrentIndex(index_display if index_display != -1 else 0)
-    
+        self.display_mode_combo.setCurrentIndex(
+            index_display if index_display != -1 else 0
+        )
+
         index_label = self.label_mode_combo.findData(curve.label_mode)
         self.label_mode_combo.setCurrentIndex(index_label if index_label != -1 else 0)
-    
+
         self.opacity_slider.setValue(int(curve.opacity))
         self.fill_checkbox.setChecked(curve.fill)
 
-        mode_index = self.gain_mode_combo.findData(getattr(curve, "gain_mode", "multiplier"))
+        mode_index = self.gain_mode_combo.findData(
+            getattr(curve, "gain_mode", "multiplier")
+        )
         self.gain_mode_combo.blockSignals(True)
         self.gain_mode_combo.setCurrentIndex(mode_index if mode_index != -1 else 0)
         self.gain_mode_combo.blockSignals(False)
@@ -918,17 +1117,17 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.gain_slider.setValue(int(curve.gain * 100))  # gain 1.0 → slider 100
         self.gain_input.setValue(curve.gain)
         self.units_per_grid_input.setValue(getattr(curve, "units_per_grid", 1.0))
-        self.offset_slider.setValue(int(curve.offset))    # offset en pixels/valeur
+        self.offset_slider.setValue(int(curve.offset))  # offset en pixels/valeur
         self.offset_input.setValue(curve.offset)
         self.time_offset_input.setValue(curve.time_offset)
-    
+
         index_zero = self.zero_indicator_combo.findData(curve.zero_indicator)
         self.zero_indicator_combo.setCurrentIndex(index_zero if index_zero != -1 else 0)
-    
+
         # Downsampling
         index_ds = self.downsampling_combo.findData(curve.downsampling_mode)
         self.downsampling_combo.setCurrentIndex(index_ds if index_ds != -1 else 0)
-    
+
         self.downsampling_ratio_input.setValue(curve.downsampling_ratio)
         is_manual = curve.downsampling_mode == "manual"
         self.downsampling_ratio_input.setEnabled(is_manual)
@@ -983,4 +1182,3 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
             self.mode_layout.addRow(graph.name, container)
             self.mode_combos[graph.name] = combo
-    
