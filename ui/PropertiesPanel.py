@@ -605,25 +605,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 self.controller.add_satellite_item, zone, item
             )
 
-    def _add_zone_item(self):
-        options = ["LinearRegion", "Rectangle", "Path"]
-        choice, ok = QtWidgets.QInputDialog.getItem(
-            self,
-            "Ajouter une zone",
-            "Type de zone :",
-            options,
-            0,
-            False,
-        )
-        if not ok:
-            return
 
-        if choice == "LinearRegion":
-            zone = {"type": "linear", "bounds": [0.0, 1.0]}
-        elif choice == "Rectangle":
-            zone = {"type": "rect", "rect": [0.0, 0.0, 1.0, 1.0]}
-        else:
-            zone = {"type": "path", "points": [(0.0, 0.0), (1.0, 1.0)]}
+    def _add_zone_item(self):
+        """Add a new custom zone with default parameters directly."""
+        # Default to a linear region. The user can change the type later
+        # using the table's combobox.
+        zone = {"type": "linear", "bounds": [0.0, 1.0]}
 
         if self.controller:
             self._call_graph_controller(self.controller.add_zone, zone)
