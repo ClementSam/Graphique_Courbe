@@ -437,6 +437,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             btn_row.addWidget(add_btn)
             btn_row.addWidget(edit_btn)
             v.addLayout(btn_row)
+            # Hide table listing items and the add button as requested
+            table.hide()
+            add_btn.hide()
             toggle(False)
             return group, checkbox, color_btn, size_spin, table, add_btn, edit_btn
 
