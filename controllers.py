@@ -230,6 +230,14 @@ class GraphController:
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
 
+    def set_satellite_items(self, zone: str, items: list):
+        logger.debug(
+            f"🛰 [GraphController.set_satellite_items] zone={zone} items={items}"
+        )
+        self.service.set_satellite_items(zone, items)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
     def add_zone(self, zone: dict):
         logger.debug(f"🗒 [GraphController.add_zone] zone={zone}")
         self.service.add_zone(zone)

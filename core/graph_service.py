@@ -578,6 +578,17 @@ class GraphService:
         if zone in graph.satellite_settings:
             graph.satellite_settings[zone]["items"].append(item)
 
+    def set_satellite_items(self, zone: str, items: list):
+        """Replace the list of items for a satellite zone."""
+        logger.debug(
+            f"🛰 [GraphService.set_satellite_items] zone={zone} items={items}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_settings:
+            graph.satellite_settings[zone]["items"] = list(items)
+
     def add_zone(self, zone: dict):
         """Add a graphic zone description to the current graph."""
         logger.debug(f"🗒 [GraphService.add_zone] zone={zone}")

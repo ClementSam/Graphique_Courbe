@@ -320,6 +320,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         for zone, btn in self.satellite_add_buttons.items():
             btn.clicked.connect(lambda _, z=zone: self._add_satellite_item(z))
 
+        for zone, btn in self.satellite_edit_buttons.items():
+            btn.clicked.connect(lambda _, z=zone: self._edit_satellite_zone(z))
+
         self.add_zone_btn.clicked.connect(self._add_zone_item)
 
         signal_bus.graph_updated.connect(self.update_mode_tab)
@@ -414,12 +417,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             table = QtWidgets.QTableWidget(0, 2)
             table.setHorizontalHeaderLabels(["Type", "Texte"])
             add_btn = QtWidgets.QPushButton("Ajouter")
+            edit_btn = QtWidgets.QPushButton("Éditer…")
 
             def toggle(enabled):
                 color_btn.setEnabled(enabled)
                 size_spin.setEnabled(enabled)
                 table.setEnabled(enabled)
                 add_btn.setEnabled(enabled)
+                edit_btn.setEnabled(enabled)
 
             checkbox.toggled.connect(toggle)
             v.addWidget(checkbox)
@@ -428,9 +433,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             h.addWidget(size_spin)
             v.addLayout(h)
             v.addWidget(table)
-            v.addWidget(add_btn)
+            btn_row = QtWidgets.QHBoxLayout()
+            btn_row.addWidget(add_btn)
+            btn_row.addWidget(edit_btn)
+            v.addLayout(btn_row)
             toggle(False)
-            return group, checkbox, color_btn, size_spin, table, add_btn
+            return group, checkbox, color_btn, size_spin, table, add_btn, edit_btn
 
         (
             self.sat_left_group,
@@ -439,6 +447,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_left_size,
             self.satellite_left_table,
             self.satellite_left_add,
+            self.satellite_left_edit,
         ) = create_satellite_group("Zone gauche")
         layout.addWidget(self.sat_left_group)
 
@@ -449,6 +458,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_right_size,
             self.satellite_right_table,
             self.satellite_right_add,
+            self.satellite_right_edit,
         ) = create_satellite_group("Zone droite")
         layout.addWidget(self.sat_right_group)
 
@@ -459,6 +469,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_top_size,
             self.satellite_top_table,
             self.satellite_top_add,
+            self.satellite_top_edit,
         ) = create_satellite_group("Zone haut")
         layout.addWidget(self.sat_top_group)
 
@@ -469,6 +480,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_bottom_size,
             self.satellite_bottom_table,
             self.satellite_bottom_add,
+            self.satellite_bottom_edit,
         ) = create_satellite_group("Zone bas")
         layout.addWidget(self.sat_bottom_group)
 
@@ -483,6 +495,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             "right": self.satellite_right_add,
             "top": self.satellite_top_add,
             "bottom": self.satellite_bottom_add,
+        }
+        self.satellite_edit_buttons = {
+            "left": self.satellite_left_edit,
+            "right": self.satellite_right_edit,
+            "top": self.satellite_top_edit,
+            "bottom": self.satellite_bottom_edit,
         }
 
         # Zone objects in the plot
@@ -771,6 +789,24 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             item = {"type": choice.lower(), "text": content}
             self._call_graph_controller(self.controller.add_satellite_item, zone, item)
 
+    def _edit_satellite_zone(self, zone: str):
+        from ui.satellite_zone_builder import SatelliteZoneBuilder
+
+        state = AppState.get_instance()
+        graph = state.current_graph
+        if not graph:
+            return
+
+        items = graph.satellite_settings[zone]["items"]
+        dlg = SatelliteZoneBuilder(items, parent=self)
+        if dlg.exec_() == QtWidgets.QDialog.Accepted:
+            new_items = dlg.items()
+            if self.controller:
+                self._call_graph_controller(
+                    self.controller.set_satellite_items, zone, new_items
+                )
+            self.update_graph_ui()
+
     def _add_zone_item(self):
         """Add a new custom zone with default parameters directly."""
         # Default to a linear region. The user can change the type later
@@ -990,24 +1026,28 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 self.satellite_left_size,
                 self.satellite_left_table,
                 self.satellite_left_add,
+                self.satellite_left_edit,
             ),
             "right": (
                 self.satellite_right_color,
                 self.satellite_right_size,
                 self.satellite_right_table,
                 self.satellite_right_add,
+                self.satellite_right_edit,
             ),
             "top": (
                 self.satellite_top_color,
                 self.satellite_top_size,
                 self.satellite_top_table,
                 self.satellite_top_add,
+                self.satellite_top_edit,
             ),
             "bottom": (
                 self.satellite_bottom_color,
                 self.satellite_bottom_size,
                 self.satellite_bottom_table,
                 self.satellite_bottom_add,
+                self.satellite_bottom_edit,
             ),
         }.items():
             enabled = graph.satellite_visibility[zone]
