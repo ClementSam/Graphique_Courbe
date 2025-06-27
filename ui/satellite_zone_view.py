@@ -25,8 +25,8 @@ class _DraggableRectItem(QtCore.QObject, QtWidgets.QGraphicsRectItem):
     moved = QtCore.pyqtSignal()
 
     def __init__(self, *args, **kwargs):
-        QtCore.QObject.__init__(self)
         QtWidgets.QGraphicsRectItem.__init__(self, *args, **kwargs)
+        QtCore.QObject.__init__(self)
 
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
