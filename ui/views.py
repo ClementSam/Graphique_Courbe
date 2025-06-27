@@ -295,10 +295,10 @@ class MyPlotView:
                 if item and item.widget():
                     item.widget().deleteLater()
 
-            if old_view:
+            edit_mode = self.graph_data.satellite_edit_mode.get(zone, False)
+            if old_view and edit_mode:
                 self.graph_data.satellite_settings[zone]["items"] = old_view.get_items()
 
-            edit_mode = self.graph_data.satellite_edit_mode.get(zone, False)
             view = SatelliteZoneView(editable=edit_mode)
             layout.addWidget(view)
             view.setSceneRect(0, 0, box.width(), box.height())
