@@ -294,3 +294,14 @@ def test_logic_analyzer_mode_applies_offsets(service):
     svc.apply_mode(gname, "logic_analyzer")
     assert c3.offset == 0
     assert c1.offset == 1
+
+
+def test_set_satellite_edit_mode(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    assert state.current_graph.satellite_edit_mode["left"] is False
+    svc.set_satellite_edit_mode("left", True)
+    assert state.current_graph.satellite_edit_mode["left"] is True

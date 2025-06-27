@@ -122,6 +122,15 @@ class GraphData:
         }
     )
 
+    satellite_edit_mode: dict[str, bool] = field(
+        default_factory=lambda: {
+            "left": False,
+            "right": False,
+            "top": False,
+            "bottom": False,
+        }
+    )
+
     zones: List[dict] = field(default_factory=list)
 
 

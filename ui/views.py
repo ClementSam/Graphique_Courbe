@@ -289,7 +289,8 @@ class MyPlotView:
                 if item and item.widget():
                     item.widget().deleteLater()
 
-            view = SatelliteZoneView()
+            edit_mode = self.graph_data.satellite_edit_mode.get(zone, False)
+            view = SatelliteZoneView(editable=edit_mode)
             layout.addWidget(view)
             view.setSceneRect(0, 0, box.width(), box.height())
             view.load_items(settings.get("items", []))

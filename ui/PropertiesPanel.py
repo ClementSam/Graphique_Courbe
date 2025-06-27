@@ -3,6 +3,7 @@
 from core.app_state import AppState
 from PyQt5 import QtWidgets, QtCore, QtGui
 from ui.widgets import BitGroupWidget
+from ui.satellite_zone_builder import Toolbox
 from signal_bus import signal_bus
 from core.utils import generate_random_color
 import logging
@@ -320,8 +321,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         for zone, btn in self.satellite_add_buttons.items():
             btn.clicked.connect(lambda _, z=zone: self._add_satellite_item(z))
 
-        for zone, btn in self.satellite_edit_buttons.items():
-            btn.clicked.connect(lambda _, z=zone: self._edit_satellite_zone(z))
+        for zone, chk in self.satellite_edit_checks.items():
+            chk.toggled.connect(
+                lambda val, z=zone: self._call_graph_controller(
+                    self.controller.set_satellite_edit_mode, z, val
+                )
+            )
 
         self.add_zone_btn.clicked.connect(self._add_zone_item)
 
@@ -417,14 +422,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             table = QtWidgets.QTableWidget(0, 2)
             table.setHorizontalHeaderLabels(["Type", "Texte"])
             add_btn = QtWidgets.QPushButton("Ajouter")
-            edit_btn = QtWidgets.QPushButton("Éditer…")
+            edit_chk = QtWidgets.QCheckBox("Éditer")
 
             def toggle(enabled):
                 color_btn.setEnabled(enabled)
                 size_spin.setEnabled(enabled)
                 table.setEnabled(enabled)
                 add_btn.setEnabled(enabled)
-                edit_btn.setEnabled(enabled)
+                edit_chk.setEnabled(enabled)
 
             checkbox.toggled.connect(toggle)
             v.addWidget(checkbox)
@@ -435,13 +440,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             v.addWidget(table)
             btn_row = QtWidgets.QHBoxLayout()
             btn_row.addWidget(add_btn)
-            btn_row.addWidget(edit_btn)
+            btn_row.addWidget(edit_chk)
             v.addLayout(btn_row)
-            # Hide table listing items and the add button as requested
-            table.hide()
-            add_btn.hide()
             toggle(False)
-            return group, checkbox, color_btn, size_spin, table, add_btn, edit_btn
+            return group, checkbox, color_btn, size_spin, table, add_btn, edit_chk
 
         (
             self.sat_left_group,
@@ -499,12 +501,16 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             "top": self.satellite_top_add,
             "bottom": self.satellite_bottom_add,
         }
-        self.satellite_edit_buttons = {
+        self.satellite_edit_checks = {
             "left": self.satellite_left_edit,
             "right": self.satellite_right_edit,
             "top": self.satellite_top_edit,
             "bottom": self.satellite_bottom_edit,
         }
+
+        # Palette of draggable objects
+        self.toolbox = Toolbox()
+        layout.addWidget(self.toolbox)
 
         # Zone objects in the plot
         zone_group = QtWidgets.QGroupBox("Zones personnalisées")
@@ -1022,6 +1028,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         }.items():
             color = graph.satellite_settings[zone]["color"]
             btn.setStyleSheet(f"background-color: {color}")
+
+        for zone, chk in self.satellite_edit_checks.items():
+            chk.blockSignals(True)
+            chk.setChecked(graph.satellite_edit_mode[zone])
+            chk.blockSignals(False)
 
         for zone, widgets in {
             "left": (
