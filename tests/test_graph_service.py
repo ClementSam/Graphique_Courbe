@@ -294,3 +294,36 @@ def test_logic_analyzer_mode_applies_offsets(service):
     svc.apply_mode(gname, "logic_analyzer")
     assert c3.offset == 0
     assert c1.offset == 1
+
+
+def test_satellite_settings_are_graph_specific(service):
+    svc, state, _ = service
+    svc.add_graph()
+    g1 = list(state.graphs.keys())[0]
+    svc.add_graph()
+    g2 = list(state.graphs.keys())[1]
+
+    svc.select_graph(g1)
+    svc.set_satellite_visible("left", True)
+    svc.set_satellite_size("left", 150)
+    svc.set_satellite_color("left", "#123456")
+    svc.set_satellite_edit_mode(True)
+
+    svc.select_graph(g2)
+    svc.set_satellite_visible("left", False)
+    svc.set_satellite_size("left", 200)
+    svc.set_satellite_color("left", "#abcdef")
+    svc.set_satellite_edit_mode(False)
+
+    g1_data = state.graphs[g1]
+    g2_data = state.graphs[g2]
+
+    assert g1_data.satellite_visibility["left"] is True
+    assert g1_data.satellite_settings["left"]["size"] == 150
+    assert g1_data.satellite_settings["left"]["color"] == "#123456"
+    assert g1_data.satellite_edit_mode is True
+
+    assert g2_data.satellite_visibility["left"] is False
+    assert g2_data.satellite_settings["left"]["size"] == 200
+    assert g2_data.satellite_settings["left"]["color"] == "#abcdef"
+    assert g2_data.satellite_edit_mode is False

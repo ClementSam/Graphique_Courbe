@@ -122,6 +122,8 @@ class GraphData:
         }
     )
 
+    satellite_edit_mode: bool = False
+
     zones: List[dict] = field(default_factory=list)
 
 

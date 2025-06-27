@@ -222,6 +222,14 @@ class GraphController:
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
 
+    def set_satellite_edit_mode(self, enabled: bool):
+        logger.debug(
+            f"🛰 [GraphController.set_satellite_edit_mode] enabled={enabled}"
+        )
+        self.service.set_satellite_edit_mode(enabled)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
     def add_satellite_item(self, zone: str, item: dict):
         logger.debug(
             f"🛰 [GraphController.add_satellite_item] zone={zone} item={item}"

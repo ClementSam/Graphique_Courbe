@@ -232,3 +232,16 @@ def test_controller_create_bit_group_curve(controller):
     assert created == "grp"
     assert len(state.current_graph.curves) == 2
     assert len(bus.curve_updated.emitted) == 1
+
+
+def test_set_satellite_edit_mode_triggers_update(controller):
+    c, state, bus = controller
+    c.add_graph()
+    bus.graph_updated.emitted.clear()
+    c.ui.plot_calls = 0
+
+    c.set_satellite_edit_mode(True)
+
+    assert state.current_graph.satellite_edit_mode is True
+    assert len(bus.graph_updated.emitted) == 1
+    assert c.ui.plot_calls == 1

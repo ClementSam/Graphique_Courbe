@@ -567,6 +567,16 @@ class GraphService:
         if zone in graph.satellite_settings:
             graph.satellite_settings[zone]["size"] = size
 
+    def set_satellite_edit_mode(self, enabled: bool):
+        """Toggle edition mode for satellite items on the current graph."""
+        logger.debug(
+            f"🛰 [GraphService.set_satellite_edit_mode] enabled={enabled}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        graph.satellite_edit_mode = enabled
+
     def add_satellite_item(self, zone: str, item: dict):
         """Append an item description to a satellite zone."""
         logger.debug(
