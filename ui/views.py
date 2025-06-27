@@ -25,7 +25,7 @@ class MyPlotView:
         self.curves = {}
         self.labels = {}
         self.legend = None
-        self.satellites = []
+        self.satellites = {}
 
         self.left_indicator_plot = None  # ← AJOUT ICI ✅
 
@@ -270,6 +270,7 @@ class MyPlotView:
             visible = self.graph_data.satellite_visibility.get(zone, False)
             box.setVisible(visible)
             if not visible:
+                self.satellites.pop(zone, None)
                 continue
 
             settings = self.graph_data.satellite_settings.get(zone, {})
@@ -302,3 +303,4 @@ class MyPlotView:
             layout.addWidget(view)
             view.setSceneRect(0, 0, box.width(), box.height())
             view.load_items(settings.get("items", []))
+            self.satellites[zone] = view

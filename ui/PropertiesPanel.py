@@ -899,6 +899,28 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             )
         self.update_graph_ui()
 
+    def _on_view_items_moved(self, zone: str, view):
+        """Update table values and graph data when items are moved in a view."""
+        items = view.get_items()
+        table = self.satellite_tables.get(zone)
+        if not table:
+            return
+        table.blockSignals(True)
+        for row, item in enumerate(items):
+            if row >= table.rowCount():
+                break
+            x_spin = table.cellWidget(row, 5)
+            y_spin = table.cellWidget(row, 6)
+            if isinstance(x_spin, QtWidgets.QSpinBox):
+                x_spin.setValue(int(item.get("x", 0)))
+            if isinstance(y_spin, QtWidgets.QSpinBox):
+                y_spin.setValue(int(item.get("y", 0)))
+        table.blockSignals(False)
+        if self.controller:
+            self._call_graph_controller(
+                self.controller.set_satellite_items, zone, items
+            )
+
     def _add_zone_item(self):
         """Add a new custom zone with default parameters directly."""
         # Default to a linear region. The user can change the type later
@@ -1247,6 +1269,25 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 table.setCellWidget(row, 7, btns)
 
             table.blockSignals(False)
+
+        # Connect view movement signals to update tables
+        if self.controller and hasattr(self.controller, "ui"):
+            coord = self.controller.ui
+            view = coord.views.get(graph.name)
+            if view:
+                for zone, table in self.satellite_tables.items():
+                    zview = getattr(view, "satellites", {}).get(zone)
+                    if not zview:
+                        continue
+                    handler = getattr(zview, "_pp_handler", None)
+                    if handler:
+                        try:
+                            zview.itemsMoved.disconnect(handler)
+                        except Exception:
+                            pass
+                    handler = lambda v=zview, z=zone: self._on_view_items_moved(z, v)
+                    zview.itemsMoved.connect(handler)
+                    zview._pp_handler = handler
 
         # Zones table
         self.zone_table.blockSignals(True)
