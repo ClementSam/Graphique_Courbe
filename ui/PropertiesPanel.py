@@ -318,9 +318,6 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 )
             )
 
-        for zone, btn in self.satellite_add_buttons.items():
-            btn.clicked.connect(lambda _, z=zone: self._add_satellite_item(z))
-
         for zone, chk in self.satellite_edit_checks.items():
             chk.toggled.connect(
                 lambda val, z=zone: self._call_graph_controller(
@@ -421,14 +418,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             size_spin.setRange(20, 500)
             table = QtWidgets.QTableWidget(0, 2)
             table.setHorizontalHeaderLabels(["Type", "Texte"])
-            add_btn = QtWidgets.QPushButton("Ajouter")
             edit_chk = QtWidgets.QCheckBox("Éditer")
 
             def toggle(enabled):
                 color_btn.setEnabled(enabled)
                 size_spin.setEnabled(enabled)
                 table.setEnabled(enabled)
-                add_btn.setEnabled(enabled)
                 edit_chk.setEnabled(enabled)
 
             checkbox.toggled.connect(toggle)
@@ -438,12 +433,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             h.addWidget(size_spin)
             v.addLayout(h)
             v.addWidget(table)
-            btn_row = QtWidgets.QHBoxLayout()
-            btn_row.addWidget(add_btn)
-            btn_row.addWidget(edit_chk)
-            v.addLayout(btn_row)
+            v.addWidget(edit_chk)
             toggle(False)
-            return group, checkbox, color_btn, size_spin, table, add_btn, edit_chk
+            return group, checkbox, color_btn, size_spin, table, edit_chk
 
         (
             self.sat_left_group,
@@ -451,7 +443,6 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_left_color,
             self.satellite_left_size,
             self.satellite_left_table,
-            self.satellite_left_add,
             self.satellite_left_edit,
         ) = create_satellite_group("Zone gauche")
         layout.addWidget(self.sat_left_group)
@@ -462,7 +453,6 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_right_color,
             self.satellite_right_size,
             self.satellite_right_table,
-            self.satellite_right_add,
             self.satellite_right_edit,
         ) = create_satellite_group("Zone droite")
         layout.addWidget(self.sat_right_group)
@@ -473,7 +463,6 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_top_color,
             self.satellite_top_size,
             self.satellite_top_table,
-            self.satellite_top_add,
             self.satellite_top_edit,
         ) = create_satellite_group("Zone haut")
         layout.addWidget(self.sat_top_group)
@@ -484,7 +473,6 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_bottom_color,
             self.satellite_bottom_size,
             self.satellite_bottom_table,
-            self.satellite_bottom_add,
             self.satellite_bottom_edit,
         ) = create_satellite_group("Zone bas")
         layout.addWidget(self.sat_bottom_group)
@@ -494,12 +482,6 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             "right": self.satellite_right_table,
             "top": self.satellite_top_table,
             "bottom": self.satellite_bottom_table,
-        }
-        self.satellite_add_buttons = {
-            "left": self.satellite_left_add,
-            "right": self.satellite_right_add,
-            "top": self.satellite_top_add,
-            "bottom": self.satellite_bottom_add,
         }
         self.satellite_edit_checks = {
             "left": self.satellite_left_edit,
@@ -1039,28 +1021,24 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 self.satellite_left_color,
                 self.satellite_left_size,
                 self.satellite_left_table,
-                self.satellite_left_add,
                 self.satellite_left_edit,
             ),
             "right": (
                 self.satellite_right_color,
                 self.satellite_right_size,
                 self.satellite_right_table,
-                self.satellite_right_add,
                 self.satellite_right_edit,
             ),
             "top": (
                 self.satellite_top_color,
                 self.satellite_top_size,
                 self.satellite_top_table,
-                self.satellite_top_add,
                 self.satellite_top_edit,
             ),
             "bottom": (
                 self.satellite_bottom_color,
                 self.satellite_bottom_size,
                 self.satellite_bottom_table,
-                self.satellite_bottom_add,
                 self.satellite_bottom_edit,
             ),
         }.items():

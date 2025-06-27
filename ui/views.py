@@ -284,10 +284,18 @@ class MyPlotView:
             box.setStyleSheet(f"background-color: {color};")
 
             layout = box.layout()
+            old_view = None
+            if layout.count():
+                w = layout.itemAt(0).widget()
+                if isinstance(w, SatelliteZoneView):
+                    old_view = w
             while layout.count():
                 item = layout.takeAt(0)
                 if item and item.widget():
                     item.widget().deleteLater()
+
+            if old_view:
+                self.graph_data.satellite_settings[zone]["items"] = old_view.get_items()
 
             edit_mode = self.graph_data.satellite_edit_mode.get(zone, False)
             view = SatelliteZoneView(editable=edit_mode)
