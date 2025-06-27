@@ -589,6 +589,17 @@ class GraphService:
         if zone in graph.satellite_settings:
             graph.satellite_settings[zone]["items"] = list(items)
 
+    def set_satellite_edit_mode(self, zone: str, enabled: bool):
+        """Enable or disable edit mode for a satellite zone."""
+        logger.debug(
+            f"🛰 [GraphService.set_satellite_edit_mode] zone={zone} enabled={enabled}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_edit_mode:
+            graph.satellite_edit_mode[zone] = enabled
+
     def add_zone(self, zone: dict):
         """Add a graphic zone description to the current graph."""
         logger.debug(f"🗒 [GraphService.add_zone] zone={zone}")
