@@ -17,20 +17,41 @@ class SatelliteZoneView(QtWidgets.QGraphicsView):
     def clear_items(self):
         self.scene().clear()
 
-    def create_item(self, typ: str, pos: QtCore.QPointF, text: str = ""):
+    def create_item(
+        self,
+        typ: str,
+        pos: QtCore.QPointF,
+        text: str = "",
+        width: int | None = None,
+        height: int | None = None,
+    ):
         typ = typ.lower()
         if typ in {"text", "texte"}:
             item = QtWidgets.QGraphicsTextItem(text or "Texte")
+            if width or height:
+                # Rough scaling based on requested size
+                br = item.boundingRect()
+                sx = width / br.width() if width else 1.0
+                sy = height / br.height() if height else 1.0
+                item.setScale(min(sx, sy))
             if self._editable:
                 item.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
             self.scene().addItem(item)
         elif typ in {"button", "bouton"}:
             btn = QtWidgets.QPushButton(text or "Bouton")
+            if width and height:
+                btn.setFixedSize(width, height)
+            elif width:
+                btn.setFixedWidth(width)
+            elif height:
+                btn.setFixedHeight(height)
             item = self.scene().addWidget(btn)
             if self._editable:
                 item.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
         else:  # image placeholder
-            rect = QtWidgets.QGraphicsRectItem(0, 0, 50, 50)
+            w = width or 50
+            h = height or 50
+            rect = QtWidgets.QGraphicsRectItem(0, 0, w, h)
             rect.setBrush(QtGui.QBrush(QtGui.QColor("lightgray")))
             rect.setData(0, text)
             item = rect
@@ -44,7 +65,13 @@ class SatelliteZoneView(QtWidgets.QGraphicsView):
         self.clear_items()
         for it in items:
             pos = QtCore.QPointF(it.get("x", 0), it.get("y", 0))
-            self.create_item(it.get("type", "text"), pos, it.get("text", ""))
+            self.create_item(
+                it.get("type", "text"),
+                pos,
+                it.get("text", ""),
+                it.get("width"),
+                it.get("height"),
+            )
 
     def set_editable(self, editable: bool):
         self._editable = editable
@@ -84,6 +111,8 @@ class SatelliteZoneView(QtWidgets.QGraphicsView):
                         "text": it.toPlainText(),
                         "x": it.pos().x(),
                         "y": it.pos().y(),
+                        "width": it.boundingRect().width() * it.scale(),
+                        "height": it.boundingRect().height() * it.scale(),
                     }
                 )
             elif isinstance(it, QtWidgets.QGraphicsProxyWidget):
@@ -95,6 +124,8 @@ class SatelliteZoneView(QtWidgets.QGraphicsView):
                             "text": w.text(),
                             "x": it.pos().x(),
                             "y": it.pos().y(),
+                            "width": w.width(),
+                            "height": w.height(),
                         }
                     )
             elif isinstance(it, QtWidgets.QGraphicsRectItem):
@@ -104,6 +135,8 @@ class SatelliteZoneView(QtWidgets.QGraphicsView):
                         "text": it.data(0) or "",
                         "x": it.pos().x(),
                         "y": it.pos().y(),
+                        "width": it.rect().width(),
+                        "height": it.rect().height(),
                     }
                 )
         result.reverse()
