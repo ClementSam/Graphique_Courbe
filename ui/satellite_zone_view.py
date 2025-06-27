@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 
+
 class SatelliteZoneView(QtWidgets.QGraphicsView):
     """View to display and optionally edit satellite items."""
 
@@ -71,3 +72,39 @@ class SatelliteZoneView(QtWidgets.QGraphicsView):
             event.acceptProposedAction()
         else:
             super().dropEvent(event)
+
+    def get_items(self) -> list:
+        """Return a list of item descriptors from the scene."""
+        result = []
+        for it in self.scene().items():
+            if isinstance(it, QtWidgets.QGraphicsTextItem):
+                result.append(
+                    {
+                        "type": "text",
+                        "text": it.toPlainText(),
+                        "x": it.pos().x(),
+                        "y": it.pos().y(),
+                    }
+                )
+            elif isinstance(it, QtWidgets.QGraphicsProxyWidget):
+                w = it.widget()
+                if isinstance(w, QtWidgets.QPushButton):
+                    result.append(
+                        {
+                            "type": "button",
+                            "text": w.text(),
+                            "x": it.pos().x(),
+                            "y": it.pos().y(),
+                        }
+                    )
+            elif isinstance(it, QtWidgets.QGraphicsRectItem):
+                result.append(
+                    {
+                        "type": "image",
+                        "text": it.data(0) or "",
+                        "x": it.pos().x(),
+                        "y": it.pos().y(),
+                    }
+                )
+        result.reverse()
+        return result
