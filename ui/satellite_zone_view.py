@@ -19,12 +19,14 @@ class _DraggableProxyWidget(QtWidgets.QGraphicsProxyWidget):
         return super().itemChange(change, value)
 
 
-class _DraggableRectItem(QtWidgets.QGraphicsRectItem, QtCore.QObject):
+class _DraggableRectItem(QtCore.QObject, QtWidgets.QGraphicsRectItem):
+    """QGraphicsRectItem that can emit a ``moved`` signal."""
+
     moved = QtCore.pyqtSignal()
 
     def __init__(self, *args, **kwargs):
-        QtWidgets.QGraphicsRectItem.__init__(self, *args, **kwargs)
         QtCore.QObject.__init__(self)
+        QtWidgets.QGraphicsRectItem.__init__(self, *args, **kwargs)
 
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.ItemPositionHasChanged:
