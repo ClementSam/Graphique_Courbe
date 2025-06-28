@@ -41,6 +41,9 @@ def controller(monkeypatch):
     bus_module.signal_bus = make_bus()
     monkeypatch.setitem(sys.modules, "signal_bus", bus_module)
 
+    import ui.PropertiesPanel as pp
+    pp.signal_bus = bus_module.signal_bus
+
     import controllers as ctrl
     importlib.reload(ctrl)
 
@@ -107,3 +110,19 @@ def test_satellite_zone_move_updates_table(controller):
     table = panel.satellite_left_table
     assert table.cellWidget(0, 5).value() == 10
     assert table.cellWidget(0, 6).value() == 20
+
+
+def test_add_item_refreshes_table(controller, monkeypatch):
+    c, state, panel, bus, app = controller
+    c.add_graph()
+    name = list(state.graphs.keys())[0]
+    c.select_graph(name)
+    panel.controller = c
+    c.set_satellite_visible("left", True)
+    app.processEvents()
+
+    monkeypatch.setattr(QtWidgets.QInputDialog, "getItem", lambda *a, **k: ("Texte", True))
+    panel._add_satellite_item("left")
+
+    assert panel.satellite_left_table.rowCount() == 1
+    assert isinstance(panel.satellite_left_table.cellWidget(0, 8), QtWidgets.QPushButton)

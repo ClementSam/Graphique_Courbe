@@ -416,7 +416,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             color_btn = QtWidgets.QPushButton("Couleur")
             size_spin = QtWidgets.QSpinBox()
             size_spin.setRange(20, 500)
-            table = QtWidgets.QTableWidget(0, 8)
+            table = QtWidgets.QTableWidget(0, 10)
             table.setHorizontalHeaderLabels(
                 [
                     "Type",
@@ -427,6 +427,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                     "X",
                     "Y",
                     "Ordre",
+                    "Suppr.",
+                    "Modifié",
                 ]
             )
             edit_chk = QtWidgets.QCheckBox("Éditer")
@@ -775,12 +777,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         table.setItem(row, 0, QtWidgets.QTableWidgetItem(choice))
 
         name_edit = QtWidgets.QLineEdit(f"item{row}")
-        name_edit.editingFinished.connect(lambda z=zone: self._apply_satellite_table(z))
+        name_edit.editingFinished.connect(
+            lambda z=zone, r=row: self._satellite_cell_changed(z, r)
+        )
         table.setCellWidget(row, 1, name_edit)
 
         param_widget = QtWidgets.QLineEdit("" if choice != "Bouton" else "Bouton")
         param_widget.editingFinished.connect(
-            lambda z=zone: self._apply_satellite_table(z)
+            lambda z=zone, r=row: self._satellite_cell_changed(z, r)
         )
         table.setCellWidget(row, 2, param_widget)
 
@@ -790,7 +794,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             if col in {3, 4}:
                 spin.setRange(1, 1000)
                 spin.setValue(50)
-            spin.valueChanged.connect(lambda _, z=zone: self._apply_satellite_table(z))
+            spin.valueChanged.connect(
+                lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
+            )
             table.setCellWidget(row, col, spin)
 
         btns = QtWidgets.QWidget()
@@ -805,6 +811,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             hb.addWidget(b)
         table.setCellWidget(row, 7, btns)
 
+        del_btn = QtWidgets.QPushButton("X")
+        del_btn.clicked.connect(lambda _, r=row, z=zone: self._remove_satellite_item(z, r))
+        table.setCellWidget(row, 8, del_btn)
+
+        table.setItem(row, 9, QtWidgets.QTableWidgetItem(""))
+
         if self.controller:
             item = {
                 "type": choice.lower(),
@@ -816,6 +828,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 "y": 0,
             }
             self._call_graph_controller(self.controller.add_satellite_item, zone, item)
+        self.update_graph_ui()
 
     def _edit_satellite_zone(self, zone: str):
         from ui.satellite_zone_builder import SatelliteZoneBuilder
@@ -876,6 +889,16 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 self.controller.set_satellite_items, zone, items
             )
 
+    def _mark_satellite_row_modified(self, zone: str, row: int):
+        table = self.satellite_tables.get(zone)
+        if not table:
+            return
+        table.setItem(row, 9, QtWidgets.QTableWidgetItem("✓"))
+
+    def _satellite_cell_changed(self, zone: str, row: int):
+        self._mark_satellite_row_modified(zone, row)
+        self._apply_satellite_table(zone)
+
     def _move_satellite_item(self, zone: str, row: int, action: str):
         state = AppState.get_instance()
         graph = state.current_graph
@@ -896,6 +919,15 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         if self.controller:
             self._call_graph_controller(
                 self.controller.set_satellite_items, zone, items
+            )
+        self.update_graph_ui()
+        for r in range(len(items)):
+            self._mark_satellite_row_modified(zone, r)
+
+    def _remove_satellite_item(self, zone: str, row: int):
+        if self.controller:
+            self._call_graph_controller(
+                self.controller.remove_satellite_item, zone, row
             )
         self.update_graph_ui()
 
@@ -920,6 +952,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self._call_graph_controller(
                 self.controller.set_satellite_items, zone, items
             )
+        for r in range(len(items)):
+            self._mark_satellite_row_modified(zone, r)
 
     def _add_zone_item(self):
         """Add a new custom zone with default parameters directly."""
@@ -1190,19 +1224,19 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
                 name_edit = QtWidgets.QLineEdit(item.get("name", f"item{row}"))
                 name_edit.editingFinished.connect(
-                    lambda z=zone: self._apply_satellite_table(z)
+                    lambda z=zone, r=row: self._satellite_cell_changed(z, r)
                 )
                 table.setCellWidget(row, 1, name_edit)
 
                 if typ == "text":
                     param_widget = QtWidgets.QLineEdit(item.get("text", ""))
                     param_widget.editingFinished.connect(
-                        lambda z=zone: self._apply_satellite_table(z)
+                        lambda z=zone, r=row: self._satellite_cell_changed(z, r)
                     )
                 elif typ in {"button", "bouton"}:
                     param_widget = QtWidgets.QLineEdit(item.get("text", "Bouton"))
                     param_widget.editingFinished.connect(
-                        lambda z=zone: self._apply_satellite_table(z)
+                        lambda z=zone, r=row: self._satellite_cell_changed(z, r)
                     )
                 else:
                     param_widget = QtWidgets.QLineEdit(item.get("text", ""))
@@ -1215,7 +1249,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 w_spin.setRange(1, 1000)
                 w_spin.setValue(int(item.get("width", 50)))
                 w_spin.valueChanged.connect(
-                    lambda _, z=zone: self._apply_satellite_table(z)
+                    lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
                 )
                 table.setCellWidget(row, 3, w_spin)
 
@@ -1223,7 +1257,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 h_spin.setRange(1, 1000)
                 h_spin.setValue(int(item.get("height", 50)))
                 h_spin.valueChanged.connect(
-                    lambda _, z=zone: self._apply_satellite_table(z)
+                    lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
                 )
                 table.setCellWidget(row, 4, h_spin)
 
@@ -1231,7 +1265,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 x_spin.setRange(-1000, 1000)
                 x_spin.setValue(int(item.get("x", 0)))
                 x_spin.valueChanged.connect(
-                    lambda _, z=zone: self._apply_satellite_table(z)
+                    lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
                 )
                 table.setCellWidget(row, 5, x_spin)
 
@@ -1239,7 +1273,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 y_spin.setRange(-1000, 1000)
                 y_spin.setValue(int(item.get("y", 0)))
                 y_spin.valueChanged.connect(
-                    lambda _, z=zone: self._apply_satellite_table(z)
+                    lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
                 )
                 table.setCellWidget(row, 6, y_spin)
 
@@ -1267,6 +1301,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 for b in (to_front, to_back, up, down):
                     hb.addWidget(b)
                 table.setCellWidget(row, 7, btns)
+
+                del_btn = QtWidgets.QPushButton("X")
+                del_btn.clicked.connect(
+                    lambda _, r=row, z=zone: self._remove_satellite_item(z, r)
+                )
+                table.setCellWidget(row, 8, del_btn)
+
+                table.setItem(row, 9, QtWidgets.QTableWidgetItem(""))
 
             table.blockSignals(False)
 

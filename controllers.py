@@ -230,6 +230,14 @@ class GraphController:
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
 
+    def remove_satellite_item(self, zone: str, index: int):
+        logger.debug(
+            f"🛰 [GraphController.remove_satellite_item] zone={zone} index={index}"
+        )
+        self.service.remove_satellite_item(zone, index)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
     def set_satellite_items(self, zone: str, items: list):
         logger.debug(
             f"🛰 [GraphController.set_satellite_items] zone={zone} items={items}"
