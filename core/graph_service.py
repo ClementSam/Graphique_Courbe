@@ -532,7 +532,10 @@ class GraphService:
         )
         graph = self.state.current_graph
         if not graph:
-            return
+            logger.warning(
+                "[GraphService.set_satellite_content] Aucun graphique sélectionné"
+            )
+            raise ValueError("Aucun graphique sélectionné")
         if zone in graph.satellite_content:
             graph.satellite_content[zone] = content
             graph.satellite_visibility[zone] = bool(content)
@@ -543,7 +546,10 @@ class GraphService:
         )
         graph = self.state.current_graph
         if not graph:
-            return
+            logger.warning(
+                "[GraphService.set_satellite_visible] Aucun graphique sélectionné"
+            )
+            raise ValueError("Aucun graphique sélectionné")
         if zone in graph.satellite_visibility:
             graph.satellite_visibility[zone] = visible
 
@@ -553,7 +559,10 @@ class GraphService:
         )
         graph = self.state.current_graph
         if not graph:
-            return
+            logger.warning(
+                "[GraphService.set_satellite_color] Aucun graphique sélectionné"
+            )
+            raise ValueError("Aucun graphique sélectionné")
         if zone in graph.satellite_settings:
             graph.satellite_settings[zone]["color"] = color
 
@@ -563,7 +572,10 @@ class GraphService:
         )
         graph = self.state.current_graph
         if not graph:
-            return
+            logger.warning(
+                "[GraphService.set_satellite_size] Aucun graphique sélectionné"
+            )
+            raise ValueError("Aucun graphique sélectionné")
         if zone in graph.satellite_settings:
             graph.satellite_settings[zone]["size"] = size
 
@@ -574,7 +586,10 @@ class GraphService:
         )
         graph = self.state.current_graph
         if not graph:
-            return
+            logger.warning(
+                "[GraphService.add_satellite_item] Aucun graphique sélectionné"
+            )
+            raise ValueError("Aucun graphique sélectionné")
         if zone in graph.satellite_settings:
             graph.satellite_settings[zone]["items"].append(item)
 
@@ -585,7 +600,10 @@ class GraphService:
         )
         graph = self.state.current_graph
         if not graph:
-            return
+            logger.warning(
+                "[GraphService.remove_satellite_item] Aucun graphique sélectionné"
+            )
+            raise ValueError("Aucun graphique sélectionné")
         if zone in graph.satellite_settings:
             items = graph.satellite_settings[zone]["items"]
             if 0 <= index < len(items):
@@ -598,7 +616,10 @@ class GraphService:
         )
         graph = self.state.current_graph
         if not graph:
-            return
+            logger.warning(
+                "[GraphService.set_satellite_items] Aucun graphique sélectionné"
+            )
+            raise ValueError("Aucun graphique sélectionné")
         if zone in graph.satellite_settings:
             graph.satellite_settings[zone]["items"] = list(items)
 
@@ -609,7 +630,10 @@ class GraphService:
         )
         graph = self.state.current_graph
         if not graph:
-            return
+            logger.warning(
+                "[GraphService.set_satellite_edit_mode] Aucun graphique sélectionné"
+            )
+            raise ValueError("Aucun graphique sélectionné")
         if zone in graph.satellite_edit_mode:
             graph.satellite_edit_mode[zone] = enabled
 

@@ -326,3 +326,51 @@ def test_set_satellite_edit_mode(service):
     assert state.current_graph.satellite_edit_mode["left"] is False
     svc.set_satellite_edit_mode("left", True)
     assert state.current_graph.satellite_edit_mode["left"] is True
+
+
+def test_set_satellite_content_without_graph_raises(service):
+    svc, _, _ = service
+    with pytest.raises(ValueError):
+        svc.set_satellite_content("left", "text")
+
+
+def test_set_satellite_visible_without_graph_raises(service):
+    svc, _, _ = service
+    with pytest.raises(ValueError):
+        svc.set_satellite_visible("left", True)
+
+
+def test_set_satellite_color_without_graph_raises(service):
+    svc, _, _ = service
+    with pytest.raises(ValueError):
+        svc.set_satellite_color("left", "#ffffff")
+
+
+def test_set_satellite_size_without_graph_raises(service):
+    svc, _, _ = service
+    with pytest.raises(ValueError):
+        svc.set_satellite_size("left", 100)
+
+
+def test_add_satellite_item_without_graph_raises(service):
+    svc, _, _ = service
+    with pytest.raises(ValueError):
+        svc.add_satellite_item("left", {"type": "text"})
+
+
+def test_remove_satellite_item_without_graph_raises(service):
+    svc, _, _ = service
+    with pytest.raises(ValueError):
+        svc.remove_satellite_item("left", 0)
+
+
+def test_set_satellite_items_without_graph_raises(service):
+    svc, _, _ = service
+    with pytest.raises(ValueError):
+        svc.set_satellite_items("left", [])
+
+
+def test_set_satellite_edit_mode_without_graph_raises(service):
+    svc, _, _ = service
+    with pytest.raises(ValueError):
+        svc.set_satellite_edit_mode("left", True)
