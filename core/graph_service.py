@@ -1,7 +1,7 @@
 # core/graph_service.py
 
 from core.app_state import AppState
-from core.models import GraphData, CurveData
+from core.models import GraphData, CurveData, SatelliteItem
 from core.utils.naming import get_next_graph_name, get_unique_curve_name
 from core.utils import generate_random_color
 from typing import Optional
@@ -568,6 +568,54 @@ class GraphService:
         if zone in graph.satellite_settings:
             graph.satellite_settings[zone].size = size
 
+    def add_satellite_item(self, zone: str, item):
+        """Append an item description to a satellite zone."""
+        logger.debug(
+            f"🛰 [GraphService.add_satellite_item] zone={zone} item={item}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_settings:
+            if isinstance(item, dict):
+                item = SatelliteItem(**item)
+            graph.satellite_settings[zone].items.append(item)
+
+    def remove_satellite_item(self, zone: str, index: int):
+        """Remove an item from a satellite zone."""
+        logger.debug(
+            f"🛰 [GraphService.remove_satellite_item] zone={zone} index={index}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_settings:
+            items = graph.satellite_settings[zone].items
+            if 0 <= index < len(items):
+                items.pop(index)
+
+    def set_satellite_items(self, zone: str, items: list):
+        """Replace the list of items for a satellite zone."""
+        logger.debug(
+            f"🛰 [GraphService.set_satellite_items] zone={zone} items={items}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_settings:
+            new_items = [SatelliteItem(**i) if isinstance(i, dict) else i for i in items]
+            graph.satellite_settings[zone].items = list(new_items)
+
+    def set_satellite_edit_mode(self, zone: str, enabled: bool):
+        """Enable or disable edit mode for a satellite zone."""
+        logger.debug(
+            f"🛰 [GraphService.set_satellite_edit_mode] zone={zone} enabled={enabled}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_settings:
+            graph.satellite_settings[zone].edit_mode = enabled
 
     def add_zone(self, zone: dict):
         """Add a graphic zone description to the current graph."""

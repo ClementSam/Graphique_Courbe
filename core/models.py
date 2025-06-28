@@ -69,6 +69,18 @@ class CurveData:
         return self.bit_index is not None
 
 
+@dataclass
+class SatelliteItem:
+    """Description of an item displayed in a satellite zone."""
+
+    type: str
+    name: str = ""
+    text: str = ""
+    width: int = 50
+    height: int = 50
+    x: int = 0
+    y: int = 0
+
 
 @dataclass
 class SatelliteZoneSettings:
@@ -76,6 +88,8 @@ class SatelliteZoneSettings:
 
     color: str = "#ffffff"
     size: int = 100
+    items: List[SatelliteItem] = field(default_factory=list)
+    edit_mode: bool = False
     visible: bool = False
 
 @dataclass

@@ -3,8 +3,11 @@
 from core.app_state import AppState
 from PyQt5 import QtWidgets, QtCore, QtGui
 from ui.widgets import BitGroupWidget
+from ui.satellite_zone_builder import Toolbox
 from signal_bus import signal_bus
 from core.utils import generate_random_color
+from core.models import SatelliteItem
+from dataclasses import asdict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -317,6 +320,15 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 )
             )
 
+        for zone, chk in self.satellite_edit_checks.items():
+            chk.toggled.connect(
+                lambda val, z=zone: self._call_graph_controller(
+                    self.controller.set_satellite_edit_mode, z, val
+                )
+            )
+
+        self.add_zone_btn.clicked.connect(self._add_zone_item)
+
         signal_bus.graph_updated.connect(self.update_mode_tab)
         self.update_mode_tab()
 
@@ -406,10 +418,28 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             color_btn = QtWidgets.QPushButton("Couleur")
             size_spin = QtWidgets.QSpinBox()
             size_spin.setRange(20, 500)
+            table = QtWidgets.QTableWidget(0, 10)
+            table.setHorizontalHeaderLabels(
+                [
+                    "Type",
+                    "Name",
+                    "Paramètre",
+                    "Size X",
+                    "Size Y",
+                    "X",
+                    "Y",
+                    "Ordre",
+                    "Suppr.",
+                    "Modifié",
+                ]
+            )
+            edit_chk = QtWidgets.QCheckBox("Éditer")
 
             def toggle(enabled):
                 color_btn.setEnabled(enabled)
                 size_spin.setEnabled(enabled)
+                table.setEnabled(enabled)
+                edit_chk.setEnabled(enabled)
 
             checkbox.toggled.connect(toggle)
             v.addWidget(checkbox)
@@ -417,14 +447,18 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             h.addWidget(color_btn)
             h.addWidget(size_spin)
             v.addLayout(h)
+            v.addWidget(table)
+            v.addWidget(edit_chk)
             toggle(False)
-            return group, checkbox, color_btn, size_spin
+            return group, checkbox, color_btn, size_spin, table, edit_chk
 
         (
             self.sat_left_group,
             self.satellite_left_checkbox,
             self.satellite_left_color,
             self.satellite_left_size,
+            self.satellite_left_table,
+            self.satellite_left_edit,
         ) = create_satellite_group("Zone gauche")
         layout.addWidget(self.sat_left_group)
 
@@ -433,6 +467,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_right_checkbox,
             self.satellite_right_color,
             self.satellite_right_size,
+            self.satellite_right_table,
+            self.satellite_right_edit,
         ) = create_satellite_group("Zone droite")
         layout.addWidget(self.sat_right_group)
 
@@ -441,6 +477,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_top_checkbox,
             self.satellite_top_color,
             self.satellite_top_size,
+            self.satellite_top_table,
+            self.satellite_top_edit,
         ) = create_satellite_group("Zone haut")
         layout.addWidget(self.sat_top_group)
 
@@ -449,10 +487,27 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_bottom_checkbox,
             self.satellite_bottom_color,
             self.satellite_bottom_size,
+            self.satellite_bottom_table,
+            self.satellite_bottom_edit,
         ) = create_satellite_group("Zone bas")
         layout.addWidget(self.sat_bottom_group)
 
-        # Palette no longer used
+        self.satellite_tables = {
+            "left": self.satellite_left_table,
+            "right": self.satellite_right_table,
+            "top": self.satellite_top_table,
+            "bottom": self.satellite_bottom_table,
+        }
+        self.satellite_edit_checks = {
+            "left": self.satellite_left_edit,
+            "right": self.satellite_right_edit,
+            "top": self.satellite_top_edit,
+            "bottom": self.satellite_bottom_edit,
+        }
+
+        # Palette of draggable objects
+        self.toolbox = Toolbox()
+        layout.addWidget(self.toolbox)
 
         # Zone objects in the plot
         zone_group = QtWidgets.QGroupBox("Zones personnalisées")
@@ -705,6 +760,198 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             btn.setStyleSheet(f"background-color: {color.name()}")
             self._update_zone_from_row(row)
 
+    def _add_satellite_item(self, zone: str):
+        options = ["Texte", "Bouton", "Image"]
+        choice, ok = QtWidgets.QInputDialog.getItem(
+            self,
+            "Ajouter un objet",
+            "Type d'objet :",
+            options,
+            0,
+            False,
+        )
+        if not ok:
+            return
+
+        table = self.satellite_tables[zone]
+        row = table.rowCount()
+        table.insertRow(row)
+        table.setItem(row, 0, QtWidgets.QTableWidgetItem(choice))
+
+        name_edit = QtWidgets.QLineEdit(f"item{row}")
+        name_edit.editingFinished.connect(
+            lambda z=zone, r=row: self._satellite_cell_changed(z, r)
+        )
+        table.setCellWidget(row, 1, name_edit)
+
+        param_widget = QtWidgets.QLineEdit("" if choice != "Bouton" else "Bouton")
+        param_widget.editingFinished.connect(
+            lambda z=zone, r=row: self._satellite_cell_changed(z, r)
+        )
+        table.setCellWidget(row, 2, param_widget)
+
+        for col in range(3, 7):
+            spin = QtWidgets.QSpinBox()
+            spin.setRange(-1000, 1000)
+            if col in {3, 4}:
+                spin.setRange(1, 1000)
+                spin.setValue(50)
+            spin.valueChanged.connect(
+                lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
+            )
+            table.setCellWidget(row, col, spin)
+
+        btns = QtWidgets.QWidget()
+        hb = QtWidgets.QHBoxLayout(btns)
+        hb.setContentsMargins(0, 0, 0, 0)
+        for text, action in [("⬆", "front"), ("⬇", "back"), ("+", "up"), ("-", "down")]:
+            b = QtWidgets.QPushButton(text)
+            b.setFixedWidth(20)
+            b.clicked.connect(
+                lambda _, r=row, z=zone, a=action: self._move_satellite_item(z, r, a)
+            )
+            hb.addWidget(b)
+        table.setCellWidget(row, 7, btns)
+
+        del_btn = QtWidgets.QPushButton("X")
+        del_btn.clicked.connect(lambda _, r=row, z=zone: self._remove_satellite_item(z, r))
+        table.setCellWidget(row, 8, del_btn)
+
+        table.setItem(row, 9, QtWidgets.QTableWidgetItem(""))
+
+        if self.controller:
+            item = SatelliteItem(
+                type=choice.lower(),
+                name=f"item{row}",
+                text="" if choice != "Bouton" else "Bouton",
+                width=50,
+                height=50,
+                x=0,
+                y=0,
+            )
+            self._call_graph_controller(self.controller.add_satellite_item, zone, item)
+        self.update_graph_ui()
+
+    def _edit_satellite_zone(self, zone: str):
+        from ui.satellite_zone_builder import SatelliteZoneBuilder
+
+        state = AppState.get_instance()
+        graph = state.current_graph
+        if not graph:
+            return
+
+        items = [asdict(it) if isinstance(it, SatelliteItem) else it for it in graph.satellite_settings[zone].items]
+        dlg = SatelliteZoneBuilder(items, parent=self)
+        if dlg.exec_() == QtWidgets.QDialog.Accepted:
+            new_items = [SatelliteItem(**it) for it in dlg.items()]
+            if self.controller:
+                self._call_graph_controller(
+                    self.controller.set_satellite_items, zone, new_items
+                )
+            self.update_graph_ui()
+
+    def _apply_satellite_table(self, zone: str):
+        table = self.satellite_tables[zone]
+        items: list[SatelliteItem] = []
+        for row in range(table.rowCount()):
+            typ_item = table.item(row, 0)
+            if typ_item is None:
+                continue
+            typ = typ_item.text().lower()
+            name_edit = table.cellWidget(row, 1)
+            param_widget = table.cellWidget(row, 2)
+            w_spin = table.cellWidget(row, 3)
+            h_spin = table.cellWidget(row, 4)
+            x_spin = table.cellWidget(row, 5)
+            y_spin = table.cellWidget(row, 6)
+
+            text = ""
+            if isinstance(param_widget, QtWidgets.QLineEdit):
+                text = param_widget.text()
+            item = SatelliteItem(
+                type=typ,
+                name=(
+                    name_edit.text()
+                    if isinstance(name_edit, QtWidgets.QLineEdit)
+                    else f"item{row}"
+                ),
+                text=text,
+                width=w_spin.value() if isinstance(w_spin, QtWidgets.QSpinBox) else 50,
+                height=h_spin.value() if isinstance(h_spin, QtWidgets.QSpinBox) else 50,
+                x=x_spin.value() if isinstance(x_spin, QtWidgets.QSpinBox) else 0,
+                y=y_spin.value() if isinstance(y_spin, QtWidgets.QSpinBox) else 0,
+            )
+            items.append(item)
+        if self.controller:
+            self._call_graph_controller(
+                self.controller.set_satellite_items, zone, items
+            )
+
+    def _mark_satellite_row_modified(self, zone: str, row: int):
+        table = self.satellite_tables.get(zone)
+        if not table:
+            return
+        table.setItem(row, 9, QtWidgets.QTableWidgetItem("✓"))
+
+    def _satellite_cell_changed(self, zone: str, row: int):
+        self._mark_satellite_row_modified(zone, row)
+        self._apply_satellite_table(zone)
+
+    def _move_satellite_item(self, zone: str, row: int, action: str):
+        state = AppState.get_instance()
+        graph = state.current_graph
+        if not graph:
+            return
+        items = list(graph.satellite_settings[zone].items)
+        if row < 0 or row >= len(items):
+            return
+        item = items.pop(row)
+        if action == "front":
+            items.append(item)
+        elif action == "back":
+            items.insert(0, item)
+        elif action == "up":
+            items.insert(min(row + 1, len(items)), item)
+        elif action == "down":
+            items.insert(max(row - 1, 0), item)
+        if self.controller:
+            self._call_graph_controller(
+                self.controller.set_satellite_items, zone, items
+            )
+        self.update_graph_ui()
+        for r in range(len(items)):
+            self._mark_satellite_row_modified(zone, r)
+
+    def _remove_satellite_item(self, zone: str, row: int):
+        if self.controller:
+            self._call_graph_controller(
+                self.controller.remove_satellite_item, zone, row
+            )
+        self.update_graph_ui()
+
+    def _on_view_items_moved(self, zone: str, view):
+        """Update table values and graph data when items are moved in a view."""
+        items = [SatelliteItem(**it) for it in view.get_items()]
+        table = self.satellite_tables.get(zone)
+        if not table:
+            return
+        table.blockSignals(True)
+        for row, item in enumerate(items):
+            if row >= table.rowCount():
+                break
+            x_spin = table.cellWidget(row, 5)
+            y_spin = table.cellWidget(row, 6)
+            if isinstance(x_spin, QtWidgets.QSpinBox):
+                x_spin.setValue(int(item.x))
+            if isinstance(y_spin, QtWidgets.QSpinBox):
+                y_spin.setValue(int(item.y))
+        table.blockSignals(False)
+        if self.controller:
+            self._call_graph_controller(
+                self.controller.set_satellite_items, zone, items
+            )
+        for r in range(len(items)):
+            self._mark_satellite_row_modified(zone, r)
 
     def _add_zone_item(self):
         """Add a new custom zone with default parameters directly."""
@@ -918,22 +1165,36 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         }.items():
             color = graph.satellite_settings[zone].color
             btn.setStyleSheet(f"background-color: {color}")
+
+        for zone, chk in self.satellite_edit_checks.items():
+            chk.blockSignals(True)
+            chk.setChecked(graph.satellite_settings[zone].edit_mode)
+            chk.blockSignals(False)
+
         for zone, widgets in {
             "left": (
                 self.satellite_left_color,
                 self.satellite_left_size,
+                self.satellite_left_table,
+                self.satellite_left_edit,
             ),
             "right": (
                 self.satellite_right_color,
                 self.satellite_right_size,
+                self.satellite_right_table,
+                self.satellite_right_edit,
             ),
             "top": (
                 self.satellite_top_color,
                 self.satellite_top_size,
+                self.satellite_top_table,
+                self.satellite_top_edit,
             ),
             "bottom": (
                 self.satellite_bottom_color,
                 self.satellite_bottom_size,
+                self.satellite_bottom_table,
+                self.satellite_bottom_edit,
             ),
         }.items():
             enabled = graph.satellite_settings[zone].visible
@@ -950,7 +1211,126 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             spin.setValue(graph.satellite_settings[zone].size)
             spin.blockSignals(False)
 
+        for zone, table in self.satellite_tables.items():
+            table.blockSignals(True)
+            table.setRowCount(0)
+            for item in graph.satellite_settings[zone].items:
+                item_dict = (
+                    asdict(item) if isinstance(item, SatelliteItem) else item
+                )
+                row = table.rowCount()
+                table.insertRow(row)
+                typ = item_dict.get("type", "")
+                table.setItem(row, 0, QtWidgets.QTableWidgetItem(typ.capitalize()))
 
+                name_edit = QtWidgets.QLineEdit(item_dict.get("name", f"item{row}"))
+                name_edit.editingFinished.connect(
+                    lambda z=zone, r=row: self._satellite_cell_changed(z, r)
+                )
+                table.setCellWidget(row, 1, name_edit)
+
+                if typ == "text":
+                    param_widget = QtWidgets.QLineEdit(item_dict.get("text", ""))
+                    param_widget.editingFinished.connect(
+                        lambda z=zone, r=row: self._satellite_cell_changed(z, r)
+                    )
+                elif typ in {"button", "bouton"}:
+                    param_widget = QtWidgets.QLineEdit(item_dict.get("text", "Bouton"))
+                    param_widget.editingFinished.connect(
+                        lambda z=zone, r=row: self._satellite_cell_changed(z, r)
+                    )
+                else:
+                    param_widget = QtWidgets.QLineEdit(item_dict.get("text", ""))
+                    param_widget.editingFinished.connect(
+                        lambda z=zone: self._apply_satellite_table(z)
+                    )
+                table.setCellWidget(row, 2, param_widget)
+
+                w_spin = QtWidgets.QSpinBox()
+                w_spin.setRange(1, 1000)
+                w_spin.setValue(int(item_dict.get("width", 50)))
+                w_spin.valueChanged.connect(
+                    lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
+                )
+                table.setCellWidget(row, 3, w_spin)
+
+                h_spin = QtWidgets.QSpinBox()
+                h_spin.setRange(1, 1000)
+                h_spin.setValue(int(item_dict.get("height", 50)))
+                h_spin.valueChanged.connect(
+                    lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
+                )
+                table.setCellWidget(row, 4, h_spin)
+
+                x_spin = QtWidgets.QSpinBox()
+                x_spin.setRange(-1000, 1000)
+                x_spin.setValue(int(item_dict.get("x", 0)))
+                x_spin.valueChanged.connect(
+                    lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
+                )
+                table.setCellWidget(row, 5, x_spin)
+
+                y_spin = QtWidgets.QSpinBox()
+                y_spin.setRange(-1000, 1000)
+                y_spin.setValue(int(item_dict.get("y", 0)))
+                y_spin.valueChanged.connect(
+                    lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
+                )
+                table.setCellWidget(row, 6, y_spin)
+
+                btns = QtWidgets.QWidget()
+                hb = QtWidgets.QHBoxLayout(btns)
+                hb.setContentsMargins(0, 0, 0, 0)
+                to_front = QtWidgets.QPushButton("⬆")
+                to_back = QtWidgets.QPushButton("⬇")
+                up = QtWidgets.QPushButton("+")
+                down = QtWidgets.QPushButton("-")
+                for b in (to_front, to_back, up, down):
+                    b.setFixedWidth(20)
+                to_front.clicked.connect(
+                    lambda _, r=row, z=zone: self._move_satellite_item(z, r, "front")
+                )
+                to_back.clicked.connect(
+                    lambda _, r=row, z=zone: self._move_satellite_item(z, r, "back")
+                )
+                up.clicked.connect(
+                    lambda _, r=row, z=zone: self._move_satellite_item(z, r, "up")
+                )
+                down.clicked.connect(
+                    lambda _, r=row, z=zone: self._move_satellite_item(z, r, "down")
+                )
+                for b in (to_front, to_back, up, down):
+                    hb.addWidget(b)
+                table.setCellWidget(row, 7, btns)
+
+                del_btn = QtWidgets.QPushButton("X")
+                del_btn.clicked.connect(
+                    lambda _, r=row, z=zone: self._remove_satellite_item(z, r)
+                )
+                table.setCellWidget(row, 8, del_btn)
+
+                table.setItem(row, 9, QtWidgets.QTableWidgetItem(""))
+
+            table.blockSignals(False)
+
+        # Connect view movement signals to update tables
+        if self.controller and hasattr(self.controller, "ui"):
+            coord = self.controller.ui
+            view = coord.views.get(graph.name)
+            if view:
+                for zone, table in self.satellite_tables.items():
+                    zview = getattr(view, "satellites", {}).get(zone)
+                    if not zview:
+                        continue
+                    handler = getattr(zview, "_pp_handler", None)
+                    if handler:
+                        try:
+                            zview.itemsMoved.disconnect(handler)
+                        except Exception:
+                            pass
+                    handler = lambda v=zview, z=zone: self._on_view_items_moved(z, v)
+                    zview.itemsMoved.connect(handler)
+                    zview._pp_handler = handler
 
         # Zones table
         self.zone_table.blockSignals(True)

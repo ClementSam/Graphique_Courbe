@@ -6,6 +6,9 @@ import pyqtgraph as pg
 from signal_bus import signal_bus
 from PyQt5.QtGui import QColor, QPainterPath
 from ui.widgets.plot_container import PlotContainerWidget
+from ui.satellite_zone_view import SatelliteZoneView
+from core.models import SatelliteItem
+from dataclasses import asdict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -270,6 +273,7 @@ class MyPlotView:
             visible = settings.visible if settings else False
             box.setVisible(visible)
             if not visible:
+                self.satellites.pop(zone, None)
                 continue
 
             color = settings.color if settings else "#ffffff"
@@ -283,7 +287,26 @@ class MyPlotView:
             box.setStyleSheet(f"background-color: {color};")
 
             layout = box.layout()
+            old_view = None
+            if layout.count():
+                w = layout.itemAt(0).widget()
+                if isinstance(w, SatelliteZoneView):
+                    old_view = w
             while layout.count():
                 item = layout.takeAt(0)
                 if item and item.widget():
                     item.widget().deleteLater()
+
+            edit_mode = settings.edit_mode if settings else False
+            # Persist current item positions if the previous view was editable
+            if old_view and getattr(old_view, "_editable", False) and settings:
+                settings.items = [
+                    SatelliteItem(**it) for it in old_view.get_items()
+                ]
+
+            view = SatelliteZoneView(editable=edit_mode)
+            layout.addWidget(view)
+            view.setSceneRect(0, 0, box.width(), box.height())
+            items = [asdict(it) for it in (settings.items if settings else [])]
+            view.load_items(items)
+            self.satellites[zone] = view
