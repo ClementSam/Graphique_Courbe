@@ -240,9 +240,9 @@ def test_controller_set_satellite_edit_mode(controller):
     name = list(state.graphs.keys())[0]
     c.select_graph(name)
 
-    assert state.current_graph.satellite_edit_mode["top"] is False
+    assert state.current_graph.satellite_settings["top"].edit_mode is False
     c.ui.plot_calls = 0
     c.set_satellite_edit_mode("top", True)
 
-    assert state.current_graph.satellite_edit_mode["top"] is True
+    assert state.current_graph.satellite_settings["top"].edit_mode is True
     assert c.ui.plot_calls == 1

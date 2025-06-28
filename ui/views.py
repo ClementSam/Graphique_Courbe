@@ -7,6 +7,8 @@ from signal_bus import signal_bus
 from PyQt5.QtGui import QColor, QPainterPath
 from ui.widgets.plot_container import PlotContainerWidget
 from ui.satellite_zone_view import SatelliteZoneView
+from core.models import SatelliteItem
+from dataclasses import asdict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -267,15 +269,15 @@ class MyPlotView:
         }
 
         for zone, box in zones.items():
-            visible = self.graph_data.satellite_visibility.get(zone, False)
+            settings = self.graph_data.satellite_settings.get(zone)
+            visible = settings.visible if settings else False
             box.setVisible(visible)
             if not visible:
                 self.satellites.pop(zone, None)
                 continue
 
-            settings = self.graph_data.satellite_settings.get(zone, {})
-            color = settings.get("color", "#ffffff")
-            size = settings.get("size", 100)
+            color = settings.color if settings else "#ffffff"
+            size = settings.size if settings else 100
 
             if zone in {"left", "right"}:
                 box.setFixedWidth(size)
@@ -295,12 +297,15 @@ class MyPlotView:
                 if item and item.widget():
                     item.widget().deleteLater()
 
-            edit_mode = self.graph_data.satellite_edit_mode.get(zone, False)
-            if old_view and edit_mode:
-                self.graph_data.satellite_settings[zone]["items"] = old_view.get_items()
+            edit_mode = settings.edit_mode if settings else False
+            if old_view and edit_mode and settings:
+                settings.items = [
+                    SatelliteItem(**it) for it in old_view.get_items()
+                ]
 
             view = SatelliteZoneView(editable=edit_mode)
             layout.addWidget(view)
             view.setSceneRect(0, 0, box.width(), box.height())
-            view.load_items(settings.get("items", []))
+            items = [asdict(it) for it in (settings.items if settings else [])]
+            view.load_items(items)
             self.satellites[zone] = view

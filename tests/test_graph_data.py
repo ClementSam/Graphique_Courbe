@@ -11,10 +11,10 @@ def test_satellite_dicts_are_instance_specific():
     g1 = GraphData("g1")
     g2 = GraphData("g2")
 
-    g1.satellite_visibility["left"] = True
+    g1.satellite_settings["left"].visible = True
     g1.satellite_content["right"] = "label"
-    g1.satellite_edit_mode["top"] = True
+    g1.satellite_settings["top"].edit_mode = True
 
-    assert g2.satellite_visibility["left"] is False
+    assert g2.satellite_settings["left"].visible is False
     assert g2.satellite_content["right"] is None
-    assert g2.satellite_edit_mode["top"] is False
+    assert g2.satellite_settings["top"].edit_mode is False
