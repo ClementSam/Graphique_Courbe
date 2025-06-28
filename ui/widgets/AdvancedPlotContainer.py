@@ -20,8 +20,7 @@ class AdvancedPlotContainer(QtWidgets.QWidget):
             ["top", "left", "right", "bottom"],
             [self.top_box, self.left_box, self.right_box, self.bottom_box],
         ):
-            # Use no layout so that child widgets can be positioned freely
-            box.setLayout(None)
+            # Keep the widgets without a layout so children can be positioned freely
             logger.debug(
                 f"[INIT] Zone {box_name}_box initialisée sans layout pour positionnement absolu"
             )
