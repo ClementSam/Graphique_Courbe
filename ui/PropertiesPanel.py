@@ -5,6 +5,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from ui.widgets import BitGroupWidget
 from signal_bus import signal_bus
 from core.utils import generate_random_color
+from core import SatelliteObjectData
 import logging
 
 logger = logging.getLogger(__name__)
@@ -317,6 +318,16 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 )
             )
 
+        # Add satellite object buttons
+        self.add_zone_btn.clicked.connect(self._add_zone_item)
+        for zone, btn in {
+            "left": self.satellite_left_add_btn,
+            "right": self.satellite_right_add_btn,
+            "top": self.satellite_top_add_btn,
+            "bottom": self.satellite_bottom_add_btn,
+        }.items():
+            btn.clicked.connect(lambda _, z=zone: self._add_satellite_object(z))
+
         signal_bus.graph_updated.connect(self.update_mode_tab)
         self.update_mode_tab()
 
@@ -399,7 +410,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addLayout(ylayout)
 
         # Satellite zones
-        def create_satellite_group(title):
+        def create_satellite_group(title, zone):
             group = QtWidgets.QGroupBox(title)
             v = QtWidgets.QVBoxLayout(group)
             checkbox = QtWidgets.QCheckBox("Afficher")
@@ -410,6 +421,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             def toggle(enabled):
                 color_btn.setEnabled(enabled)
                 size_spin.setEnabled(enabled)
+                table.setEnabled(enabled)
+                add_btn.setEnabled(enabled)
 
             checkbox.toggled.connect(toggle)
             v.addWidget(checkbox)
@@ -417,15 +430,35 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             h.addWidget(color_btn)
             h.addWidget(size_spin)
             v.addLayout(h)
+
+            table = QtWidgets.QTableWidget(0, 7)
+            table.setHorizontalHeaderLabels([
+                "Type",
+                "Nom",
+                "Param",
+                "X",
+                "Y",
+                "Calque",
+                "",
+            ])
+            add_btn = QtWidgets.QPushButton("Ajouter")
+            v.addWidget(table)
+            v.addWidget(add_btn)
+
+            table.setEnabled(False)
+            add_btn.setEnabled(False)
             toggle(False)
-            return group, checkbox, color_btn, size_spin
+
+            return group, checkbox, color_btn, size_spin, table, add_btn
 
         (
             self.sat_left_group,
             self.satellite_left_checkbox,
             self.satellite_left_color,
             self.satellite_left_size,
-        ) = create_satellite_group("Zone gauche")
+            self.satellite_left_table,
+            self.satellite_left_add_btn,
+        ) = create_satellite_group("Zone gauche", "left")
         layout.addWidget(self.sat_left_group)
 
         (
@@ -433,7 +466,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_right_checkbox,
             self.satellite_right_color,
             self.satellite_right_size,
-        ) = create_satellite_group("Zone droite")
+            self.satellite_right_table,
+            self.satellite_right_add_btn,
+        ) = create_satellite_group("Zone droite", "right")
         layout.addWidget(self.sat_right_group)
 
         (
@@ -441,7 +476,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_top_checkbox,
             self.satellite_top_color,
             self.satellite_top_size,
-        ) = create_satellite_group("Zone haut")
+            self.satellite_top_table,
+            self.satellite_top_add_btn,
+        ) = create_satellite_group("Zone haut", "top")
         layout.addWidget(self.sat_top_group)
 
         (
@@ -449,7 +486,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self.satellite_bottom_checkbox,
             self.satellite_bottom_color,
             self.satellite_bottom_size,
-        ) = create_satellite_group("Zone bas")
+            self.satellite_bottom_table,
+            self.satellite_bottom_add_btn,
+        ) = create_satellite_group("Zone bas", "bottom")
         layout.addWidget(self.sat_bottom_group)
 
         # Palette no longer used
@@ -720,6 +759,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             self._call_graph_controller(self.controller.add_zone, zone)
         self.update_graph_ui()
 
+    def _add_satellite_object(self, zone: str):
+        obj = SatelliteObjectData(obj_type="text", name="Objet")
+        if self.controller:
+            self._call_graph_controller(
+                self.controller.add_satellite_object, zone, obj
+            )
+        self.update_graph_ui()
+
     def _create_zone_row(self, row: int, zone: dict):
         """Insert a row describing *zone* and setup widgets."""
         self.zone_table.insertRow(row)
@@ -750,6 +797,128 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         btn = QtWidgets.QPushButton("Supprimer")
         btn.clicked.connect(lambda _, r=row: self._remove_zone_row(r))
         self.zone_table.setCellWidget(row, 3, btn)
+
+    # ------------------------------------------------------------------
+    # Satellite objects helpers
+    # ------------------------------------------------------------------
+    def _create_satellite_row(self, zone: str, row: int, obj: SatelliteObjectData):
+        table = self._get_sat_table(zone)
+        if table is None:
+            return
+        table.insertRow(row)
+
+        type_combo = QtWidgets.QComboBox()
+        for t in ["text", "button", "image"]:
+            type_combo.addItem(t.capitalize(), t)
+        idx = type_combo.findData(obj.obj_type)
+        if idx != -1:
+            type_combo.setCurrentIndex(idx)
+        type_combo.currentIndexChanged.connect(
+            lambda _, z=zone, r=row: self._update_sat_row(z, r)
+        )
+        table.setCellWidget(row, 0, type_combo)
+
+        name_edit = QtWidgets.QLineEdit(obj.name)
+        name_edit.editingFinished.connect(
+            lambda z=zone, r=row: self._update_sat_row(z, r)
+        )
+        table.setCellWidget(row, 1, name_edit)
+
+        param_edit = QtWidgets.QLineEdit(obj.config.get("value", ""))
+        param_edit.editingFinished.connect(
+            lambda z=zone, r=row: self._update_sat_row(z, r)
+        )
+        table.setCellWidget(row, 2, param_edit)
+
+        spin_x = QtWidgets.QSpinBox()
+        spin_x.setRange(-9999, 9999)
+        spin_x.setValue(obj.x)
+        spin_x.valueChanged.connect(
+            lambda _, z=zone, r=row: self._update_sat_row(z, r)
+        )
+        table.setCellWidget(row, 3, spin_x)
+
+        spin_y = QtWidgets.QSpinBox()
+        spin_y.setRange(-9999, 9999)
+        spin_y.setValue(obj.y)
+        spin_y.valueChanged.connect(
+            lambda _, z=zone, r=row: self._update_sat_row(z, r)
+        )
+        table.setCellWidget(row, 4, spin_y)
+
+        btns = QtWidgets.QWidget()
+        h = QtWidgets.QHBoxLayout(btns)
+        h.setContentsMargins(0, 0, 0, 0)
+        up_btn = QtWidgets.QToolButton()
+        up_btn.setText("▲")
+        down_btn = QtWidgets.QToolButton()
+        down_btn.setText("▼")
+        top_btn = QtWidgets.QToolButton()
+        top_btn.setText("⤒")
+        bottom_btn = QtWidgets.QToolButton()
+        bottom_btn.setText("⤓")
+        for b in (up_btn, down_btn, top_btn, bottom_btn):
+            h.addWidget(b)
+            b.setFixedWidth(18)
+
+        up_btn.clicked.connect(lambda _, z=zone, r=row: self._move_sat_row(z, r, r-1))
+        down_btn.clicked.connect(lambda _, z=zone, r=row: self._move_sat_row(z, r, r+1))
+        top_btn.clicked.connect(lambda _, z=zone, r=row: self._move_sat_row(z, r, 0))
+        bottom_btn.clicked.connect(
+            lambda _, z=zone, r=row: self._move_sat_row(z, r, 1e9)
+        )
+        table.setCellWidget(row, 5, btns)
+
+        del_btn = QtWidgets.QPushButton("✖")
+        del_btn.clicked.connect(lambda _, z=zone, r=row: self._remove_sat_row(z, r))
+        table.setCellWidget(row, 6, del_btn)
+
+    def _get_sat_table(self, zone: str):
+        return {
+            "left": self.satellite_left_table,
+            "right": self.satellite_right_table,
+            "top": self.satellite_top_table,
+            "bottom": self.satellite_bottom_table,
+        }.get(zone)
+
+    def _update_sat_row(self, zone: str, row: int):
+        table = self._get_sat_table(zone)
+        if table is None:
+            return
+        type_combo = table.cellWidget(row, 0)
+        name_edit = table.cellWidget(row, 1)
+        param_edit = table.cellWidget(row, 2)
+        spin_x = table.cellWidget(row, 3)
+        spin_y = table.cellWidget(row, 4)
+        if not all(
+            isinstance(w, QtWidgets.QWidget) for w in [type_combo, name_edit, param_edit, spin_x, spin_y]
+        ):
+            return
+        obj = SatelliteObjectData(
+            obj_type=type_combo.currentData(),
+            name=name_edit.text(),
+            config={"value": param_edit.text()},
+            x=spin_x.value(),
+            y=spin_y.value(),
+        )
+        if self.controller:
+            self._call_graph_controller(
+                self.controller.update_satellite_object, zone, row, obj
+            )
+
+    def _remove_sat_row(self, zone: str, row: int):
+        if self.controller:
+            self._call_graph_controller(
+                self.controller.remove_satellite_object, zone, row
+            )
+        self.update_graph_ui()
+
+    def _move_sat_row(self, zone: str, row: int, new_index: int):
+        if self.controller:
+            self._call_graph_controller(
+                self.controller.move_satellite_object, zone, row, new_index
+            )
+        self.update_graph_ui()
 
     def _on_zone_type_changed(self, row: int):
         combo = self.zone_table.cellWidget(row, 0)
@@ -949,6 +1118,19 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             spin.blockSignals(True)
             spin.setValue(graph.satellite_settings[zone].size)
             spin.blockSignals(False)
+
+        # Satellite objects tables
+        for zone, table in {
+            "left": self.satellite_left_table,
+            "right": self.satellite_right_table,
+            "top": self.satellite_top_table,
+            "bottom": self.satellite_bottom_table,
+        }.items():
+            table.blockSignals(True)
+            table.setRowCount(0)
+            for idx, obj in enumerate(graph.satellite_objects.get(zone, [])):
+                self._create_satellite_row(zone, idx, obj)
+            table.blockSignals(False)
 
 
 

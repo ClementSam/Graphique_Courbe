@@ -595,6 +595,55 @@ class GraphService:
         if 0 <= index < len(graph.zones):
             graph.zones.pop(index)
 
+    # ------------------------------------------------------------------
+    # Satellite objects management
+    # ------------------------------------------------------------------
+    def add_satellite_object(self, zone: str, obj):
+        """Add an object description to the given satellite zone."""
+        logger.debug(f"🛰 [GraphService.add_satellite_object] zone={zone} obj={obj}")
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_objects:
+            graph.satellite_objects[zone].append(obj)
+
+    def update_satellite_object(self, zone: str, index: int, obj):
+        """Replace an object at *index* in the given zone."""
+        logger.debug(
+            f"🛰 [GraphService.update_satellite_object] zone={zone} index={index} obj={obj}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_objects and 0 <= index < len(graph.satellite_objects[zone]):
+            graph.satellite_objects[zone][index] = obj
+
+    def remove_satellite_object(self, zone: str, index: int):
+        """Remove object at *index* from the given zone."""
+        logger.debug(
+            f"🛰 [GraphService.remove_satellite_object] zone={zone} index={index}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_objects and 0 <= index < len(graph.satellite_objects[zone]):
+            graph.satellite_objects[zone].pop(index)
+
+    def move_satellite_object(self, zone: str, index: int, new_index: int):
+        """Move object to *new_index* in the list for the zone."""
+        logger.debug(
+            f"🛰 [GraphService.move_satellite_object] zone={zone} index={index} → {new_index}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        objs = graph.satellite_objects.get(zone)
+        if objs is None or not (0 <= index < len(objs)):
+            return
+        obj = objs.pop(index)
+        new_index = max(0, min(new_index, len(objs)))
+        objs.insert(new_index, obj)
+
     def apply_mode(self, graph_name: str, mode: str):
         """Apply a predefined configuration to the given graph."""
         logger.debug(f"🎛 [GraphService.apply_mode] graph={graph_name} mode={mode}")

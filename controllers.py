@@ -240,6 +240,41 @@ class GraphController:
         self.service.remove_zone(index)
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
+
+    # --------------------------------------------------------------
+    # Satellite objects
+    # --------------------------------------------------------------
+    def add_satellite_object(self, zone: str, obj):
+        logger.debug(
+            f"🛰 [GraphController.add_satellite_object] zone={zone} obj={obj}"
+        )
+        self.service.add_satellite_object(zone, obj)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def update_satellite_object(self, zone: str, index: int, obj):
+        logger.debug(
+            f"🛰 [GraphController.update_satellite_object] zone={zone} index={index} obj={obj}"
+        )
+        self.service.update_satellite_object(zone, index, obj)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def remove_satellite_object(self, zone: str, index: int):
+        logger.debug(
+            f"🛰 [GraphController.remove_satellite_object] zone={zone} index={index}"
+        )
+        self.service.remove_satellite_object(zone, index)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def move_satellite_object(self, zone: str, index: int, new_index: int):
+        logger.debug(
+            f"🛰 [GraphController.move_satellite_object] zone={zone} {index}->{new_index}"
+        )
+        self.service.move_satellite_object(zone, index, new_index)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
     
     def set_graph_visible(self, graph_name: str, visible: bool):
         logger.debug(f"👁 [GraphController.set_graph_visible] {graph_name} → {visible}")
