@@ -152,6 +152,27 @@ def test_set_satellite_items(service):
     assert state.current_graph.satellite_settings["right"]["items"] == new_items
 
 
+def test_remove_satellite_item(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    svc.set_satellite_items(
+        "left",
+        [
+            {"type": "text", "text": "a"},
+            {"type": "text", "text": "b"},
+        ],
+    )
+
+    svc.remove_satellite_item("left", 0)
+
+    items = state.current_graph.satellite_settings["left"]["items"]
+    assert len(items) == 1
+    assert items[0]["text"] == "b"
+
+
 def test_add_zone(service):
     svc, state, _ = service
     svc.add_graph()

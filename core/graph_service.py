@@ -578,6 +578,19 @@ class GraphService:
         if zone in graph.satellite_settings:
             graph.satellite_settings[zone]["items"].append(item)
 
+    def remove_satellite_item(self, zone: str, index: int):
+        """Remove an item from a satellite zone."""
+        logger.debug(
+            f"🛰 [GraphService.remove_satellite_item] zone={zone} index={index}"
+        )
+        graph = self.state.current_graph
+        if not graph:
+            return
+        if zone in graph.satellite_settings:
+            items = graph.satellite_settings[zone]["items"]
+            if 0 <= index < len(items):
+                items.pop(index)
+
     def set_satellite_items(self, zone: str, items: list):
         """Replace the list of items for a satellite zone."""
         logger.debug(
