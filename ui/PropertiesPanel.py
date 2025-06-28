@@ -431,13 +431,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             h.addWidget(size_spin)
             v.addLayout(h)
 
-            table = QtWidgets.QTableWidget(0, 7)
+            table = QtWidgets.QTableWidget(0, 8)
             table.setHorizontalHeaderLabels([
                 "Type",
                 "Nom",
                 "Param",
                 "X",
                 "Y",
+                "Ancre",
                 "Calque",
                 "",
             ])
@@ -760,7 +761,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.update_graph_ui()
 
     def _add_satellite_object(self, zone: str):
-        obj = SatelliteObjectData(obj_type="text", name="Objet")
+        obj = SatelliteObjectData(obj_type="text", name="Objet", anchor="grid")
         if self.controller:
             self._call_graph_controller(
                 self.controller.add_satellite_object, zone, obj
@@ -846,6 +847,29 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         )
         table.setCellWidget(row, 4, spin_y)
 
+        anchor_combo = QtWidgets.QComboBox()
+        options = [
+            "grid",
+            "top-left",
+            "top",
+            "top-right",
+            "left",
+            "center",
+            "right",
+            "bottom-left",
+            "bottom",
+            "bottom-right",
+        ]
+        for opt in options:
+            anchor_combo.addItem(opt, opt)
+        idx = anchor_combo.findData(getattr(obj, "anchor", "grid"))
+        if idx != -1:
+            anchor_combo.setCurrentIndex(idx)
+        anchor_combo.currentIndexChanged.connect(
+            lambda _, z=zone, r=row: self._update_sat_row(z, r)
+        )
+        table.setCellWidget(row, 5, anchor_combo)
+
         btns = QtWidgets.QWidget()
         h = QtWidgets.QHBoxLayout(btns)
         h.setContentsMargins(0, 0, 0, 0)
@@ -867,11 +891,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         bottom_btn.clicked.connect(
             lambda _, z=zone, r=row: self._move_sat_row(z, r, 1e9)
         )
-        table.setCellWidget(row, 5, btns)
+        table.setCellWidget(row, 6, btns)
 
         del_btn = QtWidgets.QPushButton("✖")
         del_btn.clicked.connect(lambda _, z=zone, r=row: self._remove_sat_row(z, r))
-        table.setCellWidget(row, 6, del_btn)
+        table.setCellWidget(row, 7, del_btn)
 
     def _get_sat_table(self, zone: str):
         return {
@@ -890,8 +914,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         param_edit = table.cellWidget(row, 2)
         spin_x = table.cellWidget(row, 3)
         spin_y = table.cellWidget(row, 4)
+        anchor_combo = table.cellWidget(row, 5)
         if not all(
-            isinstance(w, QtWidgets.QWidget) for w in [type_combo, name_edit, param_edit, spin_x, spin_y]
+            isinstance(w, QtWidgets.QWidget)
+            for w in [type_combo, name_edit, param_edit, spin_x, spin_y, anchor_combo]
         ):
             return
         obj = SatelliteObjectData(
@@ -900,6 +926,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             config={"value": param_edit.text()},
             x=spin_x.value(),
             y=spin_y.value(),
+            anchor=anchor_combo.currentData() if isinstance(anchor_combo, QtWidgets.QComboBox) else "grid",
         )
         if self.controller:
             self._call_graph_controller(
