@@ -18,7 +18,7 @@ class AdvancedPlotContainer(QtWidgets.QWidget):
 
         for box_name, box in zip(["top", "left", "right", "bottom"],
                                  [self.top_box, self.left_box, self.right_box, self.bottom_box]):
-            layout = QtWidgets.QVBoxLayout()
+            layout = QtWidgets.QGridLayout()
             layout.setContentsMargins(0, 0, 0, 0)
             layout.setSpacing(2)
             box.setLayout(layout)
