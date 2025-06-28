@@ -431,17 +431,21 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             h.addWidget(size_spin)
             v.addLayout(h)
 
-            table = QtWidgets.QTableWidget(0, 8)
-            table.setHorizontalHeaderLabels([
-                "Type",
-                "Nom",
-                "Param",
-                "X",
-                "Y",
-                "Ancre",
-                "Calque",
-                "",
-            ])
+            table = QtWidgets.QTableWidget(0, 10)
+            table.setHorizontalHeaderLabels(
+                [
+                    "Type",
+                    "Nom",
+                    "Param",
+                    "Largeur",
+                    "Hauteur",
+                    "X",
+                    "Y",
+                    "Ancre",
+                    "Calque",
+                    "",
+                ]
+            )
             add_btn = QtWidgets.QPushButton("Ajouter")
             v.addWidget(table)
             v.addWidget(add_btn)
@@ -830,13 +834,30 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         )
         table.setCellWidget(row, 2, param_widget)
 
+        spin_w = QtWidgets.QSpinBox()
+        spin_w.setRange(1, 1000)
+        spin_w.setValue(int(obj.config.get("width", 24)))
+        spin_w.valueChanged.connect(
+            lambda _, z=zone, r=row: self._update_sat_row(z, r)
+        )
+        table.setCellWidget(row, 3, spin_w)
+
+        spin_h = QtWidgets.QSpinBox()
+        spin_h.setRange(1, 1000)
+        spin_h.setValue(int(obj.config.get("height", 24)))
+        spin_h.valueChanged.connect(
+            lambda _, z=zone, r=row: self._update_sat_row(z, r)
+        )
+        spin_h.setEnabled(obj.obj_type != "text")
+        table.setCellWidget(row, 4, spin_h)
+
         spin_x = QtWidgets.QSpinBox()
         spin_x.setRange(-9999, 9999)
         spin_x.setValue(obj.x)
         spin_x.valueChanged.connect(
             lambda _, z=zone, r=row: self._update_sat_row(z, r)
         )
-        table.setCellWidget(row, 3, spin_x)
+        table.setCellWidget(row, 5, spin_x)
 
         spin_y = QtWidgets.QSpinBox()
         spin_y.setRange(-9999, 9999)
@@ -844,7 +865,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         spin_y.valueChanged.connect(
             lambda _, z=zone, r=row: self._update_sat_row(z, r)
         )
-        table.setCellWidget(row, 4, spin_y)
+        table.setCellWidget(row, 6, spin_y)
 
         anchor_combo = QtWidgets.QComboBox()
         options = [
@@ -867,7 +888,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         anchor_combo.currentIndexChanged.connect(
             lambda _, z=zone, r=row: self._update_sat_row(z, r)
         )
-        table.setCellWidget(row, 5, anchor_combo)
+        table.setCellWidget(row, 7, anchor_combo)
 
         btns = QtWidgets.QWidget()
         h = QtWidgets.QHBoxLayout(btns)
@@ -890,11 +911,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         bottom_btn.clicked.connect(
             lambda _, z=zone, r=row: self._move_sat_row(z, r, 1e9)
         )
-        table.setCellWidget(row, 6, btns)
+        table.setCellWidget(row, 8, btns)
 
         del_btn = QtWidgets.QPushButton("✖")
         del_btn.clicked.connect(lambda _, z=zone, r=row: self._remove_sat_row(z, r))
-        table.setCellWidget(row, 7, del_btn)
+        table.setCellWidget(row, 9, del_btn)
 
     def _create_sat_param_widget(self, zone: str, row: int, obj_type: str, value: str):
         if obj_type == "image":
@@ -948,6 +969,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             val = ""
         new_widget = self._create_sat_param_widget(zone, row, combo.currentData(), val)
         table.setCellWidget(row, 2, new_widget)
+        spin_h = table.cellWidget(row, 4)
+        if isinstance(spin_h, QtWidgets.QSpinBox):
+            spin_h.setEnabled(combo.currentData() != "text")
         self._update_sat_row(zone, row)
 
     def _get_sat_table(self, zone: str):
@@ -965,12 +989,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         type_combo = table.cellWidget(row, 0)
         name_edit = table.cellWidget(row, 1)
         param_edit = table.cellWidget(row, 2)
-        spin_x = table.cellWidget(row, 3)
-        spin_y = table.cellWidget(row, 4)
-        anchor_combo = table.cellWidget(row, 5)
+        spin_w = table.cellWidget(row, 3)
+        spin_h = table.cellWidget(row, 4)
+        spin_x = table.cellWidget(row, 5)
+        spin_y = table.cellWidget(row, 6)
+        anchor_combo = table.cellWidget(row, 7)
         if not all(
             isinstance(w, QtWidgets.QWidget)
-            for w in [type_combo, name_edit, param_edit, spin_x, spin_y, anchor_combo]
+            for w in [type_combo, name_edit, param_edit, spin_w, spin_h, spin_x, spin_y, anchor_combo]
         ):
             return
         if isinstance(param_edit, QtWidgets.QLineEdit):
@@ -983,7 +1009,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         obj = SatelliteObjectData(
             obj_type=type_combo.currentData(),
             name=name_edit.text(),
-            config={"value": param_value},
+            config={
+                "value": param_value,
+                "width": int(spin_w.value()),
+                "height": int(spin_h.value()),
+            },
             x=spin_x.value(),
             y=spin_y.value(),
             anchor=anchor_combo.currentData() if isinstance(anchor_combo, QtWidgets.QComboBox) else "grid",

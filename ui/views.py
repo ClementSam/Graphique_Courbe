@@ -340,6 +340,8 @@ class MyPlotView:
             if path:
                 pix = QtGui.QPixmap(path)
                 if not pix.isNull():
-                    label.setPixmap(pix)
+                    w = int(obj.config.get("width", pix.width()))
+                    h = int(obj.config.get("height", pix.height()))
+                    label.setPixmap(pix.scaled(w, h))
             return label
         return QtWidgets.QLabel(obj.name)

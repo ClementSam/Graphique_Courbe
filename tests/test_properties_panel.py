@@ -8,7 +8,7 @@ from PyQt5 import QtWidgets
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from core.app_state import AppState
-from core.models import GraphData, CurveData
+from core.models import GraphData, CurveData, SatelliteObjectData
 from ui.PropertiesPanel import PropertiesPanel
 
 
@@ -38,3 +38,18 @@ def test_update_curve_ui_resets_when_no_selection():
     assert not panel.downsampling_ratio_input.isEnabled()
     assert not panel.downsampling_apply_btn.isEnabled()
     assert panel.time_offset_input.value() == 0.0
+
+
+def test_text_height_spin_disabled():
+    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    panel = PropertiesPanel()
+    panel.satellite_left_checkbox.setChecked(True)
+    panel._create_satellite_row(
+        "left",
+        0,
+        SatelliteObjectData(obj_type="text", name="t"),
+    )
+    table = panel.satellite_left_table
+    spin_h = table.cellWidget(0, 4)
+    assert isinstance(spin_h, QtWidgets.QSpinBox)
+    assert not spin_h.isEnabled()
