@@ -282,15 +282,18 @@ class MyPlotView:
 
             box.setStyleSheet(f"background-color: {color};")
 
-            # Remove previous widgets
-            for child in box.findChildren(QtWidgets.QWidget):
-                child.deleteLater()
+            layout = box.layout()
+            while layout.count():
+                item = layout.takeAt(0)
+                if item and item.widget():
+                    item.widget().deleteLater()
 
             for obj in self.graph_data.satellite_objects.get(zone, []):
                 widget = self._create_satellite_widget(obj)
-                widget.setParent(box)
-                widget.move(obj.x, obj.y)
-                widget.show()
+                if layout is None:
+                    widget.setParent(box)
+                else:
+                    layout.addWidget(widget)
 
     def _create_satellite_widget(self, obj):
         if obj.obj_type == "text":
