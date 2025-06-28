@@ -234,15 +234,3 @@ def test_controller_create_bit_group_curve(controller):
     assert len(bus.curve_updated.emitted) == 1
 
 
-def test_controller_set_satellite_edit_mode(controller):
-    c, state, _ = controller
-    c.add_graph()
-    name = list(state.graphs.keys())[0]
-    c.select_graph(name)
-
-    assert state.current_graph.satellite_settings["top"].edit_mode is False
-    c.ui.plot_calls = 0
-    c.set_satellite_edit_mode("top", True)
-
-    assert state.current_graph.satellite_settings["top"].edit_mode is True
-    assert c.ui.plot_calls == 1

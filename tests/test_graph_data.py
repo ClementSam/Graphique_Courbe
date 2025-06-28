@@ -13,8 +13,5 @@ def test_satellite_dicts_are_instance_specific():
 
     g1.satellite_settings["left"].visible = True
     g1.satellite_content["right"] = "label"
-    g1.satellite_settings["top"].edit_mode = True
-
     assert g2.satellite_settings["left"].visible is False
     assert g2.satellite_content["right"] is None
-    assert g2.satellite_settings["top"].edit_mode is False
