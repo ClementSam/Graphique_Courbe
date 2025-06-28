@@ -292,8 +292,14 @@ class MyPlotView:
                 widget = self._create_satellite_widget(obj)
                 if layout is None:
                     widget.setParent(box)
+                    widget.move(obj.x, obj.y)
                 else:
-                    layout.addWidget(widget)
+                    if isinstance(layout, QtWidgets.QGridLayout):
+                        row = max(0, obj.y)
+                        col = max(0, obj.x)
+                        layout.addWidget(widget, row, col)
+                    else:
+                        layout.addWidget(widget)
 
     def _create_satellite_widget(self, obj):
         if obj.obj_type == "text":
