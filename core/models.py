@@ -89,6 +89,8 @@ class SatelliteObjectData:
     x: int = 0
     y: int = 0
     anchor: str = "grid"  # "grid" uses layout; otherwise free positioning
+    width: int = 24
+    height: int = 24
 
 @dataclass
 class GraphData:
