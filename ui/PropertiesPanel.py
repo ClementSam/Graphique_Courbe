@@ -815,7 +815,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         if idx != -1:
             type_combo.setCurrentIndex(idx)
         type_combo.currentIndexChanged.connect(
-            lambda _, z=zone, r=row: self._update_sat_row(z, r)
+            lambda _, z=zone, r=row: self._on_sat_type_changed(z, r)
         )
         table.setCellWidget(row, 0, type_combo)
 
@@ -825,11 +825,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         )
         table.setCellWidget(row, 1, name_edit)
 
-        param_edit = QtWidgets.QLineEdit(obj.config.get("value", ""))
-        param_edit.editingFinished.connect(
-            lambda z=zone, r=row: self._update_sat_row(z, r)
+        param_widget = self._create_sat_param_widget(
+            zone, row, obj.obj_type, obj.config.get("value", "")
         )
-        table.setCellWidget(row, 2, param_edit)
+        table.setCellWidget(row, 2, param_widget)
 
         spin_x = QtWidgets.QSpinBox()
         spin_x.setRange(-9999, 9999)
@@ -897,6 +896,60 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         del_btn.clicked.connect(lambda _, z=zone, r=row: self._remove_sat_row(z, r))
         table.setCellWidget(row, 7, del_btn)
 
+    def _create_sat_param_widget(self, zone: str, row: int, obj_type: str, value: str):
+        if obj_type == "image":
+            cont = QtWidgets.QWidget()
+            lay = QtWidgets.QHBoxLayout(cont)
+            lay.setContentsMargins(0, 0, 0, 0)
+            edit = QtWidgets.QLineEdit(value)
+            btn = QtWidgets.QToolButton()
+            btn.setText("…")
+            btn.setFixedWidth(24)
+            btn.clicked.connect(
+                lambda _, e=edit, z=zone, r=row: self._choose_image_file(e, z, r)
+            )
+            edit.editingFinished.connect(
+                lambda z=zone, r=row: self._update_sat_row(z, r)
+            )
+            lay.addWidget(edit)
+            lay.addWidget(btn)
+            cont.line_edit = edit
+            return cont
+        edit = QtWidgets.QLineEdit(value)
+        edit.editingFinished.connect(
+            lambda z=zone, r=row: self._update_sat_row(z, r)
+        )
+        return edit
+
+    def _choose_image_file(self, line_edit: QtWidgets.QLineEdit, zone: str, row: int):
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            "Sélectionner une image",
+            "",
+            "Images (*.png *.jpg *.jpeg *.bmp *.gif);;Tous les fichiers (*)",
+        )
+        if path:
+            line_edit.setText(path)
+            self._update_sat_row(zone, row)
+
+    def _on_sat_type_changed(self, zone: str, row: int):
+        table = self._get_sat_table(zone)
+        if table is None:
+            return
+        combo = table.cellWidget(row, 0)
+        current = table.cellWidget(row, 2)
+        if not isinstance(combo, QtWidgets.QComboBox):
+            return
+        if isinstance(current, QtWidgets.QLineEdit):
+            val = current.text()
+        elif hasattr(current, "line_edit"):
+            val = current.line_edit.text()
+        else:
+            val = ""
+        new_widget = self._create_sat_param_widget(zone, row, combo.currentData(), val)
+        table.setCellWidget(row, 2, new_widget)
+        self._update_sat_row(zone, row)
+
     def _get_sat_table(self, zone: str):
         return {
             "left": self.satellite_left_table,
@@ -920,10 +973,17 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             for w in [type_combo, name_edit, param_edit, spin_x, spin_y, anchor_combo]
         ):
             return
+        if isinstance(param_edit, QtWidgets.QLineEdit):
+            param_value = param_edit.text()
+        elif hasattr(param_edit, "line_edit"):
+            param_value = param_edit.line_edit.text()
+        else:
+            param_value = ""
+
         obj = SatelliteObjectData(
             obj_type=type_combo.currentData(),
             name=name_edit.text(),
-            config={"value": param_edit.text()},
+            config={"value": param_value},
             x=spin_x.value(),
             y=spin_y.value(),
             anchor=anchor_combo.currentData() if isinstance(anchor_combo, QtWidgets.QComboBox) else "grid",
