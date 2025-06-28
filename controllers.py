@@ -24,6 +24,12 @@ class GraphController:
             if properties_panel is not None:
                 self.ui.properties_panel = properties_panel
 
+        if properties_panel is not None:
+            try:
+                properties_panel.set_controller(self)
+            except Exception:
+                pass
+
     def load_project(self, graphs: dict):
         logger.debug("📂 [GraphController.load_project] Chargement du projet...")
         logger.debug(f"📊 [GraphController.load_project] Graphiques reçus : {list(graphs.keys())}")
@@ -190,21 +196,14 @@ class GraphController:
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
 
-    def set_satellite_content(self, zone: str, content: str | None):
-        logger.debug(
-            f"🛰 [GraphController.set_satellite_content] zone={zone} content={content}"
-        )
-        self.service.set_satellite_content(zone, content)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
 
     def set_satellite_visible(self, zone: str, visible: bool):
         logger.debug(
             f"🛰 [GraphController.set_satellite_visible] zone={zone} visible={visible}"
         )
         self.service.set_satellite_visible(zone, visible)
-        signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
+        signal_bus.graph_updated.emit()
 
     def set_satellite_color(self, zone: str, color: str):
         logger.debug(
@@ -252,6 +251,7 @@ class GraphController:
         )
         self.service.set_satellite_edit_mode(zone, enabled)
         self.ui.refresh_plot()
+        signal_bus.graph_updated.emit()
 
     def add_zone(self, zone: dict):
         logger.debug(f"🗒 [GraphController.add_zone] zone={zone}")

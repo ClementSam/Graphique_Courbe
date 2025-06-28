@@ -104,14 +104,6 @@ class GraphData:
         }
     )
 
-    satellite_content: dict[str, Optional[str]] = field(
-        default_factory=lambda: {
-            "left": None,
-            "right": None,
-            "top": None,
-            "bottom": None,
-        }
-    )
 
     satellite_settings: dict[str, dict] = field(
         default_factory=lambda: {

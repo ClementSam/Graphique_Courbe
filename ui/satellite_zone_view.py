@@ -144,7 +144,7 @@ class SatelliteZoneView(QtWidgets.QGraphicsView):
     def dropEvent(self, event):
         if self._editable and event.mimeData().hasText():
             typ = event.mimeData().text()
-            pos = self.mapToScene(event.pos())
+            pos = event.pos()
             self.create_item(typ, pos)
             # Immediately notify listeners so the underlying graph data gets
             # updated when new items are dropped.
