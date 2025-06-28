@@ -298,7 +298,8 @@ class MyPlotView:
                     item.widget().deleteLater()
 
             edit_mode = settings.edit_mode if settings else False
-            if old_view and edit_mode and settings:
+            # Persist current item positions if the previous view was editable
+            if old_view and getattr(old_view, "_editable", False) and settings:
                 settings.items = [
                     SatelliteItem(**it) for it in old_view.get_items()
                 ]
