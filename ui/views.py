@@ -283,23 +283,45 @@ class MyPlotView:
             box.setStyleSheet(f"background-color: {color};")
 
             layout = box.layout()
-            while layout.count():
-                item = layout.takeAt(0)
-                if item and item.widget():
-                    item.widget().deleteLater()
+            if layout is not None:
+                while layout.count():
+                    item = layout.takeAt(0)
+                    if item and item.widget():
+                        item.widget().deleteLater()
+            for child in box.findChildren(QtWidgets.QWidget):
+                if layout is None or layout.indexOf(child) == -1:
+                    child.deleteLater()
 
             for obj in self.graph_data.satellite_objects.get(zone, []):
                 widget = self._create_satellite_widget(obj)
-                if layout is None:
-                    widget.setParent(box)
-                    widget.move(obj.x, obj.y)
-                else:
+                anchor = getattr(obj, "anchor", "grid")
+                if anchor == "grid" and layout is not None:
                     if isinstance(layout, QtWidgets.QGridLayout):
                         row = max(0, obj.y)
                         col = max(0, obj.x)
                         layout.addWidget(widget, row, col)
                     else:
                         layout.addWidget(widget)
+                else:
+                    widget.setParent(box)
+                    zone_w = box.width()
+                    zone_h = box.height()
+                    anchor_map = {
+                        "top-left": (0, 0),
+                        "top": (0.5, 0),
+                        "top-right": (1, 0),
+                        "left": (0, 0.5),
+                        "center": (0.5, 0.5),
+                        "right": (1, 0.5),
+                        "bottom-left": (0, 1),
+                        "bottom": (0.5, 1),
+                        "bottom-right": (1, 1),
+                    }
+                    ax, ay = anchor_map.get(anchor, (0, 0))
+                    x = int(ax * zone_w) + obj.x
+                    y = int(ay * zone_h) + obj.y
+                    widget.move(x, y)
+                    widget.show()
 
     def _create_satellite_widget(self, obj):
         if obj.obj_type == "text":

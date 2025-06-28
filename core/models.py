@@ -88,6 +88,7 @@ class SatelliteObjectData:
     config: dict = field(default_factory=dict)
     x: int = 0
     y: int = 0
+    anchor: str = "grid"  # "grid" uses layout; otherwise free positioning
 
 @dataclass
 class GraphData:
