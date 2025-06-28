@@ -4,7 +4,7 @@ import types
 import importlib
 import numpy as np
 import pytest
-from core.models import CurveData
+from core.models import CurveData, SatelliteObjectData
 
 # ensure repository root on path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -268,4 +268,26 @@ def test_logic_analyzer_mode_applies_offsets(service):
     svc.apply_mode(gname, "logic_analyzer")
     assert c3.offset == 0
     assert c1.offset == 1
+
+
+def test_satellite_object_operations(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+
+    obj = SatelliteObjectData(obj_type="text", name="label")
+    svc.add_satellite_object("left", obj)
+    assert len(state.current_graph.satellite_objects["left"]) == 1
+
+    new = SatelliteObjectData(obj_type="button", name="btn")
+    svc.update_satellite_object("left", 0, new)
+    assert state.current_graph.satellite_objects["left"][0].name == "btn"
+
+    svc.add_satellite_object("left", obj)
+    svc.move_satellite_object("left", 0, 1)
+    assert state.current_graph.satellite_objects["left"][1].name == "btn"
+
+    svc.remove_satellite_object("left", 0)
+    assert len(state.current_graph.satellite_objects["left"]) == 1
 

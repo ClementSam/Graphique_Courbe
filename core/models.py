@@ -78,6 +78,17 @@ class SatelliteZoneSettings:
     size: int = 100
     visible: bool = False
 
+
+@dataclass
+class SatelliteObjectData:
+    """Description of one object placed inside a satellite zone."""
+
+    obj_type: str = "text"  # "text", "button", "image"
+    name: str = ""
+    config: dict = field(default_factory=dict)
+    x: int = 0
+    y: int = 0
+
 @dataclass
 class GraphData:
     name: str
@@ -120,6 +131,15 @@ class GraphData:
             "right": SatelliteZoneSettings(),
             "top": SatelliteZoneSettings(),
             "bottom": SatelliteZoneSettings(),
+        }
+    )
+
+    satellite_objects: dict[str, List[SatelliteObjectData]] = field(
+        default_factory=lambda: {
+            "left": [],
+            "right": [],
+            "top": [],
+            "bottom": [],
         }
     )
 

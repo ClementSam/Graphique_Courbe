@@ -287,3 +287,27 @@ class MyPlotView:
                 item = layout.takeAt(0)
                 if item and item.widget():
                     item.widget().deleteLater()
+
+            for obj in self.graph_data.satellite_objects.get(zone, []):
+                widget = self._create_satellite_widget(obj)
+                if layout is None:
+                    widget.setParent(box)
+                else:
+                    layout.addWidget(widget)
+
+    def _create_satellite_widget(self, obj):
+        if obj.obj_type == "text":
+            label = QtWidgets.QLabel(obj.config.get("value", obj.name))
+            return label
+        if obj.obj_type == "button":
+            btn = QtWidgets.QPushButton(obj.name or "Bouton")
+            return btn
+        if obj.obj_type == "image":
+            label = QtWidgets.QLabel()
+            path = obj.config.get("value")
+            if path:
+                pix = QtGui.QPixmap(path)
+                if not pix.isNull():
+                    label.setPixmap(pix)
+            return label
+        return QtWidgets.QLabel(obj.name)
