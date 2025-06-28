@@ -222,6 +222,37 @@ class GraphController:
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
 
+    def add_satellite_item(self, zone: str, item: dict):
+        logger.debug(
+            f"🛰 [GraphController.add_satellite_item] zone={zone} item={item}"
+        )
+        self.service.add_satellite_item(zone, item)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def remove_satellite_item(self, zone: str, index: int):
+        logger.debug(
+            f"🛰 [GraphController.remove_satellite_item] zone={zone} index={index}"
+        )
+        self.service.remove_satellite_item(zone, index)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_satellite_items(self, zone: str, items: list):
+        logger.debug(
+            f"🛰 [GraphController.set_satellite_items] zone={zone} items={items}"
+        )
+        self.service.set_satellite_items(zone, items)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_satellite_edit_mode(self, zone: str, enabled: bool):
+        logger.debug(
+            f"🛰 [GraphController.set_satellite_edit_mode] zone={zone} enabled={enabled}"
+        )
+        self.service.set_satellite_edit_mode(zone, enabled)
+        self.ui.refresh_plot()
+        signal_bus.graph_updated.emit()
 
     def add_zone(self, zone: dict):
         logger.debug(f"🗒 [GraphController.add_zone] zone={zone}")
