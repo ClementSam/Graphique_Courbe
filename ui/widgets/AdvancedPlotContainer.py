@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,16 +16,15 @@ class AdvancedPlotContainer(QtWidgets.QWidget):
         self.right_box = QtWidgets.QWidget()
         self.bottom_box = QtWidgets.QWidget()
 
-        for box_name, box in zip(["top", "left", "right", "bottom"],
-                                 [self.top_box, self.left_box, self.right_box, self.bottom_box]):
-            layout = QtWidgets.QVBoxLayout()
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(2)
-            box.setLayout(layout)
-            logger.debug(f"[INIT] Zone {box_name}_box initialisée avec layout {layout}")
-
-        self.left_box.layout().setAlignment(QtCore.Qt.AlignTop)
-        self.right_box.layout().setAlignment(QtCore.Qt.AlignTop)
+        for box_name, box in zip(
+            ["top", "left", "right", "bottom"],
+            [self.top_box, self.left_box, self.right_box, self.bottom_box],
+        ):
+            # Use no layout so that child widgets can be positioned freely
+            box.setLayout(None)
+            logger.debug(
+                f"[INIT] Zone {box_name}_box initialisée sans layout pour positionnement absolu"
+            )
 
         # #debug
         # label = QtWidgets.QLabel("TEST ⟵")
@@ -57,7 +56,8 @@ class AdvancedPlotContainer(QtWidgets.QWidget):
 
     def add_to_top(self, widget):
         logger.debug("[AdvancedPlotContainer.py > add_to_top()] ▶️ Entrée dans add_to_top()")
-        self.top_box.layout().addWidget(widget)
+        widget.setParent(self.top_box)
+        widget.show()
         logger.debug(f"[AdvancedPlotContainer] ➕ Widget ajouté en haut: {widget}")
 
     def add_to_left(self, widget):
@@ -71,15 +71,20 @@ class AdvancedPlotContainer(QtWidgets.QWidget):
         widget.setMinimumSize(120, 100)
         widget.setStyleSheet(widget.styleSheet() + " border: 2px dashed green;")
 
-        self.left_box.layout().addWidget(widget)
-        logger.debug(f"[AdvancedPlotContainer] 🧩 Widget inséré dans left_box → {widget}, taille: {widget.size()}, visible: {widget.isVisible()}")
+        widget.setParent(self.left_box)
+        widget.show()
+        logger.debug(
+            f"[AdvancedPlotContainer] 🧩 Widget inséré dans left_box → {widget}, taille: {widget.size()}, visible: {widget.isVisible()}"
+        )
 
     def add_to_right(self, widget):
         logger.debug("[AdvancedPlotContainer.py > add_to_right()] ▶️ Entrée dans add_to_right()")
-        self.right_box.layout().addWidget(widget)
+        widget.setParent(self.right_box)
+        widget.show()
         logger.debug(f"[AdvancedPlotContainer] ➕ Widget ajouté à droite: {widget}")
 
     def add_to_bottom(self, widget):
         logger.debug("[AdvancedPlotContainer.py > add_to_bottom()] ▶️ Entrée dans add_to_bottom()")
-        self.bottom_box.layout().addWidget(widget)
+        widget.setParent(self.bottom_box)
+        widget.show()
         logger.debug(f"[AdvancedPlotContainer] ➕ Widget ajouté en bas: {widget}")
