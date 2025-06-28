@@ -10,6 +10,7 @@ from PyQt5 import QtWidgets
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from core.app_state import AppState
+from core.models import SatelliteItem
 from ui.PropertiesPanel import PropertiesPanel
 
 class DummySignal:
@@ -69,16 +70,16 @@ def test_satellite_items_persist_after_refresh(controller):
 
     c.set_satellite_items(
         "left",
-        [{"type": "text", "text": "hello", "width": 50, "height": 20, "x": 0, "y": 0}],
+        [SatelliteItem(type="text", text="hello", width=50, height=20, x=0, y=0)],
     )
     c.set_satellite_visible("left", True)
     app.processEvents()
 
     c.ui.refresh_plot()
-    first = list(state.graphs[name].satellite_settings["left"]["items"])
+    first = list(state.graphs[name].satellite_settings["left"].items)
 
     c.ui.refresh_plot()
-    after = state.graphs[name].satellite_settings["left"]["items"]
+    after = state.graphs[name].satellite_settings["left"].items
 
     assert after == first
 

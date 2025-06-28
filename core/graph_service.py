@@ -1,7 +1,7 @@
 # core/graph_service.py
 
 from core.app_state import AppState
-from core.models import GraphData, CurveData
+from core.models import GraphData, CurveData, SatelliteItem
 from core.utils.naming import get_next_graph_name, get_unique_curve_name
 from core.utils import generate_random_color
 from typing import Optional
@@ -535,7 +535,8 @@ class GraphService:
             return
         if zone in graph.satellite_content:
             graph.satellite_content[zone] = content
-            graph.satellite_visibility[zone] = bool(content)
+            if zone in graph.satellite_settings:
+                graph.satellite_settings[zone].visible = bool(content)
 
     def set_satellite_visible(self, zone: str, visible: bool):
         logger.debug(
@@ -544,8 +545,8 @@ class GraphService:
         graph = self.state.current_graph
         if not graph:
             return
-        if zone in graph.satellite_visibility:
-            graph.satellite_visibility[zone] = visible
+        if zone in graph.satellite_settings:
+            graph.satellite_settings[zone].visible = visible
 
     def set_satellite_color(self, zone: str, color: str):
         logger.debug(
@@ -555,7 +556,7 @@ class GraphService:
         if not graph:
             return
         if zone in graph.satellite_settings:
-            graph.satellite_settings[zone]["color"] = color
+            graph.satellite_settings[zone].color = color
 
     def set_satellite_size(self, zone: str, size: int):
         logger.debug(
@@ -565,9 +566,9 @@ class GraphService:
         if not graph:
             return
         if zone in graph.satellite_settings:
-            graph.satellite_settings[zone]["size"] = size
+            graph.satellite_settings[zone].size = size
 
-    def add_satellite_item(self, zone: str, item: dict):
+    def add_satellite_item(self, zone: str, item):
         """Append an item description to a satellite zone."""
         logger.debug(
             f"🛰 [GraphService.add_satellite_item] zone={zone} item={item}"
@@ -576,7 +577,9 @@ class GraphService:
         if not graph:
             return
         if zone in graph.satellite_settings:
-            graph.satellite_settings[zone]["items"].append(item)
+            if isinstance(item, dict):
+                item = SatelliteItem(**item)
+            graph.satellite_settings[zone].items.append(item)
 
     def remove_satellite_item(self, zone: str, index: int):
         """Remove an item from a satellite zone."""
@@ -587,7 +590,7 @@ class GraphService:
         if not graph:
             return
         if zone in graph.satellite_settings:
-            items = graph.satellite_settings[zone]["items"]
+            items = graph.satellite_settings[zone].items
             if 0 <= index < len(items):
                 items.pop(index)
 
@@ -600,7 +603,8 @@ class GraphService:
         if not graph:
             return
         if zone in graph.satellite_settings:
-            graph.satellite_settings[zone]["items"] = list(items)
+            new_items = [SatelliteItem(**i) if isinstance(i, dict) else i for i in items]
+            graph.satellite_settings[zone].items = list(new_items)
 
     def set_satellite_edit_mode(self, zone: str, enabled: bool):
         """Enable or disable edit mode for a satellite zone."""
@@ -610,8 +614,8 @@ class GraphService:
         graph = self.state.current_graph
         if not graph:
             return
-        if zone in graph.satellite_edit_mode:
-            graph.satellite_edit_mode[zone] = enabled
+        if zone in graph.satellite_settings:
+            graph.satellite_settings[zone].edit_mode = enabled
 
     def add_zone(self, zone: dict):
         """Add a graphic zone description to the current graph."""

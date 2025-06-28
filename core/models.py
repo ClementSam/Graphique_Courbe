@@ -1,7 +1,7 @@
 # models.py
 
 import numpy as np
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import List, Optional
 from enum import Enum
 
@@ -68,6 +68,30 @@ class CurveData:
     def is_bit_curve(self) -> bool:
         return self.bit_index is not None
 
+
+@dataclass
+class SatelliteItem:
+    """Description of an item displayed in a satellite zone."""
+
+    type: str
+    name: str = ""
+    text: str = ""
+    width: int = 50
+    height: int = 50
+    x: int = 0
+    y: int = 0
+
+
+@dataclass
+class SatelliteZoneSettings:
+    """Visual configuration for one satellite zone."""
+
+    color: str = "#ffffff"
+    size: int = 100
+    items: List[SatelliteItem] = field(default_factory=list)
+    edit_mode: bool = False
+    visible: bool = False
+
 @dataclass
 class GraphData:
     name: str
@@ -95,15 +119,6 @@ class GraphData:
         }
     )
 
-    satellite_visibility: dict[str, bool] = field(
-        default_factory=lambda: {
-            "left": False,
-            "right": False,
-            "top": False,
-            "bottom": False,
-        }
-    )
-
     satellite_content: dict[str, Optional[str]] = field(
         default_factory=lambda: {
             "left": None,
@@ -113,21 +128,12 @@ class GraphData:
         }
     )
 
-    satellite_settings: dict[str, dict] = field(
+    satellite_settings: dict[str, SatelliteZoneSettings] = field(
         default_factory=lambda: {
-            "left": {"color": "#ffffff", "size": 100, "items": []},
-            "right": {"color": "#ffffff", "size": 100, "items": []},
-            "top": {"color": "#ffffff", "size": 100, "items": []},
-            "bottom": {"color": "#ffffff", "size": 100, "items": []},
-        }
-    )
-
-    satellite_edit_mode: dict[str, bool] = field(
-        default_factory=lambda: {
-            "left": False,
-            "right": False,
-            "top": False,
-            "bottom": False,
+            "left": SatelliteZoneSettings(),
+            "right": SatelliteZoneSettings(),
+            "top": SatelliteZoneSettings(),
+            "bottom": SatelliteZoneSettings(),
         }
     )
 

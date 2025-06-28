@@ -6,6 +6,8 @@ from ui.widgets import BitGroupWidget
 from ui.satellite_zone_builder import Toolbox
 from signal_bus import signal_bus
 from core.utils import generate_random_color
+from core.models import SatelliteItem
+from dataclasses import asdict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -818,15 +820,15 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         table.setItem(row, 9, QtWidgets.QTableWidgetItem(""))
 
         if self.controller:
-            item = {
-                "type": choice.lower(),
-                "name": f"item{row}",
-                "text": "" if choice != "Bouton" else "Bouton",
-                "width": 50,
-                "height": 50,
-                "x": 0,
-                "y": 0,
-            }
+            item = SatelliteItem(
+                type=choice.lower(),
+                name=f"item{row}",
+                text="" if choice != "Bouton" else "Bouton",
+                width=50,
+                height=50,
+                x=0,
+                y=0,
+            )
             self._call_graph_controller(self.controller.add_satellite_item, zone, item)
         self.update_graph_ui()
 
@@ -838,10 +840,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         if not graph:
             return
 
-        items = graph.satellite_settings[zone]["items"]
+        items = [asdict(it) if isinstance(it, SatelliteItem) else it for it in graph.satellite_settings[zone].items]
         dlg = SatelliteZoneBuilder(items, parent=self)
         if dlg.exec_() == QtWidgets.QDialog.Accepted:
-            new_items = dlg.items()
+            new_items = [SatelliteItem(**it) for it in dlg.items()]
             if self.controller:
                 self._call_graph_controller(
                     self.controller.set_satellite_items, zone, new_items
@@ -850,7 +852,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
     def _apply_satellite_table(self, zone: str):
         table = self.satellite_tables[zone]
-        items = []
+        items: list[SatelliteItem] = []
         for row in range(table.rowCount()):
             typ_item = table.item(row, 0)
             if typ_item is None:
@@ -866,23 +868,19 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             text = ""
             if isinstance(param_widget, QtWidgets.QLineEdit):
                 text = param_widget.text()
-            item = {
-                "type": typ,
-                "name": (
+            item = SatelliteItem(
+                type=typ,
+                name=(
                     name_edit.text()
                     if isinstance(name_edit, QtWidgets.QLineEdit)
                     else f"item{row}"
                 ),
-                "text": text,
-                "width": (
-                    w_spin.value() if isinstance(w_spin, QtWidgets.QSpinBox) else 50
-                ),
-                "height": (
-                    h_spin.value() if isinstance(h_spin, QtWidgets.QSpinBox) else 50
-                ),
-                "x": x_spin.value() if isinstance(x_spin, QtWidgets.QSpinBox) else 0,
-                "y": y_spin.value() if isinstance(y_spin, QtWidgets.QSpinBox) else 0,
-            }
+                text=text,
+                width=w_spin.value() if isinstance(w_spin, QtWidgets.QSpinBox) else 50,
+                height=h_spin.value() if isinstance(h_spin, QtWidgets.QSpinBox) else 50,
+                x=x_spin.value() if isinstance(x_spin, QtWidgets.QSpinBox) else 0,
+                y=y_spin.value() if isinstance(y_spin, QtWidgets.QSpinBox) else 0,
+            )
             items.append(item)
         if self.controller:
             self._call_graph_controller(
@@ -904,7 +902,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         graph = state.current_graph
         if not graph:
             return
-        items = list(graph.satellite_settings[zone]["items"])
+        items = list(graph.satellite_settings[zone].items)
         if row < 0 or row >= len(items):
             return
         item = items.pop(row)
@@ -933,7 +931,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
     def _on_view_items_moved(self, zone: str, view):
         """Update table values and graph data when items are moved in a view."""
-        items = view.get_items()
+        items = [SatelliteItem(**it) for it in view.get_items()]
         table = self.satellite_tables.get(zone)
         if not table:
             return
@@ -944,9 +942,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             x_spin = table.cellWidget(row, 5)
             y_spin = table.cellWidget(row, 6)
             if isinstance(x_spin, QtWidgets.QSpinBox):
-                x_spin.setValue(int(item.get("x", 0)))
+                x_spin.setValue(int(item.x))
             if isinstance(y_spin, QtWidgets.QSpinBox):
-                y_spin.setValue(int(item.get("y", 0)))
+                y_spin.setValue(int(item.y))
         table.blockSignals(False)
         if self.controller:
             self._call_graph_controller(
@@ -1156,7 +1154,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             "bottom": self.satellite_bottom_checkbox,
         }.items():
             checkbox.blockSignals(True)
-            checkbox.setChecked(graph.satellite_visibility[zone])
+            checkbox.setChecked(graph.satellite_settings[zone].visible)
             checkbox.blockSignals(False)
 
         for zone, btn in {
@@ -1165,12 +1163,12 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             "top": self.satellite_top_color,
             "bottom": self.satellite_bottom_color,
         }.items():
-            color = graph.satellite_settings[zone]["color"]
+            color = graph.satellite_settings[zone].color
             btn.setStyleSheet(f"background-color: {color}")
 
         for zone, chk in self.satellite_edit_checks.items():
             chk.blockSignals(True)
-            chk.setChecked(graph.satellite_edit_mode[zone])
+            chk.setChecked(graph.satellite_settings[zone].edit_mode)
             chk.blockSignals(False)
 
         for zone, widgets in {
@@ -1199,7 +1197,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 self.satellite_bottom_edit,
             ),
         }.items():
-            enabled = graph.satellite_visibility[zone]
+            enabled = graph.satellite_settings[zone].visible
             for w in widgets:
                 w.setEnabled(enabled)
 
@@ -1210,36 +1208,39 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             "bottom": self.satellite_bottom_size,
         }.items():
             spin.blockSignals(True)
-            spin.setValue(graph.satellite_settings[zone]["size"])
+            spin.setValue(graph.satellite_settings[zone].size)
             spin.blockSignals(False)
 
         for zone, table in self.satellite_tables.items():
             table.blockSignals(True)
             table.setRowCount(0)
-            for item in graph.satellite_settings[zone]["items"]:
+            for item in graph.satellite_settings[zone].items:
+                item_dict = (
+                    asdict(item) if isinstance(item, SatelliteItem) else item
+                )
                 row = table.rowCount()
                 table.insertRow(row)
-                typ = item.get("type", "")
+                typ = item_dict.get("type", "")
                 table.setItem(row, 0, QtWidgets.QTableWidgetItem(typ.capitalize()))
 
-                name_edit = QtWidgets.QLineEdit(item.get("name", f"item{row}"))
+                name_edit = QtWidgets.QLineEdit(item_dict.get("name", f"item{row}"))
                 name_edit.editingFinished.connect(
                     lambda z=zone, r=row: self._satellite_cell_changed(z, r)
                 )
                 table.setCellWidget(row, 1, name_edit)
 
                 if typ == "text":
-                    param_widget = QtWidgets.QLineEdit(item.get("text", ""))
+                    param_widget = QtWidgets.QLineEdit(item_dict.get("text", ""))
                     param_widget.editingFinished.connect(
                         lambda z=zone, r=row: self._satellite_cell_changed(z, r)
                     )
                 elif typ in {"button", "bouton"}:
-                    param_widget = QtWidgets.QLineEdit(item.get("text", "Bouton"))
+                    param_widget = QtWidgets.QLineEdit(item_dict.get("text", "Bouton"))
                     param_widget.editingFinished.connect(
                         lambda z=zone, r=row: self._satellite_cell_changed(z, r)
                     )
                 else:
-                    param_widget = QtWidgets.QLineEdit(item.get("text", ""))
+                    param_widget = QtWidgets.QLineEdit(item_dict.get("text", ""))
                     param_widget.editingFinished.connect(
                         lambda z=zone: self._apply_satellite_table(z)
                     )
@@ -1247,7 +1248,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
                 w_spin = QtWidgets.QSpinBox()
                 w_spin.setRange(1, 1000)
-                w_spin.setValue(int(item.get("width", 50)))
+                w_spin.setValue(int(item_dict.get("width", 50)))
                 w_spin.valueChanged.connect(
                     lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
                 )
@@ -1255,7 +1256,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
                 h_spin = QtWidgets.QSpinBox()
                 h_spin.setRange(1, 1000)
-                h_spin.setValue(int(item.get("height", 50)))
+                h_spin.setValue(int(item_dict.get("height", 50)))
                 h_spin.valueChanged.connect(
                     lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
                 )
@@ -1263,7 +1264,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
                 x_spin = QtWidgets.QSpinBox()
                 x_spin.setRange(-1000, 1000)
-                x_spin.setValue(int(item.get("x", 0)))
+                x_spin.setValue(int(item_dict.get("x", 0)))
                 x_spin.valueChanged.connect(
                     lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
                 )
@@ -1271,7 +1272,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
                 y_spin = QtWidgets.QSpinBox()
                 y_spin.setRange(-1000, 1000)
-                y_spin.setValue(int(item.get("y", 0)))
+                y_spin.setValue(int(item_dict.get("y", 0)))
                 y_spin.valueChanged.connect(
                     lambda _, z=zone, r=row: self._satellite_cell_changed(z, r)
                 )

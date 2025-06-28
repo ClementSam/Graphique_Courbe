@@ -4,7 +4,7 @@ import types
 import importlib
 import numpy as np
 import pytest
-from core.models import CurveData
+from core.models import CurveData, SatelliteItem
 
 # ensure repository root on path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -130,11 +130,11 @@ def test_add_satellite_item(service):
     name = list(state.graphs.keys())[0]
     svc.select_graph(name)
 
-    svc.add_satellite_item("left", {"type": "text", "text": ""})
+    svc.add_satellite_item("left", SatelliteItem(type="text", text=""))
 
-    items = state.current_graph.satellite_settings["left"]["items"]
+    items = state.current_graph.satellite_settings["left"].items
     assert len(items) == 1
-    assert items[0]["type"] == "text"
+    assert items[0].type == "text"
 
 
 def test_set_satellite_items(service):
@@ -144,12 +144,12 @@ def test_set_satellite_items(service):
     svc.select_graph(name)
 
     new_items = [
-        {"type": "text", "text": "hello"},
-        {"type": "button", "text": "ok"},
+        SatelliteItem(type="text", text="hello"),
+        SatelliteItem(type="button", text="ok"),
     ]
     svc.set_satellite_items("right", new_items)
 
-    assert state.current_graph.satellite_settings["right"]["items"] == new_items
+    assert state.current_graph.satellite_settings["right"].items == new_items
 
 
 def test_remove_satellite_item(service):
@@ -161,16 +161,16 @@ def test_remove_satellite_item(service):
     svc.set_satellite_items(
         "left",
         [
-            {"type": "text", "text": "a"},
-            {"type": "text", "text": "b"},
+            SatelliteItem(type="text", text="a"),
+            SatelliteItem(type="text", text="b"),
         ],
     )
 
     svc.remove_satellite_item("left", 0)
 
-    items = state.current_graph.satellite_settings["left"]["items"]
+    items = state.current_graph.satellite_settings["left"].items
     assert len(items) == 1
-    assert items[0]["text"] == "b"
+    assert items[0].text == "b"
 
 
 def test_add_zone(service):
@@ -323,6 +323,6 @@ def test_set_satellite_edit_mode(service):
     name = list(state.graphs.keys())[0]
     svc.select_graph(name)
 
-    assert state.current_graph.satellite_edit_mode["left"] is False
+    assert state.current_graph.satellite_settings["left"].edit_mode is False
     svc.set_satellite_edit_mode("left", True)
-    assert state.current_graph.satellite_edit_mode["left"] is True
+    assert state.current_graph.satellite_settings["left"].edit_mode is True

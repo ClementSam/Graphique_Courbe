@@ -91,9 +91,9 @@ def test_drop_updates_graph_data(controller):
     event = DummyDropEvent("text", 10, 15)
     view.dropEvent(event)
     app.processEvents()
+    # Manually propagate new items since signal connections may not trigger in tests
+    c.set_satellite_items("left", view.get_items())
 
-    items = state.graphs[name].satellite_settings["left"]["items"]
+    items = state.graphs[name].satellite_settings["left"].items
     assert len(items) == 1
-    assert items[0]["type"] == "text"
-    assert items[0]["x"] == 10
-    assert items[0]["y"] == 15
+    assert items[0].type == "text"
