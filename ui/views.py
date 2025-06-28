@@ -306,7 +306,11 @@ class MyPlotView:
             label = QtWidgets.QLabel(obj.config.get("value", obj.name))
             return label
         if obj.obj_type == "button":
-            btn = QtWidgets.QPushButton(obj.name or "Bouton")
+            btn = QtWidgets.QToolButton()
+            btn.setText(obj.name or "Bouton")
+            width = int(obj.config.get("width", 24))
+            height = int(obj.config.get("height", 24))
+            btn.setFixedSize(width, height)
             return btn
         if obj.obj_type == "image":
             label = QtWidgets.QLabel()
