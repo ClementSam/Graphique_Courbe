@@ -325,11 +325,11 @@ class MyPlotView:
 
     def _create_satellite_widget(self, obj):
         if obj.obj_type == "text":
-            label = QtWidgets.QLabel(obj.config.get("value", obj.name))
+            label = QtWidgets.QLabel(obj.config.get("value", ""))
             return label
         if obj.obj_type == "button":
             btn = QtWidgets.QToolButton()
-            btn.setText(obj.name or "Bouton")
+            btn.setText(obj.config.get("value", ""))
             width = int(obj.config.get("width", 24))
             height = int(obj.config.get("height", 24))
             btn.setFixedSize(width, height)
