@@ -25,8 +25,9 @@ class ZoneParamsWidget(QtWidgets.QWidget):
 
     def __init__(self, ztype: str = "linear", zone: dict | None = None, parent=None):
         super().__init__(parent)
-        self._layout = QtWidgets.QHBoxLayout(self)
+        self._layout = QtWidgets.QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
+        self._points_layout: QtWidgets.QVBoxLayout | None = None
         self._type = None
         self._fields: list[QtWidgets.QDoubleSpinBox] = []
         self._points: list[
@@ -42,6 +43,7 @@ class ZoneParamsWidget(QtWidgets.QWidget):
             item = self._layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
+        self._points_layout = None
 
     def _create_spin(self, placeholder: str = ""):
         spin = QtWidgets.QDoubleSpinBox()
@@ -62,22 +64,25 @@ class ZoneParamsWidget(QtWidgets.QWidget):
         self._clear_layout()
 
         if ztype == "linear":
+            row = QtWidgets.QHBoxLayout()
             for name in ["x départ", "x de fin"]:
                 spin = self._create_spin(name)
                 self._fields.append(spin)
-                self._layout.addWidget(spin)
+                row.addWidget(spin)
+            self._layout.addLayout(row)
         elif ztype == "rect":
+            row = QtWidgets.QHBoxLayout()
             for name in ["x", "y", "largeur", "hauteur"]:
                 spin = self._create_spin(name)
                 self._fields.append(spin)
-                self._layout.addWidget(spin)
+                row.addWidget(spin)
+            self._layout.addLayout(row)
         else:  # path
+            self._points_layout = QtWidgets.QVBoxLayout()
+            self._layout.addLayout(self._points_layout)
             self._add_btn = QtWidgets.QPushButton("+")
             self._add_btn.clicked.connect(self._add_point)
             self._layout.addWidget(self._add_btn)
-            # start with two points
-            self._add_point()
-            self._add_point()
 
     def _add_point(self, x: float = 0.0, y: float = 0.0):
         cont = QtWidgets.QWidget()
@@ -92,16 +97,14 @@ class ZoneParamsWidget(QtWidgets.QWidget):
         rm.clicked.connect(lambda *_: self._remove_point(cont))
         for w in (sx, sy, rm):
             lay.addWidget(w)
-        if self._add_btn:
-            self._layout.insertWidget(self._layout.count() - 1, cont)
+        if self._points_layout is not None:
+            self._points_layout.addWidget(cont)
         else:
             self._layout.addWidget(cont)
         self._points.append((cont, sx, sy))
         self.changed.emit()
 
     def _remove_point(self, widget: QtWidgets.QWidget):
-        if len(self._points) <= 2:
-            return
         for i, (w, sx, sy) in enumerate(self._points):
             if w is widget:
                 self._points.pop(i)
@@ -128,9 +131,6 @@ class ZoneParamsWidget(QtWidgets.QWidget):
             self._points.clear()
             for x, y in pts:
                 self._add_point(x, y)
-            if not pts:
-                self._add_point()
-                self._add_point()
         self.blockSignals(False)
 
     def get_zone(self) -> dict:
@@ -501,8 +501,15 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         # Zone objects in the plot
         zone_group = QtWidgets.QGroupBox("Zones personnalisées")
         v_z = QtWidgets.QVBoxLayout(zone_group)
-        self.zone_table = QtWidgets.QTableWidget(0, 4)
-        self.zone_table.setHorizontalHeaderLabels(["Type", "Paramètres", "Couleur", ""])
+        self.zone_table = QtWidgets.QTableWidget(0, 6)
+        self.zone_table.setHorizontalHeaderLabels([
+            "Type",
+            "Nom",
+            "Paramètres",
+            "Couleur trait",
+            "Couleur plein",
+            "",
+        ])
         self.add_zone_btn = QtWidgets.QPushButton("Ajouter une zone")
         v_z.addWidget(self.zone_table)
         v_z.addWidget(self.add_zone_btn)
@@ -740,8 +747,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                 self.controller.set_satellite_color, zone, color.name()
             )
 
-    def _choose_zone_color(self, row: int):
-        btn = self.zone_table.cellWidget(row, 2)
+    def _choose_zone_color(self, row: int, column: int):
+        btn = self.zone_table.cellWidget(row, column)
         if not isinstance(btn, QtWidgets.QPushButton):
             return
         color = QtWidgets.QColorDialog.getColor(parent=self)
@@ -756,8 +763,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         # using the table's combobox.
         zone = {
             "type": "linear",
+            "name": "",
             "bounds": [0.0, 1.0],
-            "color": generate_random_color(),
+            "line_color": generate_random_color(),
+            "fill_color": generate_random_color(),
         }
 
         if self.controller:
@@ -788,20 +797,31 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         )
         self.zone_table.setCellWidget(row, 0, combo)
 
+        name_edit = QtWidgets.QLineEdit(zone.get("name", ""))
+        name_edit.editingFinished.connect(lambda r=row: self._update_zone_from_row(r))
+        self.zone_table.setCellWidget(row, 1, name_edit)
+
         params = ZoneParamsWidget(zone.get("type", "linear"))
         params.set_zone(zone)
         params.changed.connect(lambda r=row: self._update_zone_from_row(r))
-        self.zone_table.setCellWidget(row, 1, params)
+        self.zone_table.setCellWidget(row, 2, params)
 
-        color_btn = QtWidgets.QPushButton()
-        color = zone.get("color", "#FF0000")
-        color_btn.setStyleSheet(f"background-color: {color}")
-        color_btn.clicked.connect(lambda _, r=row: self._choose_zone_color(r))
-        self.zone_table.setCellWidget(row, 2, color_btn)
+        line_btn = QtWidgets.QPushButton()
+        line_color = zone.get("line_color", "#FF0000")
+        line_btn.setStyleSheet(f"background-color: {line_color}")
+        line_btn.clicked.connect(lambda _, r=row: self._choose_zone_color(r, 3))
+        self.zone_table.setCellWidget(row, 3, line_btn)
+
+        fill_btn = QtWidgets.QPushButton()
+        fill_color = zone.get("fill_color", "#FF0000")
+        fill_btn.setStyleSheet(f"background-color: {fill_color}")
+        fill_btn.clicked.connect(lambda _, r=row: self._choose_zone_color(r, 4))
+        fill_btn.setEnabled(zone.get("type", "linear") != "path")
+        self.zone_table.setCellWidget(row, 4, fill_btn)
 
         btn = QtWidgets.QPushButton("Supprimer")
         btn.clicked.connect(lambda _, r=row: self._remove_zone_row(r))
-        self.zone_table.setCellWidget(row, 3, btn)
+        self.zone_table.setCellWidget(row, 5, btn)
 
     # ------------------------------------------------------------------
     # Satellite objects helpers
@@ -1039,12 +1059,15 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
     def _on_zone_type_changed(self, row: int):
         combo = self.zone_table.cellWidget(row, 0)
-        params = self.zone_table.cellWidget(row, 1)
+        params = self.zone_table.cellWidget(row, 2)
+        fill_btn = self.zone_table.cellWidget(row, 4)
         if not isinstance(combo, QtWidgets.QComboBox) or not isinstance(
             params, ZoneParamsWidget
         ):
             return
         params.set_type(combo.currentData())
+        if isinstance(fill_btn, QtWidgets.QPushButton):
+            fill_btn.setEnabled(combo.currentData() != "path")
 
     def _on_gain_slider(self, value: int):
         self.gain_input.setValue(value / 100)
@@ -1081,9 +1104,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self._call_controller(self.controller.set_offset, val)
 
     def _update_zone_from_row(self, row: int):
-        params = self.zone_table.cellWidget(row, 1)
+        params = self.zone_table.cellWidget(row, 2)
         combo = self.zone_table.cellWidget(row, 0)
-        color_btn = self.zone_table.cellWidget(row, 2)
+        name_edit = self.zone_table.cellWidget(row, 1)
+        line_btn = self.zone_table.cellWidget(row, 3)
+        fill_btn = self.zone_table.cellWidget(row, 4)
 
         if not isinstance(params, ZoneParamsWidget) or not isinstance(
             combo, QtWidgets.QComboBox
@@ -1091,11 +1116,18 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             return
 
         zone = params.get_zone()
-        if isinstance(color_btn, QtWidgets.QPushButton):
-            style = color_btn.styleSheet()
+        if isinstance(name_edit, QtWidgets.QLineEdit):
+            zone["name"] = name_edit.text()
+        if isinstance(line_btn, QtWidgets.QPushButton):
+            style = line_btn.styleSheet()
             if "background-color" in style:
                 color = style.split(":")[-1].strip()
-                zone["color"] = color
+                zone["line_color"] = color
+        if isinstance(fill_btn, QtWidgets.QPushButton):
+            style = fill_btn.styleSheet()
+            if "background-color" in style:
+                color = style.split(":")[-1].strip()
+                zone["fill_color"] = color
 
         if self.controller:
             self._call_graph_controller(self.controller.update_zone, row, zone)
