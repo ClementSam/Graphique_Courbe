@@ -11,15 +11,37 @@ logger = logging.getLogger(__name__)
 
 
 def apply_logic_analyzer_layout(graph: GraphData) -> None:
-    """Position curves like a logic analyzer view."""
+    """Position curves like a logic analyzer view and add background zones."""
+
+    # Clear any previously defined zones so we start from a clean state
+    graph.zones.clear()
+
     offset = 0
     for curve in reversed(graph.curves):
         if not curve.visible:
             continue
+
+        # Apply consistent gain and offset for logic analyzer readability
         curve.gain_mode = "multiplier"
         curve.gain = 0.9
         curve.units_per_grid = 1.0 / 0.9
         curve.offset = offset
+
+        # Alternate background colors for each curve lane
+        fill = "#eeeeee" if offset % 2 == 0 else "#dddddd"
+        graph.zones.append(
+            {
+                "type": "linear",
+                "bounds": [offset, offset + 1],
+                "orientation": "horizontal",
+                "fill_color": fill,
+                "fill_alpha": 100,
+                "line_color": fill,
+                "line_alpha": 0,
+                "line_width": 0,
+            }
+        )
+
         offset += 1
 
 

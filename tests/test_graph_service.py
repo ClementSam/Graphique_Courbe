@@ -264,10 +264,22 @@ def test_logic_analyzer_mode_applies_offsets(service):
     assert c2.offset == 1
     assert c1.offset == 2
 
+    zones = state.graphs[gname].zones
+    assert len(zones) == 3
+    assert all(z["type"] == "linear" for z in zones)
+    assert all(z["orientation"] == "horizontal" for z in zones)
+    assert zones[0]["bounds"] == [0, 1]
+    assert zones[1]["bounds"] == [1, 2]
+    assert zones[2]["bounds"] == [2, 3]
+
     c2.visible = False
     svc.apply_mode(gname, "logic_analyzer")
     assert c3.offset == 0
     assert c1.offset == 1
+    zones = state.graphs[gname].zones
+    assert len(zones) == 2
+    assert zones[0]["bounds"] == [0, 1]
+    assert zones[1]["bounds"] == [1, 2]
 
 
 def test_satellite_object_operations(service):
