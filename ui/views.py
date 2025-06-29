@@ -160,26 +160,34 @@ class MyPlotView:
         for zone in getattr(self.graph_data, "zones", []):
             ztype = zone.get("type")
             line_color = zone.get("line_color", "#FF0000")
+            line_alpha = float(zone.get("line_alpha", 100)) / 100.0
+            line_width = int(zone.get("line_width", 1))
             fill_color = zone.get("fill_color", line_color)
+            fill_alpha = float(zone.get("fill_alpha", 40)) / 100.0
+            line_qcolor = QColor(line_color)
+            line_qcolor.setAlphaF(line_alpha)
+            pen = pg.mkPen(line_qcolor, width=line_width)
+
+            fill_qcolor = QColor(fill_color)
+            fill_qcolor.setAlphaF(fill_alpha)
+
             if ztype == "linear":
                 bounds = zone.get("bounds", [0, 1])
                 orientation = zone.get("orientation", "vertical")
                 item = pg.LinearRegionItem(
                     values=bounds,
                     orientation=orientation,
-                    # Ensure we always pass a QBrush instance
-                    brush=QtGui.QBrush(QColor("#40" + fill_color.lstrip("#"))),
-                    pen=pg.mkPen(line_color),
+                    brush=QtGui.QBrush(fill_qcolor),
+                    pen=pen,
                 )
             elif ztype == "rect":
                 x, y, w, h = zone.get("rect", [0, 0, 1, 1])
                 item = QtWidgets.QGraphicsRectItem(x, y, w, h)
-                pen = pg.mkPen(line_color)
                 # mkBrush may return tuples on some platforms if given an
                 # unrecognized color specification. Construct the QBrush
                 # explicitly to avoid "unexpected type 'tuple'" errors on
                 # setBrush().
-                brush = QtGui.QBrush(QColor("#40" + fill_color.lstrip("#")))
+                brush = QtGui.QBrush(fill_qcolor)
                 item.setPen(pen)
                 item.setBrush(brush)
             elif ztype == "path":
@@ -190,7 +198,7 @@ class MyPlotView:
                     for pt in pts[1:]:
                         path.lineTo(*pt)
                 item = QtWidgets.QGraphicsPathItem(path)
-                item.setPen(pg.mkPen(line_color))
+                item.setPen(pen)
             else:
                 continue
             self.plot_widget.addItem(item)
