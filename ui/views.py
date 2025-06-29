@@ -159,21 +159,22 @@ class MyPlotView:
         # Add custom zones
         for zone in getattr(self.graph_data, "zones", []):
             ztype = zone.get("type")
-            color = zone.get("color", "#FF0000")
+            line_color = zone.get("line_color", "#FF0000")
+            fill_color = zone.get("fill_color", line_color)
             if ztype == "linear":
                 bounds = zone.get("bounds", [0, 1])
                 orientation = zone.get("orientation", "vertical")
                 item = pg.LinearRegionItem(
                     values=bounds,
                     orientation=orientation,
-                    brush=pg.mkBrush(QColor(color + "40")),
-                    pen=pg.mkPen(color),
+                    brush=pg.mkBrush(QColor(fill_color + "40")),
+                    pen=pg.mkPen(line_color),
                 )
             elif ztype == "rect":
                 x, y, w, h = zone.get("rect", [0, 0, 1, 1])
                 item = QtWidgets.QGraphicsRectItem(x, y, w, h)
-                pen = pg.mkPen(color)
-                brush = pg.mkBrush(QColor(color + "40"))
+                pen = pg.mkPen(line_color)
+                brush = pg.mkBrush(QColor(fill_color + "40"))
                 item.setPen(pen)
                 item.setBrush(brush)
             elif ztype == "path":
@@ -184,7 +185,7 @@ class MyPlotView:
                     for pt in pts[1:]:
                         path.lineTo(*pt)
                 item = QtWidgets.QGraphicsPathItem(path)
-                item.setPen(pg.mkPen(color))
+                item.setPen(pg.mkPen(line_color))
             else:
                 continue
             self.plot_widget.addItem(item)
