@@ -167,14 +167,19 @@ class MyPlotView:
                 item = pg.LinearRegionItem(
                     values=bounds,
                     orientation=orientation,
-                    brush=pg.mkBrush(QColor("#40" + fill_color.lstrip("#"))),
+                    # Ensure we always pass a QBrush instance
+                    brush=QtGui.QBrush(QColor("#40" + fill_color.lstrip("#"))),
                     pen=pg.mkPen(line_color),
                 )
             elif ztype == "rect":
                 x, y, w, h = zone.get("rect", [0, 0, 1, 1])
                 item = QtWidgets.QGraphicsRectItem(x, y, w, h)
                 pen = pg.mkPen(line_color)
-                brush = pg.mkBrush(QColor("#40" + fill_color.lstrip("#")))
+                # mkBrush may return tuples on some platforms if given an
+                # unrecognized color specification. Construct the QBrush
+                # explicitly to avoid "unexpected type 'tuple'" errors on
+                # setBrush().
+                brush = QtGui.QBrush(QColor("#40" + fill_color.lstrip("#")))
                 item.setPen(pen)
                 item.setBrush(brush)
             elif ztype == "path":
