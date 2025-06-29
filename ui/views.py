@@ -167,14 +167,14 @@ class MyPlotView:
                 item = pg.LinearRegionItem(
                     values=bounds,
                     orientation=orientation,
-                    brush=pg.mkBrush(QColor(fill_color + "40")),
+                    brush=pg.mkBrush(QColor("#40" + fill_color.lstrip("#"))),
                     pen=pg.mkPen(line_color),
                 )
             elif ztype == "rect":
                 x, y, w, h = zone.get("rect", [0, 0, 1, 1])
                 item = QtWidgets.QGraphicsRectItem(x, y, w, h)
                 pen = pg.mkPen(line_color)
-                brush = pg.mkBrush(QColor(fill_color + "40"))
+                brush = pg.mkBrush(QColor("#40" + fill_color.lstrip("#")))
                 item.setPen(pen)
                 item.setBrush(brush)
             elif ztype == "path":
