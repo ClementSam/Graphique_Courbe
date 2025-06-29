@@ -446,6 +446,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
                     "",
                 ]
             )
+            # Stretch columns so the content remains visible
+            header = table.horizontalHeader()
+            header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
             add_btn = QtWidgets.QPushButton("Ajouter")
             v.addWidget(table)
             v.addWidget(add_btn)
@@ -501,15 +504,22 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         # Zone objects in the plot
         zone_group = QtWidgets.QGroupBox("Zones personnalisées")
         v_z = QtWidgets.QVBoxLayout(zone_group)
-        self.zone_table = QtWidgets.QTableWidget(0, 6)
-        self.zone_table.setHorizontalHeaderLabels([
-            "Type",
-            "Nom",
-            "Paramètres",
-            "Couleur trait",
-            "Couleur plein",
-            "",
-        ])
+        self.zone_table = QtWidgets.QTableWidget(0, 9)
+        self.zone_table.setHorizontalHeaderLabels(
+            [
+                "Type",
+                "Nom",
+                "Paramètres",
+                "Couleur trait",
+                "trait : alpha",
+                "trait : épaisseur",
+                "Couleur plein",
+                "Plein : alpha",
+                "",
+            ]
+        )
+        header = self.zone_table.horizontalHeader()
+        header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.add_zone_btn = QtWidgets.QPushButton("Ajouter une zone")
         v_z.addWidget(self.zone_table)
         v_z.addWidget(self.add_zone_btn)
@@ -766,7 +776,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             "name": "",
             "bounds": [0.0, 1.0],
             "line_color": generate_random_color(),
+            "line_alpha": 100,
+            "line_width": 1,
             "fill_color": generate_random_color(),
+            "fill_alpha": 40,
         }
 
         if self.controller:
@@ -812,16 +825,35 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         line_btn.clicked.connect(lambda _, r=row: self._choose_zone_color(r, 3))
         self.zone_table.setCellWidget(row, 3, line_btn)
 
+        line_alpha = QtWidgets.QSpinBox()
+        line_alpha.setRange(0, 100)
+        line_alpha.setValue(int(zone.get("line_alpha", 100)))
+        line_alpha.valueChanged.connect(lambda _, r=row: self._update_zone_from_row(r))
+        self.zone_table.setCellWidget(row, 4, line_alpha)
+
+        line_width = QtWidgets.QSpinBox()
+        line_width.setRange(1, 10)
+        line_width.setValue(int(zone.get("line_width", 1)))
+        line_width.valueChanged.connect(lambda _, r=row: self._update_zone_from_row(r))
+        self.zone_table.setCellWidget(row, 5, line_width)
+
         fill_btn = QtWidgets.QPushButton()
         fill_color = zone.get("fill_color", "#FF0000")
         fill_btn.setStyleSheet(f"background-color: {fill_color}")
-        fill_btn.clicked.connect(lambda _, r=row: self._choose_zone_color(r, 4))
+        fill_btn.clicked.connect(lambda _, r=row: self._choose_zone_color(r, 6))
         fill_btn.setEnabled(zone.get("type", "linear") != "path")
-        self.zone_table.setCellWidget(row, 4, fill_btn)
+        self.zone_table.setCellWidget(row, 6, fill_btn)
+
+        fill_alpha = QtWidgets.QSpinBox()
+        fill_alpha.setRange(0, 100)
+        fill_alpha.setValue(int(zone.get("fill_alpha", 40)))
+        fill_alpha.valueChanged.connect(lambda _, r=row: self._update_zone_from_row(r))
+        fill_alpha.setEnabled(zone.get("type", "linear") != "path")
+        self.zone_table.setCellWidget(row, 7, fill_alpha)
 
         btn = QtWidgets.QPushButton("Supprimer")
         btn.clicked.connect(lambda _, r=row: self._remove_zone_row(r))
-        self.zone_table.setCellWidget(row, 5, btn)
+        self.zone_table.setCellWidget(row, 8, btn)
 
     # ------------------------------------------------------------------
     # Satellite objects helpers
@@ -1060,14 +1092,18 @@ class PropertiesPanel(QtWidgets.QTabWidget):
     def _on_zone_type_changed(self, row: int):
         combo = self.zone_table.cellWidget(row, 0)
         params = self.zone_table.cellWidget(row, 2)
-        fill_btn = self.zone_table.cellWidget(row, 4)
+        fill_btn = self.zone_table.cellWidget(row, 6)
+        fill_alpha = self.zone_table.cellWidget(row, 7)
         if not isinstance(combo, QtWidgets.QComboBox) or not isinstance(
             params, ZoneParamsWidget
         ):
             return
         params.set_type(combo.currentData())
+        enabled = combo.currentData() != "path"
         if isinstance(fill_btn, QtWidgets.QPushButton):
-            fill_btn.setEnabled(combo.currentData() != "path")
+            fill_btn.setEnabled(enabled)
+        if isinstance(fill_alpha, QtWidgets.QSpinBox):
+            fill_alpha.setEnabled(enabled)
 
     def _on_gain_slider(self, value: int):
         self.gain_input.setValue(value / 100)
@@ -1108,7 +1144,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         combo = self.zone_table.cellWidget(row, 0)
         name_edit = self.zone_table.cellWidget(row, 1)
         line_btn = self.zone_table.cellWidget(row, 3)
-        fill_btn = self.zone_table.cellWidget(row, 4)
+        line_alpha = self.zone_table.cellWidget(row, 4)
+        line_width = self.zone_table.cellWidget(row, 5)
+        fill_btn = self.zone_table.cellWidget(row, 6)
+        fill_alpha = self.zone_table.cellWidget(row, 7)
 
         if not isinstance(params, ZoneParamsWidget) or not isinstance(
             combo, QtWidgets.QComboBox
@@ -1123,11 +1162,17 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             if "background-color" in style:
                 color = style.split(":")[-1].strip()
                 zone["line_color"] = color
+        if isinstance(line_alpha, QtWidgets.QSpinBox):
+            zone["line_alpha"] = line_alpha.value()
+        if isinstance(line_width, QtWidgets.QSpinBox):
+            zone["line_width"] = line_width.value()
         if isinstance(fill_btn, QtWidgets.QPushButton):
             style = fill_btn.styleSheet()
             if "background-color" in style:
                 color = style.split(":")[-1].strip()
                 zone["fill_color"] = color
+        if isinstance(fill_alpha, QtWidgets.QSpinBox):
+            zone["fill_alpha"] = fill_alpha.value()
 
         if self.controller:
             self._call_graph_controller(self.controller.update_zone, row, zone)
