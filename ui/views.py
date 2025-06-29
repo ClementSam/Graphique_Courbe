@@ -171,7 +171,7 @@ class MyPlotView:
             fill_qcolor = QColor(fill_color)
             fill_qcolor.setAlphaF(fill_alpha)
 
-            if ztype == "linear":
+            if ztype in {"hlinear", "vlinear"}:
                 bounds = zone.get("bounds", [0, 1])
                 orientation = zone.get("orientation", "vertical")
                 item = pg.LinearRegionItem(

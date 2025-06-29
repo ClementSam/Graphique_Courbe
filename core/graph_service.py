@@ -31,7 +31,7 @@ def apply_logic_analyzer_layout(graph: GraphData) -> None:
         fill = "#eeeeee" if offset % 2 == 0 else "#dddddd"
         graph.zones.append(
             {
-                "type": "linear",
+                "type": "hlinear",
                 "bounds": [offset, offset + 1],
                 "orientation": "horizontal",
                 "fill_color": fill,

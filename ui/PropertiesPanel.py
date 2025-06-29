@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 # Available zone types and their placeholders for the "Zones personnalisées" table
 ZONE_TYPES = {
-    "linear": "début, fin",
+    "hlinear": "début, fin",
+    "vlinear": "début, fin",
     "rect": "x, y, largeur, hauteur",
     "path": "x1, y1, x2, y2, ...",
 }
@@ -23,7 +24,7 @@ class ZoneParamsWidget(QtWidgets.QWidget):
 
     changed = QtCore.pyqtSignal()
 
-    def __init__(self, ztype: str = "linear", zone: dict | None = None, parent=None):
+    def __init__(self, ztype: str = "vlinear", zone: dict | None = None, parent=None):
         super().__init__(parent)
         self._layout = QtWidgets.QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -63,7 +64,7 @@ class ZoneParamsWidget(QtWidgets.QWidget):
         self._points.clear()
         self._clear_layout()
 
-        if ztype == "linear":
+        if ztype in {"hlinear", "vlinear"}:
             row = QtWidgets.QHBoxLayout()
             for name in ["x départ", "x de fin"]:
                 spin = self._create_spin(name)
@@ -114,8 +115,8 @@ class ZoneParamsWidget(QtWidgets.QWidget):
 
     def set_zone(self, zone: dict):
         self.blockSignals(True)
-        self.set_type(zone.get("type", "linear"))
-        if self._type == "linear":
+        self.set_type(zone.get("type", "vlinear"))
+        if self._type in {"hlinear", "vlinear"}:
             vals = zone.get("bounds", [0.0, 1.0])
             for spin, val in zip(self._fields, vals):
                 spin.setValue(val)
@@ -134,9 +135,9 @@ class ZoneParamsWidget(QtWidgets.QWidget):
         self.blockSignals(False)
 
     def get_zone(self) -> dict:
-        if self._type == "linear":
+        if self._type in {"hlinear", "vlinear"}:
             vals = [f.value() for f in self._fields]
-            return {"type": "linear", "bounds": vals}
+            return {"type": self._type, "bounds": vals}
         if self._type == "rect":
             vals = [f.value() for f in self._fields]
             return {"type": "rect", "rect": vals}
@@ -772,7 +773,8 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         # Default to a linear region. The user can change the type later
         # using the table's combobox.
         zone = {
-            "type": "linear",
+            "type": "vlinear",
+            "orientation": "vertical",
             "name": "",
             "bounds": [0.0, 1.0],
             "line_color": generate_random_color(),
@@ -799,10 +801,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.zone_table.insertRow(row)
 
         combo = QtWidgets.QComboBox()
-        combo.addItem("LinearRegion", "linear")
+        combo.addItem("HLinearRegion", "hlinear")
+        combo.addItem("VLinearRegion", "vlinear")
         combo.addItem("Rectangle", "rect")
         combo.addItem("Path", "path")
-        index = combo.findData(zone.get("type", "linear"))
+        index = combo.findData(zone.get("type", "vlinear"))
         if index != -1:
             combo.setCurrentIndex(index)
         combo.currentIndexChanged.connect(
@@ -814,7 +817,7 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         name_edit.editingFinished.connect(lambda r=row: self._update_zone_from_row(r))
         self.zone_table.setCellWidget(row, 1, name_edit)
 
-        params = ZoneParamsWidget(zone.get("type", "linear"))
+        params = ZoneParamsWidget(zone.get("type", "vlinear"))
         params.set_zone(zone)
         params.changed.connect(lambda r=row: self._update_zone_from_row(r))
         self.zone_table.setCellWidget(row, 2, params)
@@ -841,14 +844,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         fill_color = zone.get("fill_color", "#FF0000")
         fill_btn.setStyleSheet(f"background-color: {fill_color}")
         fill_btn.clicked.connect(lambda _, r=row: self._choose_zone_color(r, 6))
-        fill_btn.setEnabled(zone.get("type", "linear") != "path")
+        fill_btn.setEnabled(zone.get("type", "vlinear") != "path")
         self.zone_table.setCellWidget(row, 6, fill_btn)
 
         fill_alpha = QtWidgets.QSpinBox()
         fill_alpha.setRange(0, 100)
         fill_alpha.setValue(int(zone.get("fill_alpha", 40)))
         fill_alpha.valueChanged.connect(lambda _, r=row: self._update_zone_from_row(r))
-        fill_alpha.setEnabled(zone.get("type", "linear") != "path")
+        fill_alpha.setEnabled(zone.get("type", "vlinear") != "path")
         self.zone_table.setCellWidget(row, 7, fill_alpha)
 
         btn = QtWidgets.QPushButton("Supprimer")
@@ -1155,6 +1158,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             return
 
         zone = params.get_zone()
+        current_type = combo.currentData()
+        if current_type in {"hlinear", "vlinear"}:
+            zone["type"] = current_type
+            zone["orientation"] = "horizontal" if current_type == "hlinear" else "vertical"
         if isinstance(name_edit, QtWidgets.QLineEdit):
             zone["name"] = name_edit.text()
         if isinstance(line_btn, QtWidgets.QPushButton):
