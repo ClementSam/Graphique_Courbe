@@ -260,9 +260,9 @@ def test_logic_analyzer_mode_applies_offsets(service):
 
     svc.apply_mode(gname, "logic_analyzer")
 
-    assert c3.offset == 0
-    assert c2.offset == 1
-    assert c1.offset == 2
+    assert c3.offset == pytest.approx(0.05)
+    assert c2.offset == pytest.approx(1.05)
+    assert c1.offset == pytest.approx(2.05)
 
     zones = state.graphs[gname].zones
     assert len(zones) == 3
@@ -270,11 +270,14 @@ def test_logic_analyzer_mode_applies_offsets(service):
     assert zones[0]["bounds"] == [0, 1]
     assert zones[1]["bounds"] == [1, 2]
     assert zones[2]["bounds"] == [2, 3]
+    assert all(z["line_color"] == "#000000" for z in zones)
+    assert all(z["line_width"] == 1 for z in zones)
+    assert all(z["fill_alpha"] == 50 for z in zones)
 
     c2.visible = False
     svc.apply_mode(gname, "logic_analyzer")
-    assert c3.offset == 0
-    assert c1.offset == 1
+    assert c3.offset == pytest.approx(0.05)
+    assert c1.offset == pytest.approx(1.05)
     zones = state.graphs[gname].zones
     assert len(zones) == 2
     assert zones[0]["bounds"] == [0, 1]
