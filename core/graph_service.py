@@ -17,6 +17,7 @@ def apply_logic_analyzer_layout(graph: GraphData) -> None:
     graph.zones.clear()
 
     offset = 0
+    curve_offset = 0.05
     for curve in reversed(graph.curves):
         if not curve.visible:
             continue
@@ -25,7 +26,7 @@ def apply_logic_analyzer_layout(graph: GraphData) -> None:
         curve.gain_mode = "multiplier"
         curve.gain = 0.9
         curve.units_per_grid = 1.0 / 0.9
-        curve.offset = offset
+        curve.offset = offset + curve_offset
 
         # Alternate background colors for each curve lane
         fill = "#eeeeee" if offset % 2 == 0 else "#dddddd"
@@ -34,10 +35,10 @@ def apply_logic_analyzer_layout(graph: GraphData) -> None:
                 "type": "hlinear",
                 "bounds": [offset, offset + 1],
                 "fill_color": fill,
-                "fill_alpha": 100,
-                "line_color": fill,
-                "line_alpha": 0,
-                "line_width": 0,
+                "fill_alpha": 50,
+                "line_color": "#000000",
+                "line_alpha": 100,
+                "line_width": 1,
             }
         )
 

@@ -180,6 +180,10 @@ class MyPlotView:
                     brush=QtGui.QBrush(fill_qcolor),
                     pen=pen,
                 )
+                item.setMovable(False)
+                item.setHoverBrush(item.brush)
+                item.setAcceptedMouseButtons(QtCore.Qt.NoButton)
+                item.setZValue(100)
             elif ztype == "rect":
                 x, y, w, h = zone.get("rect", [0, 0, 1, 1])
                 item = QtWidgets.QGraphicsRectItem(x, y, w, h)
@@ -201,6 +205,8 @@ class MyPlotView:
                 item.setPen(pen)
             else:
                 continue
+            item.setAcceptedMouseButtons(QtCore.Qt.NoButton)
+            item.setZValue(100)
             self.plot_widget.addItem(item)
 
         end = time.perf_counter()
