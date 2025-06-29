@@ -173,7 +173,10 @@ class MyPlotView:
 
             if ztype in {"hlinear", "vlinear"}:
                 bounds = zone.get("bounds", [0, 1])
-                orientation = zone.get("orientation", "vertical")
+                orientation = zone.get(
+                    "orientation",
+                    "horizontal" if ztype == "hlinear" else "vertical",
+                )
                 item = pg.LinearRegionItem(
                     values=bounds,
                     orientation=orientation,

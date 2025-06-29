@@ -774,7 +774,6 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         # using the table's combobox.
         zone = {
             "type": "vlinear",
-            "orientation": "vertical",
             "name": "",
             "bounds": [0.0, 1.0],
             "line_color": generate_random_color(),
@@ -1161,7 +1160,6 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         current_type = combo.currentData()
         if current_type in {"hlinear", "vlinear"}:
             zone["type"] = current_type
-            zone["orientation"] = "horizontal" if current_type == "hlinear" else "vertical"
         if isinstance(name_edit, QtWidgets.QLineEdit):
             zone["name"] = name_edit.text()
         if isinstance(line_btn, QtWidgets.QPushButton):

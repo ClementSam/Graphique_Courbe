@@ -33,7 +33,6 @@ def apply_logic_analyzer_layout(graph: GraphData) -> None:
             {
                 "type": "hlinear",
                 "bounds": [offset, offset + 1],
-                "orientation": "horizontal",
                 "fill_color": fill,
                 "fill_alpha": 100,
                 "line_color": fill,
