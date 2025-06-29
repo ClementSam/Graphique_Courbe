@@ -132,11 +132,11 @@ def test_add_zone(service):
     name = list(state.graphs.keys())[0]
     svc.select_graph(name)
 
-    svc.add_zone({"type": "linear", "bounds": [0, 1]})
+    svc.add_zone({"type": "vlinear", "bounds": [0, 1], "orientation": "vertical"})
 
     zones = state.current_graph.zones
     assert len(zones) == 1
-    assert zones[0]["type"] == "linear"
+    assert zones[0]["type"] == "vlinear"
 
 
 def test_remove_zone(service):
@@ -145,7 +145,7 @@ def test_remove_zone(service):
     name = list(state.graphs.keys())[0]
     svc.select_graph(name)
 
-    svc.add_zone({"type": "linear", "bounds": [0, 1]})
+    svc.add_zone({"type": "vlinear", "bounds": [0, 1], "orientation": "vertical"})
     svc.add_zone({"type": "rect", "rect": [0, 0, 1, 1]})
 
     svc.remove_zone(0)
@@ -266,7 +266,7 @@ def test_logic_analyzer_mode_applies_offsets(service):
 
     zones = state.graphs[gname].zones
     assert len(zones) == 3
-    assert all(z["type"] == "linear" for z in zones)
+    assert all(z["type"] == "hlinear" for z in zones)
     assert all(z["orientation"] == "horizontal" for z in zones)
     assert zones[0]["bounds"] == [0, 1]
     assert zones[1]["bounds"] == [1, 2]

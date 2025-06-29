@@ -3,7 +3,6 @@
 from core.app_state import AppState
 from ui.views import MyPlotView
 from ui.PropertiesPanel import PropertiesPanel
-from core.graph_service import apply_logic_analyzer_layout
 import logging
 
 logger = logging.getLogger(__name__)
@@ -67,8 +66,6 @@ class GraphUICoordinator:
                 continue
             view.graph_data = graph
             view.container.set_graph_name(graph.name)
-            if graph.mode == "logic_analyzer":
-                apply_logic_analyzer_layout(graph)
             logger.debug(f"🔧 [refresh_plot] Appel de update_graph_properties() pour : {name}")
             view.update_graph_properties()
             logger.debug(f"🔄 [refresh_plot] Appel de refresh_curves() pour : {name}")
