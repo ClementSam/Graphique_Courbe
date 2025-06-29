@@ -5,6 +5,7 @@ import time
 import pyqtgraph as pg
 from signal_bus import signal_bus
 from PyQt5.QtGui import QColor, QPainterPath
+from ui.custom_regions import LinearRegion, HLinearRegion
 from ui.widgets.plot_container import PlotContainerWidget
 import logging
 
@@ -173,10 +174,9 @@ class MyPlotView:
 
             if ztype in {"hlinear", "vlinear"}:
                 bounds = zone.get("bounds", [0, 1])
-                orientation = "horizontal" if ztype == "hlinear" else "vertical"
-                item = pg.LinearRegionItem(
+                region_cls = HLinearRegion if ztype == "hlinear" else LinearRegion
+                item = region_cls(
                     values=bounds,
-                    orientation=orientation,
                     brush=QtGui.QBrush(fill_qcolor),
                     pen=pen,
                 )
