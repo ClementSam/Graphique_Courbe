@@ -451,7 +451,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             )
             # Stretch columns so the content remains visible
             header = table.horizontalHeader()
-            header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+            header.setSectionResizeMode(QtWidgets.QHeaderView.Interactive)
+            header.setStretchLastSection(True)
+            table.setMinimumHeight(150)
             add_btn = QtWidgets.QPushButton("Ajouter")
             v.addWidget(table)
             v.addWidget(add_btn)
@@ -522,7 +524,9 @@ class PropertiesPanel(QtWidgets.QTabWidget):
             ]
         )
         header = self.zone_table.horizontalHeader()
-        header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(QtWidgets.QHeaderView.Interactive)
+        header.setStretchLastSection(True)
+        self.zone_table.setMinimumHeight(150)
         self.add_zone_btn = QtWidgets.QPushButton("Ajouter une zone")
         v_z.addWidget(self.zone_table)
         v_z.addWidget(self.add_zone_btn)
