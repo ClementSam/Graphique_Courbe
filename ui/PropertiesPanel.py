@@ -152,8 +152,10 @@ class PropertiesPanel(QtWidgets.QTabWidget):
 
         super().__init__(parent)
         self.controller = controller
-        # Limit the overall height so the dock doesn't occupy too much space
-        self.setMaximumHeight(400)
+        # Allow the panel to expand to fill the available dock area
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         self.setup_ui()
         self._connect_signals()
 
