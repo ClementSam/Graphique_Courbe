@@ -31,6 +31,7 @@ class ImportCurveDialog(QDialog):
         layout.addWidget(QLabel("Choisissez le format de fichier :"))
         self.format_combo = QComboBox()
         self.format_combo.addItem("Oscilloscope Keysight / fichier .BIN", "keysight_bin")
+        self.format_combo.addItem("Oscilloscope Rohde & Schwarz / fichier .BIN", "rohde_schwarz_bin")
         self.format_combo.addItem("Gestionnaire de courbes / JSON", "internal_json")
         self.format_combo.addItem("Oscilloscope Keysight V5 / JSON", "keysight_json_v5")
         self.format_combo.addItem("Oscilloscope TEKTRO V1.2 / JSON", "tektro_json_v1_2")
