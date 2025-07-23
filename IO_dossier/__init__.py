@@ -8,5 +8,5 @@
 __version__ = 'x.x'
 
 # Main class
-from RTxReadBin import RTxReadBin
+from .RTxReadBin import RTxReadBin
 

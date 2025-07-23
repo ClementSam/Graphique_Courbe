@@ -12,6 +12,7 @@ import struct
 from collections import namedtuple
 import numpy as np
 from ui.dialogs.curve_selection_dialog import CurveSelectionDialog
+from .RTxReadBin import RTxReadBin
 
 
 def _select_curves(curves: List[CurveData]) -> List[CurveData]:
@@ -44,6 +45,8 @@ def load_curve_by_format(
         curves = load_keysight_json_v5(path)
     elif fmt == "tektro_json_v1_2":
         curves = load_tektro_json_v1_2(path)
+    elif fmt == "rohde_schwarz_bin":
+        curves = load_rohde_schwarz_bin(path)
     else:
         raise ValueError(f"Format inconnu : {fmt}")
 
@@ -129,5 +132,34 @@ def load_keysight_bin(path: str) -> List[CurveData]:
             label = header.label.decode().strip("\x00") or f"Waveform {i + 1}"
 
             curves.append(CurveData(name=label, x=x, y=y))
+
+    return curves
+
+
+def load_rohde_schwarz_bin(path: str) -> List[CurveData]:
+    """Load waveform exported by Rohde & Schwarz oscilloscopes."""
+    y, x, _ = RTxReadBin(path)
+    y_arr = np.asarray(y)
+    x_arr = np.asarray(x)
+
+    if y_arr.ndim == 1:
+        y_arr = y_arr[:, np.newaxis, np.newaxis]
+    elif y_arr.ndim == 2:
+        # assume (samples, channels) or (samples, acquisitions)
+        y_arr = y_arr[:, np.newaxis, :]
+
+    if x_arr.ndim == 1:
+        x_arr = x_arr[:, np.newaxis]
+
+    n_samples, n_acq, n_ch = y_arr.shape
+    curves = []
+    for ch in range(n_ch):
+        curves.append(
+            CurveData(
+                name=f"Channel {ch + 1}",
+                x=x_arr[:, 0],
+                y=y_arr[:, 0, ch],
+            )
+        )
 
     return curves
