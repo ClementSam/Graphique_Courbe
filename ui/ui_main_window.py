@@ -275,6 +275,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def show_curve_tab(self, graph_name=None, curve_name=None):
         logger.debug(f"[MainWindow] Activation de l'onglet Courbe : {graph_name} > {curve_name}")
         self.right_panel.setTabEnabled(1, True)
+        self.right_panel.setTabEnabled(2, True)
         self.right_panel.setCurrentIndex(1)
 
     def show_mode_tab(self):
