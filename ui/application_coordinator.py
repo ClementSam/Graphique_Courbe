@@ -142,14 +142,12 @@ class ApplicationCoordinator:
 
     def _on_curve_updated(self):
         self.main_window.show_curve_tab()
-        self.main_window.show_mode_tab()
 
     def _on_graph_selected(self, graph_name):
         self.main_window.show_graph_tab()
 
     def _on_curve_selected(self, graph_name, curve_name):
         self.main_window.show_curve_tab(graph_name, curve_name)
-        self.main_window.show_mode_tab()
 
     def _handle_rename_requested(self, kind, old_name, new_name):
         if kind == "graph":
