@@ -40,6 +40,10 @@ class DummyCoordinator:
         self.curve_calls += 1
     def reset_zoom(self):
         pass
+    def reset_zoom_x(self):
+        pass
+    def reset_zoom_y(self):
+        pass
 
 @pytest.fixture
 def controller(monkeypatch):
@@ -103,6 +107,26 @@ def test_controller_reset_zoom_invokes_ui(controller):
     c.ui.reset_zoom = stub
     c.reset_zoom()
 
+    assert called["count"] == 1
+
+
+def test_controller_reset_zoom_x_invokes_ui(controller):
+    c, _, _ = controller
+    called = {"count": 0}
+    def stub():
+        called["count"] += 1
+    c.ui.reset_zoom_x = stub
+    c.reset_zoom_x()
+    assert called["count"] == 1
+
+
+def test_controller_reset_zoom_y_invokes_ui(controller):
+    c, _, _ = controller
+    called = {"count": 0}
+    def stub():
+        called["count"] += 1
+    c.ui.reset_zoom_y = stub
+    c.reset_zoom_y()
     assert called["count"] == 1
 
 
@@ -232,5 +256,3 @@ def test_controller_create_bit_group_curve(controller):
     assert created == "grp"
     assert len(state.current_graph.curves) == 2
     assert len(bus.curve_updated.emitted) == 1
-
-

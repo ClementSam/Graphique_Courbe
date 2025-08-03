@@ -102,6 +102,8 @@ class GraphData:
     log_y: bool = False
     font: str = "Arial"
     visible: bool = True
+    auto_range_x: bool = True
+    auto_range_y: bool = True
     fix_y_range: bool = False
     y_min: float = -5.0
     y_max: float = 5.0
@@ -110,6 +112,8 @@ class GraphData:
     x_format: str = "normal"  # valeurs possibles : "normal", "scientific", "scaled"
     y_format: str = "normal"
     mode: str = "standard"  # mode d'affichage spécifique au graphique
+    mouse_enabled_x: bool = True
+    mouse_enabled_y: bool = True
     satellite_zones_visible: dict[str, bool] = field(
         default_factory=lambda: {
             "left": True,

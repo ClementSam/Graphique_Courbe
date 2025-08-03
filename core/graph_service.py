@@ -536,16 +536,39 @@ class GraphService:
         if self.state.current_graph:
             self.state.current_graph.y_format = fmt
 
+    def set_auto_range_x(self, enabled: bool):
+        logger.debug(f"📏 [GraphService.set_auto_range_x] {enabled}")
+        if self.state.current_graph:
+            self.state.current_graph.auto_range_x = enabled
+
+    def set_auto_range_y(self, enabled: bool):
+        logger.debug(f"📏 [GraphService.set_auto_range_y] {enabled}")
+        if self.state.current_graph:
+            self.state.current_graph.auto_range_y = enabled
+            if enabled:
+                self.state.current_graph.fix_y_range = False
+
     def set_fix_y_range(self, fix: bool):
         logger.debug(f"📊 [GraphService.set_fix_y_range] {fix}")
         if self.state.current_graph:
             self.state.current_graph.fix_y_range = fix
+            self.state.current_graph.auto_range_y = not fix
 
     def set_y_limits(self, y_min: float, y_max: float):
         logger.debug(f"📉 [GraphService.set_y_limits] {y_min} → {y_max}")
         if self.state.current_graph:
             self.state.current_graph.y_min = y_min
             self.state.current_graph.y_max = y_max
+
+    def set_mouse_enabled_x(self, enabled: bool):
+        logger.debug(f"🖱️ [GraphService.set_mouse_enabled_x] {enabled}")
+        if self.state.current_graph:
+            self.state.current_graph.mouse_enabled_x = enabled
+
+    def set_mouse_enabled_y(self, enabled: bool):
+        logger.debug(f"🖱️ [GraphService.set_mouse_enabled_y] {enabled}")
+        if self.state.current_graph:
+            self.state.current_graph.mouse_enabled_y = enabled
 
     def set_satellite_content(self, zone: str, content: Optional[str]):
         """Define which widget content should appear in the given satellite zone."""

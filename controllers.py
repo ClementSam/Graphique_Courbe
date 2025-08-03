@@ -178,6 +178,18 @@ class GraphController:
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
 
+    def set_auto_range_x(self, enabled: bool):
+        logger.debug(f"📏 [GraphController.set_auto_range_x] {enabled}")
+        self.service.set_auto_range_x(enabled)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_auto_range_y(self, enabled: bool):
+        logger.debug(f"📏 [GraphController.set_auto_range_y] {enabled}")
+        self.service.set_auto_range_y(enabled)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
     def set_fix_y_range(self, fix: bool):
         logger.debug(f"📊 [GraphController.set_fix_y_range] {fix}")
         self.service.set_fix_y_range(fix)
@@ -187,6 +199,18 @@ class GraphController:
     def set_y_limits(self, y_min: float, y_max: float):
         logger.debug(f"📉 [GraphController.set_y_limits] {y_min} → {y_max}")
         self.service.set_y_limits(y_min, y_max)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_mouse_enabled_x(self, enabled: bool):
+        logger.debug(f"🖱️ [GraphController.set_mouse_enabled_x] {enabled}")
+        self.service.set_mouse_enabled_x(enabled)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
+    def set_mouse_enabled_y(self, enabled: bool):
+        logger.debug(f"🖱️ [GraphController.set_mouse_enabled_y] {enabled}")
+        self.service.set_mouse_enabled_y(enabled)
         signal_bus.graph_updated.emit()
         self.ui.refresh_plot()
 
@@ -374,3 +398,11 @@ class GraphController:
     def reset_zoom(self):
         logger.debug("🔍 [GraphController.reset_zoom] Réinitialisation du zoom")
         self.ui.reset_zoom()
+
+    def reset_zoom_x(self):
+        logger.debug("🔍 [GraphController.reset_zoom_x] Réinitialisation du zoom X")
+        self.ui.reset_zoom_x()
+
+    def reset_zoom_y(self):
+        logger.debug("🔍 [GraphController.reset_zoom_y] Réinitialisation du zoom Y")
+        self.ui.reset_zoom_y()

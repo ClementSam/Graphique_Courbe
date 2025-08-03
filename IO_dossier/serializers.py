@@ -71,9 +71,13 @@ def graph_to_dict(graph: GraphData) -> dict:
             "log_x": graph.log_x,
             "log_y": graph.log_y,
             "font": graph.font,
+            "auto_range_x": graph.auto_range_x,
+            "auto_range_y": graph.auto_range_y,
             "fix_y_range": graph.fix_y_range,
             "y_min": graph.y_min,
             "y_max": graph.y_max,
+            "mouse_enabled_x": graph.mouse_enabled_x,
+            "mouse_enabled_y": graph.mouse_enabled_y,
             "x_unit": graph.x_unit,
             "y_unit": graph.y_unit,
             "x_format": graph.x_format,
@@ -92,9 +96,13 @@ def dict_to_graph(data: dict) -> GraphData:
     g.log_x = props.get("log_x", False)
     g.log_y = props.get("log_y", False)
     g.font = props.get("font", "Arial")
+    g.auto_range_x = props.get("auto_range_x", True)
+    g.auto_range_y = props.get("auto_range_y", True)
     g.fix_y_range = props.get("fix_y_range", False)
     g.y_min = props.get("y_min", -5.0)
     g.y_max = props.get("y_max", 5.0)
+    g.mouse_enabled_x = props.get("mouse_enabled_x", True)
+    g.mouse_enabled_y = props.get("mouse_enabled_y", True)
     g.x_unit = props.get("x_unit", "")
     g.y_unit = props.get("y_unit", "")
     g.x_format = props.get("x_format", "normal")
