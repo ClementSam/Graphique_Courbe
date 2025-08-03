@@ -41,11 +41,14 @@ class MyPlotView:
         self.plot_widget.setLogMode(g.log_x, g.log_y)
         self.plot_widget.setBackground("k" if g.dark_mode else "w")
 
+        x_auto = g.auto_range_x
+        y_auto = g.auto_range_y and not g.fix_y_range
+        self.plot_widget.enableAutoRange(x=x_auto, y=y_auto)
         if g.fix_y_range:
-            self.plot_widget.enableAutoRange(False, False)
             self.plot_widget.setYRange(g.y_min, g.y_max)
-        else:
-            self.plot_widget.enableAutoRange(True, True)
+
+        vb = self.plot_widget.getViewBox()
+        vb.setMouseEnabled(x=g.mouse_enabled_x, y=g.mouse_enabled_y)
 
         self._format_axis(self.plot_widget.getAxis("bottom"), g.x_unit, g.x_format)
         self._format_axis(self.plot_widget.getAxis("left"), g.y_unit, g.y_format)
@@ -273,8 +276,28 @@ class MyPlotView:
         self.plot_widget.enableAutoRange()
 
     def reset_zoom(self):
-        """Convenience wrapper used by GraphUICoordinator."""
-        self.plot_widget.enableAutoRange()
+        """Reset both axes to show all data."""
+        vb = self.plot_widget.getViewBox()
+        vb.autoRange()
+        if self.graph_data.fix_y_range:
+            vb.setYRange(self.graph_data.y_min, self.graph_data.y_max, padding=0)
+
+    def reset_zoom_x(self):
+        """Reset only the X axis."""
+        vb = self.plot_widget.getViewBox()
+        bounds = vb.childrenBoundingRect()
+        if bounds is not None:
+            vb.setXRange(bounds.left(), bounds.right(), padding=0)
+
+    def reset_zoom_y(self):
+        """Reset only the Y axis."""
+        vb = self.plot_widget.getViewBox()
+        if self.graph_data.fix_y_range:
+            vb.setYRange(self.graph_data.y_min, self.graph_data.y_max, padding=0)
+        else:
+            bounds = vb.childrenBoundingRect()
+            if bounds is not None:
+                vb.setYRange(bounds.top(), bounds.bottom(), padding=0)
 
     def refresh_satellites(self):
         """Update visibility and content of satellite zones around the plot."""

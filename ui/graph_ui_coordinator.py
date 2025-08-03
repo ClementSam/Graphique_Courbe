@@ -78,3 +78,13 @@ class GraphUICoordinator:
         for name, view in self.views.items():
             logger.debug(f"  🔍 [reset_zoom] Vue : {name}")
             view.reset_zoom()
+
+    def reset_zoom_x(self):
+        logger.debug("[graph_ui_coordinator > reset_zoom_x()] ▶️ Réinitialisation du zoom X")
+        for name, view in self.views.items():
+            view.reset_zoom_x()
+
+    def reset_zoom_y(self):
+        logger.debug("[graph_ui_coordinator > reset_zoom_y()] ▶️ Réinitialisation du zoom Y")
+        for name, view in self.views.items():
+            view.reset_zoom_y()

@@ -112,6 +112,7 @@ def test_axis_settings(service):
     assert g.fix_y_range is True
     assert g.y_min == -1
     assert g.y_max == 1
+    assert g.auto_range_y is False
 
 
 def test_set_time_offset(service):
@@ -122,6 +123,22 @@ def test_set_time_offset(service):
 
     svc.set_time_offset(2.5)
     assert state.current_curve.time_offset == 2.5
+
+
+def test_autorange_mouse_settings(service):
+    svc, state, _ = service
+    svc.add_graph()
+    name = list(state.graphs.keys())[0]
+    svc.select_graph(name)
+    svc.set_auto_range_x(False)
+    svc.set_auto_range_y(False)
+    svc.set_mouse_enabled_x(False)
+    svc.set_mouse_enabled_y(False)
+    g = state.current_graph
+    assert g.auto_range_x is False
+    assert g.auto_range_y is False
+    assert g.mouse_enabled_x is False
+    assert g.mouse_enabled_y is False
 
 
 
@@ -304,4 +321,3 @@ def test_satellite_object_operations(service):
 
     svc.remove_satellite_object("left", 0)
     assert len(state.current_graph.satellite_objects["left"]) == 1
-

@@ -77,6 +77,12 @@ class ApplicationCoordinator:
         self.properties_panel.button_reset_zoom.clicked.connect(
             self.controller.reset_zoom
         )
+        self.properties_panel.button_reset_zoom_x.clicked.connect(
+            self.controller.reset_zoom_x
+        )
+        self.properties_panel.button_reset_zoom_y.clicked.connect(
+            self.controller.reset_zoom_y
+        )
 
     def _handle_curve_selected(self, graph_name, curve_name):
         """Handle selection of a curve from the UI tree."""
@@ -164,5 +170,3 @@ class ApplicationCoordinator:
         elif kind == "curve":
             self.controller.remove_curve(name)
             self.graph_ui_coordinator.refresh_plot()
-
-

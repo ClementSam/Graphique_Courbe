@@ -239,6 +239,26 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.logy_checkbox.toggled.connect(
             lambda val: self._call_graph_controller(self.controller.set_log_y, val)
         )
+        self.auto_x_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(
+                self.controller.set_auto_range_x, val
+            )
+        )
+        self.auto_y_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(
+                self.controller.set_auto_range_y, val
+            )
+        )
+        self.mouse_x_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(
+                self.controller.set_mouse_enabled_x, val
+            )
+        )
+        self.mouse_y_checkbox.toggled.connect(
+            lambda val: self._call_graph_controller(
+                self.controller.set_mouse_enabled_y, val
+            )
+        )
 
         # Nouvelles connexions pour les options d'axe
         self.x_unit_input.editingFinished.connect(
@@ -358,8 +378,14 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.darkmode_checkbox = QtWidgets.QCheckBox("Mode sombre")
         self.logx_checkbox = QtWidgets.QCheckBox("Échelle X logarithmique")
         self.logy_checkbox = QtWidgets.QCheckBox("Échelle Y logarithmique")
+        self.auto_x_checkbox = QtWidgets.QCheckBox("Auto-échelle X")
+        self.auto_y_checkbox = QtWidgets.QCheckBox("Auto-échelle Y")
+        self.mouse_x_checkbox = QtWidgets.QCheckBox("Souris activée X")
+        self.mouse_y_checkbox = QtWidgets.QCheckBox("Souris activée Y")
         self.font_combo = QtWidgets.QFontComboBox()
         self.button_reset_zoom = QtWidgets.QPushButton("🔍 Réinitialiser le zoom")
+        self.button_reset_zoom_x = QtWidgets.QPushButton("🔍 Zoom X")
+        self.button_reset_zoom_y = QtWidgets.QPushButton("🔍 Zoom Y")
 
         layout.addWidget(QtWidgets.QLabel("Graphique sélectionné :"))
         layout.addWidget(self.label_graph_name)
@@ -368,9 +394,15 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         layout.addWidget(self.darkmode_checkbox)
         layout.addWidget(self.logx_checkbox)
         layout.addWidget(self.logy_checkbox)
+        layout.addWidget(self.auto_x_checkbox)
+        layout.addWidget(self.auto_y_checkbox)
+        layout.addWidget(self.mouse_x_checkbox)
+        layout.addWidget(self.mouse_y_checkbox)
         layout.addWidget(QtWidgets.QLabel("Police :"))
         layout.addWidget(self.font_combo)
         layout.addWidget(self.button_reset_zoom)
+        layout.addWidget(self.button_reset_zoom_x)
+        layout.addWidget(self.button_reset_zoom_y)
 
         # ✅ Ajout : unités et formats des axes
         unit_layout = QtWidgets.QFormLayout()
@@ -1250,6 +1282,11 @@ class PropertiesPanel(QtWidgets.QTabWidget):
         self.darkmode_checkbox.setChecked(graph.dark_mode)
         self.logx_checkbox.setChecked(graph.log_x)
         self.logy_checkbox.setChecked(graph.log_y)
+        self.auto_x_checkbox.setChecked(graph.auto_range_x)
+        self.auto_y_checkbox.setChecked(graph.auto_range_y)
+        self.mouse_x_checkbox.setChecked(graph.mouse_enabled_x)
+        self.mouse_y_checkbox.setChecked(graph.mouse_enabled_y)
+        self.auto_y_checkbox.setEnabled(not graph.fix_y_range)
 
         # Police
         self.font_combo.setCurrentFont(QtGui.QFont(graph.font))
