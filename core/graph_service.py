@@ -55,15 +55,6 @@ class GraphService:
         logger.debug("🧠 [GraphService.__init__] Initialisation du service avec AppState")
         self.state = state
 
-    def create_graph(self):
-        logger.debug("🧱 [GraphService.create_graph] Création d'un nouveau graphique...")
-        name = get_next_graph_name()
-        logger.debug(f"📛 [GraphService.create_graph] Nom généré : {name}")
-        self.state.add_graph(name)
-        logger.debug(f"✅ [GraphService.create_graph] Graphique '{name}' ajouté à l'état.")
-        return name
-
-
     def select_graph(self, name: str):
         logger.debug(f"🖱 [GraphService.select_graph] Sélection du graphique : {name}")
         if name not in self.state.graphs:

@@ -2,6 +2,7 @@
 
 from core.app_state import AppState
 from core.graph_service import GraphService
+from curve_generators import generate_random_curve
 from ui.graph_ui_coordinator import GraphUICoordinator
 from signal_bus import signal_bus
 from typing import Optional
@@ -42,7 +43,6 @@ class GraphController:
         
     def add_curve(self, graph_name: str):
         logger.debug(f"➕ [GraphController.add_curve] Requête d'ajout de courbe à : {graph_name}")
-        from curve_generators import generate_random_curve
         graph = self.state.graphs.get(graph_name)
         if not graph:
             logger.debug(f"❌ [GraphController.add_curve] Graphique introuvable : {graph_name}")
@@ -79,9 +79,7 @@ class GraphController:
 
     def remove_graph(self, name: str):
         logger.debug(f"🗑 [GraphController.remove_graph] Suppression du graphique : {name}")
-        self.service.remove_graph(name)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.remove_graph, name)
         
     def remove_curve(self, name: str):
         logger.debug(f"🗑 [GraphController.remove_curve] Suppression de la courbe : {name}")
@@ -91,8 +89,7 @@ class GraphController:
 
     def rename_graph(self, old_name: str, new_name: str):
         logger.debug(f"✏️ [GraphController.rename_graph] Renommage graphique : {old_name} → {new_name}")
-        self.service.rename_graph(old_name, new_name)
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.rename_graph, old_name, new_name)
 
     def rename_curve(self, old_name: str, new_name: str):
         logger.debug(f"✏️ [GraphController.rename_curve] Renommage courbe : {old_name} → {new_name}")
@@ -101,8 +98,7 @@ class GraphController:
 
     def import_graph(self, graph_data):
         logger.debug(f"📥 [GraphController.import_graph] Import du graphique : {graph_data.name}")
-        self.service.import_graph(graph_data)
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.import_graph, graph_data)
 
     def create_bit_curves(self, curve_name: str, bit_count: Optional[int] = None):
         logger.debug(f"🔬 [GraphController.create_bit_curves] Decomposition de {curve_name} en {bit_count or 'auto'} bits")
