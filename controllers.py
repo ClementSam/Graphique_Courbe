@@ -129,141 +129,105 @@ class GraphController:
         self.service.bring_curve_to_front()
         self.ui.refresh_plot()
 
+    def _apply_graph_update(self, action, *args, **kwargs):
+        """Execute a service action then emit update signals and refresh plot."""
+        action(*args, **kwargs)
+        signal_bus.graph_updated.emit()
+        self.ui.refresh_plot()
+
     # ----- Paramètres du graphique -----
     def set_grid_visible(self, visible: bool):
         logger.debug(f"📐 [GraphController.set_grid_visible] {visible}")
-        self.service.set_grid_visible(visible)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_grid_visible, visible)
 
     def set_dark_mode(self, enabled: bool):
         logger.debug(f"🌒 [GraphController.set_dark_mode] {enabled}")
-        self.service.set_dark_mode(enabled)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_dark_mode, enabled)
 
     def set_log_x(self, enabled: bool):
         logger.debug(f"📈 [GraphController.set_log_x] {enabled}")
-        self.service.set_log_x(enabled)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_log_x, enabled)
 
     def set_log_y(self, enabled: bool):
         logger.debug(f"📉 [GraphController.set_log_y] {enabled}")
-        self.service.set_log_y(enabled)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_log_y, enabled)
 
     def set_x_unit(self, unit: str):
         logger.debug(f"📏 [GraphController.set_x_unit] {unit}")
-        self.service.set_x_unit(unit)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_x_unit, unit)
 
     def set_y_unit(self, unit: str):
         logger.debug(f"📏 [GraphController.set_y_unit] {unit}")
-        self.service.set_y_unit(unit)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_y_unit, unit)
 
     def set_x_format(self, fmt: str):
         logger.debug(f"🔢 [GraphController.set_x_format] {fmt}")
-        self.service.set_x_format(fmt)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_x_format, fmt)
 
     def set_y_format(self, fmt: str):
         logger.debug(f"🔢 [GraphController.set_y_format] {fmt}")
-        self.service.set_y_format(fmt)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_y_format, fmt)
 
     def set_auto_range_x(self, enabled: bool):
         logger.debug(f"📏 [GraphController.set_auto_range_x] {enabled}")
-        self.service.set_auto_range_x(enabled)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_auto_range_x, enabled)
 
     def set_auto_range_y(self, enabled: bool):
         logger.debug(f"📏 [GraphController.set_auto_range_y] {enabled}")
-        self.service.set_auto_range_y(enabled)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_auto_range_y, enabled)
 
     def set_fix_y_range(self, fix: bool):
         logger.debug(f"📊 [GraphController.set_fix_y_range] {fix}")
-        self.service.set_fix_y_range(fix)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_fix_y_range, fix)
 
     def set_y_limits(self, y_min: float, y_max: float):
         logger.debug(f"📉 [GraphController.set_y_limits] {y_min} → {y_max}")
-        self.service.set_y_limits(y_min, y_max)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_y_limits, y_min, y_max)
 
     def set_mouse_enabled_x(self, enabled: bool):
         logger.debug(f"🖱️ [GraphController.set_mouse_enabled_x] {enabled}")
-        self.service.set_mouse_enabled_x(enabled)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_mouse_enabled_x, enabled)
 
     def set_mouse_enabled_y(self, enabled: bool):
         logger.debug(f"🖱️ [GraphController.set_mouse_enabled_y] {enabled}")
-        self.service.set_mouse_enabled_y(enabled)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_mouse_enabled_y, enabled)
 
     def set_satellite_content(self, zone: str, content: str | None):
         logger.debug(
             f"🛰 [GraphController.set_satellite_content] zone={zone} content={content}"
         )
-        self.service.set_satellite_content(zone, content)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_satellite_content, zone, content)
 
     def set_satellite_visible(self, zone: str, visible: bool):
         logger.debug(
             f"🛰 [GraphController.set_satellite_visible] zone={zone} visible={visible}"
         )
-        self.service.set_satellite_visible(zone, visible)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_satellite_visible, zone, visible)
 
     def set_satellite_color(self, zone: str, color: str):
         logger.debug(
             f"🛰 [GraphController.set_satellite_color] zone={zone} color={color}"
         )
-        self.service.set_satellite_color(zone, color)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_satellite_color, zone, color)
 
     def set_satellite_size(self, zone: str, size: int):
         logger.debug(
             f"🛰 [GraphController.set_satellite_size] zone={zone} size={size}"
         )
-        self.service.set_satellite_size(zone, size)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.set_satellite_size, zone, size)
 
 
     def add_zone(self, zone: dict):
         logger.debug(f"🗒 [GraphController.add_zone] zone={zone}")
-        self.service.add_zone(zone)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.add_zone, zone)
 
     def update_zone(self, index: int, zone: dict):
         logger.debug(f"🗒 [GraphController.update_zone] index={index} zone={zone}")
-        self.service.update_zone(index, zone)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.update_zone, index, zone)
 
     def remove_zone(self, index: int):
         logger.debug(f"🗒 [GraphController.remove_zone] index={index}")
-        self.service.remove_zone(index)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.remove_zone, index)
 
     # --------------------------------------------------------------
     # Satellite objects
@@ -272,47 +236,41 @@ class GraphController:
         logger.debug(
             f"🛰 [GraphController.add_satellite_object] zone={zone} obj={obj}"
         )
-        self.service.add_satellite_object(zone, obj)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.add_satellite_object, zone, obj)
 
     def update_satellite_object(self, zone: str, index: int, obj):
         logger.debug(
             f"🛰 [GraphController.update_satellite_object] zone={zone} index={index} obj={obj}"
         )
-        self.service.update_satellite_object(zone, index, obj)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(
+            self.service.update_satellite_object, zone, index, obj
+        )
 
     def remove_satellite_object(self, zone: str, index: int):
         logger.debug(
             f"🛰 [GraphController.remove_satellite_object] zone={zone} index={index}"
         )
-        self.service.remove_satellite_object(zone, index)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(self.service.remove_satellite_object, zone, index)
 
     def move_satellite_object(self, zone: str, index: int, new_index: int):
         logger.debug(
             f"🛰 [GraphController.move_satellite_object] zone={zone} {index}->{new_index}"
         )
-        self.service.move_satellite_object(zone, index, new_index)
-        signal_bus.graph_updated.emit()
-        self.ui.refresh_plot()
+        self._apply_graph_update(
+            self.service.move_satellite_object, zone, index, new_index
+        )
     
     def set_graph_visible(self, graph_name: str, visible: bool):
         logger.debug(f"👁 [GraphController.set_graph_visible] {graph_name} → {visible}")
-        self.service.set_graph_visible(graph_name, visible)
-        signal_bus.graph_updated.emit()
+        self._apply_graph_update(self.service.set_graph_visible, graph_name, visible)
         signal_bus.curve_updated.emit()
-        self.ui.refresh_plot()
 
     def set_curve_visible(self, graph_name: str, curve_name: str, visible: bool):
         logger.debug(f"👁 [GraphController.set_curve_visible] {curve_name} in {graph_name} → {visible}")
-        self.service.set_curve_visible(graph_name, curve_name, visible)
-        signal_bus.graph_updated.emit()
+        self._apply_graph_update(
+            self.service.set_curve_visible, graph_name, curve_name, visible
+        )
         signal_bus.curve_updated.emit()
-        self.ui.refresh_plot()
 
     def set_opacity(self, value: float):
         logger.debug(f"🎨 [GraphController.set_opacity] Opacité = {value}")
