@@ -21,7 +21,7 @@ from signal_bus import signal_bus
 import os
 import json
 import sys
-from core.startup import check_expiry_date
+from core.license_check import check_expiry_date
 
 RECENT_FILE = "recent_projects.json"
 
